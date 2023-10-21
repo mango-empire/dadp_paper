@@ -8,7 +8,7 @@
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
 
-\newcommand{\dpn}{\textbf{mcDP}}
+\newcommand{\dpn}{\textbf{dadp}}
 
 \title{Data Augmentation for Privacy Aware Analysis}
 \author{DP Group}
@@ -21,11 +21,11 @@
 
 \begin{abstract}
     This paper serves as a reference and introduction on using the $\dpn$ R
-    package. The goal of this package is to provide tools to explore the
-    impact of different privacy regimes on a Bayesian analysis. A key strength of
+    package. The goal of this package is to provide some tools for exploring the
+    impact of different privacy regimes on a Bayesian analysis. A strength of
     this framework is the ability to target the exact posterior in settings
-    where the likelihood is too complex to analytically express. The main
-    purpose of the package is to ingest four model components and return
+    where the likelihood is too complex to analytically express.
+    The package works by ingesting four model components and returns
     a Markov chain targeting the posterior given the privatized data. These
     model components are the (1) naive posterior sampler (2) likelihood sampler
     (3) privacy mechanism and (4) summary statistic.
