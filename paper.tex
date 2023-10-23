@@ -53,8 +53,9 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{statmath}
-\usepackage{biblatex}
 \usepackage{amsthm}
+\usepackage{algpseudocodex}
+\usepackage{algorithm}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
 
@@ -74,15 +75,20 @@
     impact of different privacy regimes on a Bayesian analysis. A strength of
     this framework is the ability to target the exact posterior in settings
     where the likelihood is too complex to analytically express.
-    The package works by ingesting four model components and returns
-    a Markov chain targeting the posterior given the privatized data. These
-    model components are the (1) naive posterior sampler (2) likelihood sampler
-    (3) privacy mechanism and (4) summary statistic.
 \end{abstract}
 
-\section*{Introduction}
-Introduce some basic notation
+\section*{Methodology}
+(Insert from DA paper?)
 
+
+
+\section*{Using dadp}
+Introduce some basic notation (here or in intro)
+Consider combining this section with methodology.
+
+
+
+Using the dadp package consist of specifying four components
 \begin{enumerate}
   \item $\pi(\theta \mid x)$.
   \item $f(x \mid \theta)$.
@@ -90,139 +96,109 @@ Introduce some basic notation
   \item $T(x)$.
 \end{enumerate}
 
-\section*{Simple Binomial Proportion}
-Reference the transportation example. Discrete Gaussian distribution
 
-\begin{definition}
-Let $\mu, \sigma \in \mathbb{R}$  and $\sigma > 0$. The discrete Gaussian
-distribution has probability distribution
+
+\section*{Differentially Private Simple Linear Regression}
+
+(Alabi et al. 2020)\cite{alabi2020} considers adding noise to a sufficient static
+to create a differentially private algorithm for simple linear regression
+called \textbf{NoisyStats}
+
+
+\begin{algorithm}
+\begin{algorithmic}[1]
+\caption{NoisyStats: $(\epsilon, 0)$-DP Algorithm}
+\State Data: $\{(x_i,y_i)\}_{i=1}^{n}$
+\State Privacy Parameter: $\epsilon$
+\State $\Delta_1 = \Delta_2 = (1 - 1/n)$ \Comment{Set global sensitivity}
+\State Sample $L_1 \sim Lap(0, 3\Delta_1/\epsilon)$
+\State Sample $L_2 \sim Lap(0, 3\Delta_2/\epsilon)$
+\If{$nvar(x) + L_2 > 0$}
+\State $\tilde{\alpha} = \dfrac{ncov(x,y) + L_1}{nvar(x) + L_2}$\\
+\State $\Delta_3 = (1/n)(1 + |\tilde{\alpha}|)$
+\State Sample $L_3 \sim Lap(0, 3\Delta_3/\epsilon)$
+\State $\tilde{\beta} = (\bar{y} - \tilde{\alpha}\bar{x}) + L_3$
+\State \Return $(\tilde{\alpha}, \tilde{\beta})$
+\EndIf
+\State \Return NA
+\end{algorithmic}
+\end{algorithm}
+
+\subsection*{Sampling from likelihood under complete data}
+likelihood function
 \begin{align*}
-P(X = x) &= \dfrac{\exp(-(x-\mu)^2/2\sigma^2)}{\sum_{y \in \mathbb{Z}} \exp(-(y-\mu)^2/2\sigma^2}
+f(y \mid x,  \alpha, \beta, \mu_x, \sigma_x) 
+&= f(x \mid \mu_x, \sigma_x)f(y \mid x, \alpha, \beta)\\
+&= \phi(x; \mu_x, \sigma_x)\phi(y; \alpha + \beta x, \sigma)
 \end{align*}
-\end{definition}
-
-\section*{Simple Example}
-Assume we add noise to sample mean estimate.
 
 
-\section*{Linear Regression with Clamping}
+\newpage
 
-(dp paper) considers a simple linear regression model with
+\section*{A maybe...}
 
+
+As an example, use data from (Gelman). Problem
+consist of estimating the proportion of boys and girls.
+Data: 251,527 boys and 241,945 girls born in Paris
+from 1745 to 1770. Describe set up below
+
+Privatize by adding noise, $\eta \sim N(0, 4000)$:
+[Use DP framework?]
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlkwd{set.seed}\hlstd{(}\hlnum{1}\hlstd{)}
-\hlstd{deltaa} \hlkwb{<-} \hlnum{13}
-\hlstd{n} \hlkwb{<-} \hlnum{100}
-\hlstd{epsilon} \hlkwb{<-} \hlnum{100}
-\hlstd{xmat} \hlkwb{<-} \hlstd{MASS}\hlopt{::}\hlkwd{mvrnorm}\hlstd{(n,} \hlkwc{mu} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{.9}\hlstd{,}\hlopt{-}\hlnum{1.17}\hlstd{),} \hlkwc{Sigma} \hlstd{=} \hlkwd{diag}\hlstd{(}\hlnum{2}\hlstd{))}
-\hlstd{beta} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlopt{-}\hlnum{1.79}\hlstd{,} \hlopt{-}\hlnum{2.89}\hlstd{,} \hlopt{-}\hlnum{0.66}\hlstd{)}
-\hlstd{y} \hlkwb{<-} \hlkwd{cbind}\hlstd{(}\hlnum{1}\hlstd{,xmat)} \hlopt{%*%} \hlstd{beta} \hlopt{+} \hlkwd{rnorm}\hlstd{(n,} \hlkwc{sd} \hlstd{=} \hlkwd{sqrt}\hlstd{(}\hlnum{2}\hlstd{))}
-\hlstd{z} \hlkwb{<-} \hlkwd{tstat}\hlstd{(}\hlkwd{cbind}\hlstd{(y,xmat))}
+\hlstd{n_g} \hlkwb{<-} \hlnum{241945}
+\hlstd{n_b} \hlkwb{<-} \hlnum{251527}
+
+\hlstd{eta} \hlkwb{<-} \hlkwd{rnorm}\hlstd{(}\hlnum{2}\hlstd{,}\hlnum{0}\hlstd{,}\hlnum{4000}\hlstd{)}
+
+\hlstd{n_g} \hlopt{+} \hlstd{eta[}\hlnum{1}\hlstd{]}
 \end{alltt}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in tstat(cbind(y, xmat)): could not find function "{}tstat"{}}}\begin{alltt}
-\hlstd{sdp} \hlkwb{<-} \hlstd{z} \hlopt{+} \hlstd{VGAM}\hlopt{::}\hlkwd{rlaplace}\hlstd{(}\hlkwd{length}\hlstd{(z),} \hlkwc{location} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{scale} \hlstd{= deltaa}\hlopt{/}\hlstd{epsilon)}
+\begin{verbatim}
+## [1] 237755.7
+\end{verbatim}
+\begin{alltt}
+\hlstd{n_b} \hlopt{+} \hlstd{eta[}\hlnum{2}\hlstd{]}
 \end{alltt}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): object 'z' not found}}\begin{alltt}
-\hlstd{sdp}
-\end{alltt}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): object 'sdp' not found}}\end{kframe}
+\begin{verbatim}
+## [1] 247992.6
+\end{verbatim}
+\end{kframe}
 \end{knitrout}
 
+\subsection*{Sampling from likelihood under complete data}
+binomial distribution
+\begin{align*}
+f(x \mid \theta) &= \binom{n}{n_g} \theta^{n_g}(1-\theta)^{n-n_g}
+\end{align*}
+
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlcom{#define model}
-\hlstd{post_smpl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{dmat}\hlstd{,} \hlkwc{theta}\hlstd{) \{}
-  \hlstd{x} \hlkwb{<-} \hlkwd{cbind}\hlstd{(}\hlnum{1}\hlstd{,dmat[,}\hlopt{-}\hlnum{1}\hlstd{])}
-  \hlstd{y} \hlkwb{<-} \hlstd{dmat[,}\hlnum{1}\hlstd{]}
-
-  \hlstd{ps_s2} \hlkwb{<-} \hlkwd{solve}\hlstd{((}\hlnum{1}\hlopt{/}\hlnum{2}\hlstd{)} \hlopt{*} \hlkwd{t}\hlstd{(x)} \hlopt{%*%} \hlstd{x} \hlopt{+} \hlstd{(}\hlnum{1}\hlopt{/}\hlnum{4}\hlstd{)} \hlopt{*} \hlkwd{diag}\hlstd{(}\hlnum{3}\hlstd{))}
-  \hlstd{ps_m} \hlkwb{<-} \hlstd{ps_s2} \hlopt{%*%} \hlstd{(}\hlkwd{t}\hlstd{(x)} \hlopt{%*%} \hlstd{y)} \hlopt{*} \hlstd{(}\hlnum{1}\hlopt{/}\hlnum{2}\hlstd{)}
-
-  \hlstd{MASS}\hlopt{::}\hlkwd{mvrnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mu} \hlstd{= ps_m,} \hlkwc{Sigma} \hlstd{= ps_s2)}
-\hlstd{\}}
-
 \hlstd{lik_smpl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{theta}\hlstd{) \{}
-  \hlstd{xmat} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{=} \hlnum{.9}\hlstd{),} \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{=} \hlopt{-}\hlnum{1.17}\hlstd{))}
-  \hlstd{y} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlnum{1}\hlstd{,xmat)} \hlopt{%*%} \hlstd{theta} \hlopt{+} \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{sd} \hlstd{=} \hlkwd{sqrt}\hlstd{(}\hlnum{2}\hlstd{))}
-  \hlkwd{c}\hlstd{(y,xmat)}
-\hlstd{\}}
-
-\hlstd{clamp_data} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{dmat}\hlstd{) \{}
-  \hlkwd{pmin}\hlstd{(}\hlkwd{pmax}\hlstd{(dmat,}\hlopt{-}\hlnum{10}\hlstd{),}\hlnum{10}\hlstd{)} \hlopt{/} \hlnum{10}
-\hlstd{\}}
-
-\hlstd{tstat} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{dmat}\hlstd{) \{}
-  \hlstd{sdp_mat} \hlkwb{<-} \hlkwd{clamp_data}\hlstd{(dmat)}
-  \hlstd{ydp} \hlkwb{<-} \hlstd{sdp_mat[,}\hlnum{1}\hlstd{,} \hlkwc{drop} \hlstd{=} \hlnum{FALSE}\hlstd{]}
-  \hlstd{xdp} \hlkwb{<-} \hlkwd{cbind}\hlstd{(}\hlnum{1}\hlstd{,sdp_mat[,}\hlopt{-}\hlnum{1}\hlstd{,} \hlkwc{drop} \hlstd{=} \hlnum{FALSE}\hlstd{])}
-
-  \hlstd{s1} \hlkwb{<-} \hlkwd{t}\hlstd{(xdp)} \hlopt{%*%} \hlstd{ydp}
-  \hlstd{s2} \hlkwb{<-} \hlkwd{t}\hlstd{(ydp)} \hlopt{%*%} \hlstd{ydp}
-  \hlstd{s3} \hlkwb{<-} \hlkwd{t}\hlstd{(xdp)} \hlopt{%*%} \hlstd{xdp}
-
-  \hlstd{ur_s1} \hlkwb{<-} \hlkwd{c}\hlstd{(s1)}
-  \hlstd{ur_s2} \hlkwb{<-} \hlkwd{c}\hlstd{(s2)}
-  \hlstd{ur_s3} \hlkwb{<-} \hlstd{s3[}\hlkwd{upper.tri}\hlstd{(s3,}\hlkwc{diag} \hlstd{=} \hlnum{TRUE}\hlstd{)][}\hlopt{-}\hlnum{1}\hlstd{]}
-  \hlkwd{c}\hlstd{(ur_s1,ur_s2,ur_s3)}
-\hlstd{\}}
-
-\hlstd{st_update} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{st}\hlstd{,} \hlkwc{xs}\hlstd{,} \hlkwc{xo}\hlstd{) \{}
-  \hlstd{st} \hlopt{-} \hlkwd{tstat}\hlstd{(}\hlkwd{t}\hlstd{(xo))} \hlopt{+} \hlkwd{tstat}\hlstd{(}\hlkwd{t}\hlstd{(xs))}
-\hlstd{\}}
-
-\hlstd{st_init} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{dmat}\hlstd{) \{}
-  \hlkwd{tstat}\hlstd{(dmat)}
-\hlstd{\}}
-
-
-\hlstd{gen_priv_zt} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{epsilon}\hlstd{) \{}
-  \hlkwa{function}\hlstd{(}\hlkwc{sdp}\hlstd{,} \hlkwc{zt}\hlstd{) \{}
-    \hlkwd{sum}\hlstd{(VGAM}\hlopt{::}\hlkwd{dlaplace}\hlstd{(sdp} \hlopt{-} \hlstd{zt,} \hlnum{0}\hlstd{, deltaa}\hlopt{/}\hlstd{epsilon,} \hlnum{TRUE}\hlstd{))}
-  \hlstd{\}}
+  \hlstd{t1} \hlkwb{<-} \hlkwd{rbinom}\hlstd{(}\hlnum{1}\hlstd{,} \hlnum{493472}\hlstd{, theta)}
+  \hlstd{t2} \hlkwb{<-} \hlnum{493472} \hlopt{-} \hlstd{t1}
+  \hlkwd{c}\hlstd{(t1,t2)}
 \hlstd{\}}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlstd{dmod} \hlkwb{<-} \hlkwd{new_privacy}\hlstd{(}\hlkwc{post_smpl} \hlstd{= post_smpl,}
-                    \hlkwc{lik_smpl} \hlstd{= lik_smpl,}
-                    \hlkwc{ll_priv_mech} \hlstd{=} \hlkwd{gen_priv_zt}\hlstd{(epsilon),}
-                    \hlkwc{st_update} \hlstd{= st_update,}
-                    \hlkwc{st_calc} \hlstd{= st_init,}
-                    \hlkwc{npar} \hlstd{=} \hlnum{3}\hlstd{)}
-\end{alltt}
+\subsection*{Posterior given complete data}
+Using Jeffrey's prior $Beta(1/2,1/2)$.
+\begin{align*}
+\dfrac{\Gamma(\alpha)\Gamma(\beta)}{\Gamma(\alpha + \beta)}x^{\alpha -1}(1-x)^{\beta-1}
+\end{align*}
+conjugate model:
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in new\_privacy(post\_smpl = post\_smpl, lik\_smpl = lik\_smpl, ll\_priv\_mech = gen\_priv\_zt(epsilon), : could not find function "{}new\_privacy"{}}}\begin{alltt}
-\hlstd{tmp} \hlkwb{<-} \hlkwd{mcmc_privacy}\hlstd{(dmod,}
-                    \hlkwc{sdp} \hlstd{= sdp,}
-                    \hlkwc{nobs} \hlstd{= n,}
-                    \hlkwc{init_par} \hlstd{= beta,}
-                    \hlkwc{niter} \hlstd{=} \hlnum{1000}\hlstd{,}
-                    \hlkwc{chains} \hlstd{=} \hlnum{1}\hlstd{,}
-                    \hlkwc{varnames} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"beta0"}\hlstd{,} \hlstr{"beta1"}\hlstd{,} \hlstr{"beta2"}\hlstd{))}
-\end{alltt}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in mcmc\_privacy(dmod, sdp = sdp, nobs = n, init\_par = beta, niter = 1000, : could not find function "{}mcmc\_privacy"{}}}\begin{alltt}
-\hlstd{posterior}\hlopt{::}\hlkwd{summarize_draws}\hlstd{(tmp}\hlopt{$}\hlstd{chain)}
-\end{alltt}
+\nocite{*}
+\bibliographystyle{amsplain}
+\bibliography{ref.bib}
 
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): object 'tmp' not found}}\end{kframe}
-\end{knitrout}
 
 
 \end{document}
