@@ -104,10 +104,9 @@ Using the dadp package consist of specifying four components
 to create a differentially private algorithm for simple linear regression
 called \textbf{NoisyStats}
 
-
 \begin{algorithm}
 \begin{algorithmic}[1]
-\caption{NoisyStats: $(\epsilon, 0)$-DP Algorithm}
+\caption{NoisyStats: $(\epsilon, 0)$-DP Algorithm (closer to original paper)}
 \State Data: $\{(x_i,y_i)\}_{i=1}^{n}$
 \State Privacy Parameter: $\epsilon$
 \State $\Delta_1 = \Delta_2 = (1 - 1/n)$ \Comment{Set global sensitivity}
@@ -117,29 +116,44 @@ called \textbf{NoisyStats}
 \State $\tilde{\beta} = \dfrac{ncov(x,y) + L_1}{nvar(x) + L_2}$\\
 \State $\Delta_3 = (1/n)(1 + |\tilde{\alpha}|)$
 \State Sample $L_3 \sim Lap(0, 3\Delta_3/\epsilon)$
-\State $\tilde{\alpha} = (\bar{y} - \tilde{\alpha}\bar{x}) + L_3$
+\State $\tilde{\alpha} = (\bar{y} - \tilde{\beta}\bar{x}) + L_3$
 \State \Return $(ncov(x,y) + L_1, nvar(x) + L_2, \tilde{\alpha})$
 \EndIf
 \State \Return NA
 \end{algorithmic}
 \end{algorithm}
 
+\begin{algorithm}
+\begin{algorithmic}[1]
+\caption{NoisyStats: $(\epsilon, 0)$-DP Algorithm (easy for me!)}
+\State Data: $\{(x_i,y_i)\}_{i=1}^{n}$
+\State Privacy Parameter: $\epsilon$
+\State $\Delta_1 = \Delta_2 = (1 - 1/n)$ \Comment{Set global sensitivity}
+\State $\Delta_3 = \Delta_4 = 1/n$
+\State Sample $L_1 \sim Lap(0, 3\Delta_1/\epsilon)$, $L_2 \sim Lap(0, 3\Delta_2/\epsilon)$
+\State Sample $L_3 \sim Lap(0, 3\Delta_3/\epsilon)$, $L_4 \sim Lap(0, 3\Delta_4/\epsilon)$
+\State $\tilde{s}_1 = ncov(x,y) + L_1$
+\State $\tilde{s}_2 = nvar(x) + L_2$
+\State $\tilde{s}_3 = \bar{y} + L_3$
+\State $\tilde{s}_4 = \bar{x} + L_4$
+\State \Return $(\tilde{s}_1,\tilde{s}_2,\tilde{s}_3,\tilde{s}_4)$
+\end{algorithmic}
+\end{algorithm}
+
 Suppose we would like to explore the potential impact 
-of the \text{NoisyStats} mechanism on analysis. Assume
+of the \textbf{NoisyStats} mechanism on analysis. Assume
 the true data generating process is 
 \begin{align*}
 x_i &\sim Unif(0,1)\\
 y_i &\sim N(-2 + 3 x_i, 3^2)
 \end{align*}
+We would like to perform inference on $(\alpha, \beta)$ 
+given privatized statistic $(\tilde{s}_1, \tilde{s}_2)$.
 
 \subsection*{Sampling from likelihood under complete data}
 likelihood function $f(x) \sim Unif(0,1)$.
 \begin{align*}
-<<<<<<< HEAD
-f(y \mid x,  \alpha, \beta, \mu_x, \log \sigma_x) 
-=======
 f(y \mid x,  \alpha, \beta) 
->>>>>>> 3dae26538e7498467aa2d42842efd7c89d0307fc
 &= f(x \mid \mu_x, \sigma_x)f(y \mid x, \alpha, \beta)\\
 &= \phi(x; \mu_x, \sigma_x)\phi(y; \alpha + \beta x, \sigma)
 \end{align*}
@@ -150,47 +164,105 @@ f(y \mid x,  \alpha, \beta)
 \hlstd{lik_smpl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{theta}\hlstd{) \{}
   \hlstd{alpha} \hlkwb{<-} \hlstd{theta[}\hlnum{1}\hlstd{]}
   \hlstd{beta} \hlkwb{<-} \hlstd{theta[}\hlnum{2}\hlstd{]}
-<<<<<<< HEAD
-  \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{= alpha} \hlopt{+} \hlstd{beta} \hlopt{*} \hlstd{x,} \hlkwc{sd} \hlstd{=} \hlnum{3}\hlstd{)}
-=======
-  \hlstd{mux} \hlkwb{<-} \hlstd{theta[}\hlnum{3}\hlstd{]}
-  \hlstd{sx} \hlkwb{<-} \hlkwd{exp}\hlstd{(theta[}\hlnum{4}\hlstd{])}
-  \hlstd{sy} \hlkwb{<-} \hlkwd{exp}\hlstd{(theta[}\hlnum{5}\hlstd{])}
-
-  \hlstd{x} \hlkwb{<-} \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{= mux,} \hlkwc{sd} \hlstd{= sx)}
-  \hlstd{y} \hlkwb{<-} \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{= alpha} \hlopt{+} \hlstd{beta} \hlopt{*} \hlstd{x,} \hlkwc{sd} \hlstd{= sy)}
-
-  \hlkwd{c}\hlstd{(y,x)}
->>>>>>> 3dae26538e7498467aa2d42842efd7c89d0307fc
+  \hlstd{x} \hlkwb{<-} \hlkwd{runif}\hlstd{(}\hlnum{1}\hlstd{)}
+  \hlstd{y} \hlkwb{<-} \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{= alpha} \hlopt{+} \hlstd{beta} \hlopt{*} \hlstd{x,} \hlkwc{sd} \hlstd{=} \hlnum{3}\hlstd{)}
+  \hlkwd{c}\hlstd{(x,y)}
 \hlstd{\}}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
 \subsection*{Posterior given complete data}
-<<<<<<< HEAD
+Assume $f(\alpha,\beta) \sim N(0,10^{-2}I_{2 \times 2})$
+\begin{align*}
+\mu_p &= (1/9)\Sigma_p^{-1}X^Ty\\
+\Sigma_p^{-1} &= (1/9)X^TX + (1/100)I^{-1} 
+\end{align*}
+
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlstd{post_smpl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{dmat}\hlstd{,} \hlkwc{theta}\hlstd{) \{}
   \hlstd{x} \hlkwb{<-} \hlstd{dmat[,}\hlnum{1}\hlstd{]}
   \hlstd{y} \hlkwb{<-} \hlstd{dmat[,}\hlnum{2}\hlstd{]}
-  \hlstd{beta} \hlkwb{<-}\hlkwd{cov}\hlstd{(x,y)}\hlopt{/}\hlkwd{var}\hlstd{(x)}
-  \hlstd{alpha} \hlkwb{<-} \hlkwd{mean}\hlstd{(y)} \hlopt{-} \hlstd{beta}
+  \hlstd{xm} \hlkwb{<-} \hlkwd{cbind}\hlstd{(}\hlnum{1}\hlstd{, x)}
+  \hlstd{Si} \hlkwb{<-} \hlstd{(}\hlnum{1}\hlopt{/}\hlnum{9}\hlstd{)} \hlopt{*} \hlkwd{t}\hlstd{(xm)} \hlopt{%*%} \hlstd{xm} \hlopt{+} \hlstd{(}\hlnum{1}\hlopt{/}\hlnum{100}\hlstd{)} \hlopt{*} \hlkwd{diag}\hlstd{(}\hlnum{2}\hlstd{)}
+  \hlstd{mu} \hlkwb{<-} \hlstd{(}\hlnum{1}\hlopt{/}\hlnum{9}\hlstd{)} \hlopt{*} \hlkwd{solve}\hlstd{(Si)} \hlopt{%*%} \hlkwd{t}\hlstd{(xm)} \hlopt{%*%} \hlstd{y}
+  \hlstd{MASS}\hlopt{::}\hlkwd{mvrnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mu} \hlstd{= mu,} \hlkwc{Sigma} \hlstd{=} \hlkwd{solve}\hlstd{(Si))}
 \hlstd{\}}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
-=======
 
->>>>>>> 3dae26538e7498467aa2d42842efd7c89d0307fc
 
 \subsection*{Statistic}
-\textbf{NoisyStat} computes three summary statistics
+\textbf{NoisyStat} computes four summary statistics
 \begin{align*}
-nvar(x) &= \dfrac{1}{n-1}\sum_{i=1}^{n}
+nvar(x) &= \sum_{i=1}^{n}(x_i - \bar{x})\\
+ncov(x,y) &= \sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y})\\
 \end{align*}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{st_calc} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{dmat}\hlstd{) \{}
+  \hlstd{x} \hlkwb{<-} \hlstd{dmat[,}\hlnum{1}\hlstd{]}
+  \hlstd{y} \hlkwb{<-} \hlstd{dmat[,}\hlnum{2}\hlstd{]}
+  \hlstd{n} \hlkwb{<-} \hlkwd{length}\hlstd{(y)} \hlopt{-} \hlkwd{cov}\hlstd{(x,y)}\hlopt{/}\hlkwd{var}\hlstd{(x)}
+  \hlstd{s1} \hlkwb{<-} \hlstd{(n}\hlopt{-}\hlnum{1}\hlstd{)} \hlopt{*} \hlkwd{cov}\hlstd{(x,y)}
+  \hlstd{s2} \hlkwb{<-} \hlstd{(n}\hlopt{-}\hlnum{1}\hlstd{)} \hlopt{*} \hlkwd{var}\hlstd{(x)}
+  \hlstd{s3} \hlkwb{<-} \hlkwd{mean}\hlstd{(y)}
+  \hlstd{s4} \hlkwb{<-} \hlkwd{mean}\hlstd{(x)}
+  \hlkwd{c}\hlstd{(s1, s2, s3, s4)}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
+
+\subsection*{Privacy Mechanism}
+\textbf{NoisyStat} consist of adding independent Laplace errors
+to each of the three summary statistics
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#check vectorization?}
+\hlstd{priv_mech_factory} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{n}\hlstd{,} \hlkwc{epsilon}\hlstd{) \{}
+  \hlkwa{function}\hlstd{(}\hlkwc{sdp}\hlstd{,} \hlkwc{xt}\hlstd{) \{}
+    \hlstd{delta1} \hlkwb{<-} \hlstd{(}\hlnum{1}\hlopt{-} \hlnum{1}\hlopt{/}\hlstd{n)}
+    \hlstd{delta3} \hlkwb{<-} \hlnum{1}\hlopt{/}\hlstd{n}
+    \hlstd{t1} \hlkwb{<-} \hlstd{VGAM}\hlopt{::}\hlkwd{dlaplace}\hlstd{(sdp[}\hlnum{1}\hlstd{]} \hlopt{-} \hlstd{xt[}\hlnum{1}\hlstd{],} \hlnum{0}\hlstd{,} \hlnum{3} \hlopt{*} \hlstd{delta1}\hlopt{/}\hlstd{epsilon,} \hlnum{TRUE}\hlstd{)}
+    \hlstd{t2} \hlkwb{<-} \hlstd{VGAM}\hlopt{::}\hlkwd{dlaplace}\hlstd{(sdp[}\hlnum{2}\hlstd{]} \hlopt{-} \hlstd{xt[}\hlnum{2}\hlstd{],} \hlnum{0}\hlstd{,} \hlnum{3} \hlopt{*} \hlstd{delta1}\hlopt{/}\hlstd{epsilon,} \hlnum{TRUE}\hlstd{)}
+    \hlstd{t3} \hlkwb{<-} \hlstd{VGAM}\hlopt{::}\hlkwd{dlaplace}\hlstd{(sdp[}\hlnum{3}\hlstd{]} \hlopt{-} \hlstd{xt[}\hlnum{3}\hlstd{],} \hlnum{0}\hlstd{,} \hlnum{3} \hlopt{*} \hlstd{delta3}\hlopt{/}\hlstd{epsilon,} \hlnum{TRUE}\hlstd{)}
+    \hlstd{t4} \hlkwb{<-} \hlstd{VGAM}\hlopt{::}\hlkwd{dlaplace}\hlstd{(sdp[}\hlnum{4}\hlstd{]} \hlopt{-} \hlstd{xt[}\hlnum{4}\hlstd{],} \hlnum{0}\hlstd{,} \hlnum{3} \hlopt{*} \hlstd{delta3}\hlopt{/}\hlstd{epsilon,} \hlnum{TRUE}\hlstd{)}
+    \hlkwd{sum}\hlstd{(}\hlkwd{c}\hlstd{(t1,t2,t3,t4))}
+  \hlstd{\}}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection*{Chain diagnostics?}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{summary}\hlstd{(tmp)}
+\end{alltt}
+\begin{verbatim}
+## [1] "Average Acceptance Probability: 0.59056"
+## # A tibble: 2 x 10
+##   variable  mean median    sd   mad    q5   q95  rhat ess_bulk ess_tail
+##   <chr>    <num>  <num> <num> <num> <num> <num> <num>    <num>    <num>
+## 1 alpha     4.84   4.78 0.987  1.05  3.34 6.40  1.00      329.     369.
+## 2 beta     -2.31  -2.35 1.67   1.76 -5.03 0.400 0.999     336.     396.
+\end{verbatim}
+\begin{alltt}
+\hlstd{bayesplot}\hlopt{::}\hlkwd{mcmc_trace}\hlstd{(tmp}\hlopt{$}\hlstd{chain)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-6-1} 
+\end{knitrout}
 
 \newpage
 
@@ -215,21 +287,13 @@ Privatize by adding noise, $\eta \sim N(0, 4000)$:
 \hlstd{n_g} \hlopt{+} \hlstd{eta[}\hlnum{1}\hlstd{]}
 \end{alltt}
 \begin{verbatim}
-<<<<<<< HEAD
-## [1] 245635.5
-=======
-## [1] 240897.5
->>>>>>> 3dae26538e7498467aa2d42842efd7c89d0307fc
+## [1] 249361.9
 \end{verbatim}
 \begin{alltt}
 \hlstd{n_b} \hlopt{+} \hlstd{eta[}\hlnum{2}\hlstd{]}
 \end{alltt}
 \begin{verbatim}
-<<<<<<< HEAD
-## [1] 247383.2
-=======
-## [1] 252921
->>>>>>> 3dae26538e7498467aa2d42842efd7c89d0307fc
+## [1] 247182.7
 \end{verbatim}
 \end{kframe}
 \end{knitrout}

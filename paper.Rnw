@@ -55,10 +55,9 @@ Using the dadp package consist of specifying four components
 to create a differentially private algorithm for simple linear regression
 called \textbf{NoisyStats}
 
-
 \begin{algorithm}
 \begin{algorithmic}[1]
-\caption{NoisyStats: $(\epsilon, 0)$-DP Algorithm}
+\caption{NoisyStats: $(\epsilon, 0)$-DP Algorithm (closer to original paper)}
 \State Data: $\{(x_i,y_i)\}_{i=1}^{n}$
 \State Privacy Parameter: $\epsilon$
 \State $\Delta_1 = \Delta_2 = (1 - 1/n)$ \Comment{Set global sensitivity}
@@ -68,10 +67,27 @@ called \textbf{NoisyStats}
 \State $\tilde{\beta} = \dfrac{ncov(x,y) + L_1}{nvar(x) + L_2}$\\
 \State $\Delta_3 = (1/n)(1 + |\tilde{\alpha}|)$
 \State Sample $L_3 \sim Lap(0, 3\Delta_3/\epsilon)$
-\State $\tilde{\alpha} = (\bar{y} - \tilde{\alpha}\bar{x}) + L_3$
+\State $\tilde{\alpha} = (\bar{y} - \tilde{\beta}\bar{x}) + L_3$
 \State \Return $(ncov(x,y) + L_1, nvar(x) + L_2, \tilde{\alpha})$
 \EndIf
 \State \Return NA
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\begin{algorithmic}[1]
+\caption{NoisyStats: $(\epsilon, 0)$-DP Algorithm (easy for me!)}
+\State Data: $\{(x_i,y_i)\}_{i=1}^{n}$
+\State Privacy Parameter: $\epsilon$
+\State $\Delta_1 = \Delta_2 = (1 - 1/n)$ \Comment{Set global sensitivity}
+\State $\Delta_3 = \Delta_4 = 1/n$
+\State Sample $L_1 \sim Lap(0, 3\Delta_1/\epsilon)$, $L_2 \sim Lap(0, 3\Delta_2/\epsilon)$
+\State Sample $L_3 \sim Lap(0, 3\Delta_3/\epsilon)$, $L_4 \sim Lap(0, 3\Delta_4/\epsilon)$
+\State $\tilde{s}_1 = ncov(x,y) + L_1$
+\State $\tilde{s}_2 = nvar(x) + L_2$
+\State $\tilde{s}_3 = \bar{y} + L_3$
+\State $\tilde{s}_4 = \bar{x} + L_4$
+\State \Return $(\tilde{s}_1,\tilde{s}_2,\tilde{s}_3,\tilde{s}_4)$
 \end{algorithmic}
 \end{algorithm}
 
@@ -97,26 +113,110 @@ f(y \mid x,  \alpha, \beta)
 lik_smpl <- function(theta) {
   alpha <- theta[1]
   beta <- theta[2]
-  rnorm(1, mean = alpha + beta * x, sd = 3) 
+  x <- runif(1)
+  y <- rnorm(1, mean = alpha + beta * x, sd = 3) 
+  c(x,y)
 }
 @
 
 \subsection*{Posterior given complete data}
+Assume $f(\alpha,\beta) \sim N(0,10^{-2}I_{2 \times 2})$
+\begin{align*}
+\mu_p &= (1/9)\Sigma_p^{-1}X^Ty\\
+\Sigma_p^{-1} &= (1/9)X^TX + (1/100)I^{-1} 
+\end{align*}
+
 <<echo = TRUE>>=
 post_smpl <- function(dmat, theta) {
   x <- dmat[,1]
   y <- dmat[,2]
-  beta <-cov(x,y)/var(x)
-  alpha <- mean(y) - beta 
+  xm <- cbind(1, x)
+  Si <- (1/9) * t(xm) %*% xm + (1/100) * diag(2)
+  mu <- (1/9) * solve(Si) %*% t(xm) %*% y
+  MASS::mvrnorm(1, mu = mu, Sigma = solve(Si))
 }
 @
 
-\subsection*{Statistic}
-\textbf{NoisyStat} computes three summary statistics
-\begin{align*}
-nvar(x) &= \dfrac{1}{n-1}\sum_{i=1}^{n}
-\end{align*}
 
+\subsection*{Statistic}
+\textbf{NoisyStat} computes four summary statistics
+\begin{align*}
+nvar(x) &= \sum_{i=1}^{n}(x_i - \bar{x})\\
+ncov(x,y) &= \sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y})\\
+\end{align*}
+<<echo = TRUE>>=
+st_calc <- function(dmat) {
+  x <- dmat[,1]
+  y <- dmat[,2]
+  n <- length(y) - cov(x,y)/var(x)
+  s1 <- (n-1) * cov(x,y)
+  s2 <- (n-1) * var(x)
+  s3 <- mean(y) 
+  s4 <- mean(x)
+  c(s1, s2, s3, s4)
+}
+@
+
+
+\subsection*{Privacy Mechanism}
+\textbf{NoisyStat} consist of adding independent Laplace errors
+to each of the three summary statistics
+<<echo = TRUE>>=
+#check vectorization?
+priv_mech_factory <- function(n, epsilon) {
+  function(sdp, xt) {
+    delta1 <- (1- 1/n)
+    delta3 <- 1/n
+    t1 <- VGAM::dlaplace(sdp[1] - xt[1], 0, 3 * delta1/epsilon, TRUE)
+    t2 <- VGAM::dlaplace(sdp[2] - xt[2], 0, 3 * delta1/epsilon, TRUE)
+    t3 <- VGAM::dlaplace(sdp[3] - xt[3], 0, 3 * delta3/epsilon, TRUE)
+    t4 <- VGAM::dlaplace(sdp[4] - xt[4], 0, 3 * delta3/epsilon, TRUE)
+    sum(c(t1,t2,t3,t4))
+  }
+}
+@
+
+\subsection*{Chain diagnostics?}
+<<echo = FALSE, include = FALSE, cache = TRUE>>=
+library(DPloglin)
+set.seed(1)
+epsilon <- 1
+n <- 50
+alpha <- 5
+beta <- -3
+x <- runif(n)
+y <- alpha + beta*x + rnorm(n,0,3)
+delta1 <- 1 - 1/n
+delta3 <- 1/n
+sdp <- st_calc(cbind(x,y))
+sdp[1] <- sdp[1] + VGAM::rlaplace(1, 0, 3 * delta1/epsilon)
+sdp[2] <- sdp[2] + VGAM::rlaplace(1, 0, 3 * delta1/epsilon)
+sdp[3] <- sdp[3] + VGAM::rlaplace(1, 0, 3 * delta3/epsilon)
+sdp[4] <- sdp[4] + VGAM::rlaplace(1, 0, 3 * delta3/epsilon)
+
+
+
+dmod <- new_privacy(post_smpl = post_smpl,
+                    lik_smpl = lik_smpl,
+                    ll_priv_mech = priv_mech_factory(n, epsilon),
+                    st_calc = st_calc,
+                    add = FALSE,
+                    npar = 2)
+
+tmp <- mcmc_privacy(dmod,
+               sdp = sdp,
+               nobs = n,
+               init_par = c(1,1),
+               niter = 1000,
+               chains = 1,
+               varnames = c("alpha", "beta"))
+
+@
+
+<<echo = TRUE>>=
+summary(tmp)
+bayesplot::mcmc_trace(tmp$chain)
+@
 
 \newpage
 
