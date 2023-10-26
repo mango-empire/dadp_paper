@@ -114,22 +114,54 @@ called \textbf{NoisyStats}
 \State Sample $L_1 \sim Lap(0, 3\Delta_1/\epsilon)$
 \State Sample $L_2 \sim Lap(0, 3\Delta_2/\epsilon)$
 \If{$nvar(x) + L_2 > 0$}
-\State $\tilde{\alpha} = \dfrac{ncov(x,y) + L_1}{nvar(x) + L_2}$\\
+\State $\tilde{\beta} = \dfrac{ncov(x,y) + L_1}{nvar(x) + L_2}$\\
 \State $\Delta_3 = (1/n)(1 + |\tilde{\alpha}|)$
 \State Sample $L_3 \sim Lap(0, 3\Delta_3/\epsilon)$
-\State $\tilde{\beta} = (\bar{y} - \tilde{\alpha}\bar{x}) + L_3$
-\State \Return $(\tilde{\alpha}, \tilde{\beta})$
+\State $\tilde{\alpha} = (\bar{y} - \tilde{\alpha}\bar{x}) + L_3$
+\State \Return $(ncov(x,y) + L_1, nvar(x) + L_2, \tilde{\alpha})$
 \EndIf
 \State \Return NA
 \end{algorithmic}
 \end{algorithm}
 
 \subsection*{Sampling from likelihood under complete data}
-likelihood function
+likelihood function $f(x) \sim Unif(0,1)$.
 \begin{align*}
-f(y \mid x,  \alpha, \beta, \mu_x, \sigma_x) 
+f(y \mid x,  \alpha, \beta, \mu_x, \log \sigma_x) 
 &= f(x \mid \mu_x, \sigma_x)f(y \mid x, \alpha, \beta)\\
 &= \phi(x; \mu_x, \sigma_x)\phi(y; \alpha + \beta x, \sigma)
+\end{align*}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{lik_smpl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{theta}\hlstd{) \{}
+  \hlstd{alpha} \hlkwb{<-} \hlstd{theta[}\hlnum{1}\hlstd{]}
+  \hlstd{beta} \hlkwb{<-} \hlstd{theta[}\hlnum{2}\hlstd{]}
+  \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{= alpha} \hlopt{+} \hlstd{beta} \hlopt{*} \hlstd{x,} \hlkwc{sd} \hlstd{=} \hlnum{3}\hlstd{)}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection*{Posterior given complete data}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{post_smpl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{dmat}\hlstd{,} \hlkwc{theta}\hlstd{) \{}
+  \hlstd{x} \hlkwb{<-} \hlstd{dmat[,}\hlnum{1}\hlstd{]}
+  \hlstd{y} \hlkwb{<-} \hlstd{dmat[,}\hlnum{2}\hlstd{]}
+  \hlstd{beta} \hlkwb{<-}\hlkwd{cov}\hlstd{(x,y)}\hlopt{/}\hlkwd{var}\hlstd{(x)}
+  \hlstd{alpha} \hlkwb{<-} \hlkwd{mean}\hlstd{(y)} \hlopt{-} \hlstd{beta}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection*{Statistic}
+\textbf{NoisyStat} computes three summary statistics
+\begin{align*}
+nvar(x) &= \dfrac{1}{n-1}\sum_{i=1}^{n}
 \end{align*}
 
 
@@ -156,13 +188,13 @@ Privatize by adding noise, $\eta \sim N(0, 4000)$:
 \hlstd{n_g} \hlopt{+} \hlstd{eta[}\hlnum{1}\hlstd{]}
 \end{alltt}
 \begin{verbatim}
-## [1] 237755.7
+## [1] 245635.5
 \end{verbatim}
 \begin{alltt}
 \hlstd{n_b} \hlopt{+} \hlstd{eta[}\hlnum{2}\hlstd{]}
 \end{alltt}
 \begin{verbatim}
-## [1] 247992.6
+## [1] 247383.2
 \end{verbatim}
 \end{kframe}
 \end{knitrout}

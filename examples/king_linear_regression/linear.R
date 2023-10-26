@@ -18,7 +18,7 @@ y <- cbind(1,x) %*% beta + rnorm(N)
 y <- as.numeric(y)
 
 
-standata <- list(J = ncol(x), N=N, X = x, y= y)
+standata <- list(J = ncol(x), N=N, x = x, y = y)
 
 
 stanmodel1 <- stan_model("linear.stan")

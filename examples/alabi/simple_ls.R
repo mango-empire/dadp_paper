@@ -77,13 +77,14 @@ dmod <- new_privacy(post_smpl = post_smpl,
                     lik_smpl = lik_smpl,
                     ll_priv_mech = priv_mech_factory(epsilon),
                     st_calc = st_calc,
-                    add = TRUE,
+                    add = FALSE,
                     npar = 3)
-
-tmp <- mcmc_privacy(dmod,
+profvis::profvis({
+                    mcmc_privacy(dmod,
                     sdp = sdp,
                     nobs = n,
                     init_par = c(1,1,1),
-                    niter = 50,
+                    niter = 200,
                     chains = 1,
                     varnames = c("alpha", "beta", "sigma"))
+  })

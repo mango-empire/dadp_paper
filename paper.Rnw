@@ -65,18 +65,18 @@ called \textbf{NoisyStats}
 \State Sample $L_1 \sim Lap(0, 3\Delta_1/\epsilon)$
 \State Sample $L_2 \sim Lap(0, 3\Delta_2/\epsilon)$
 \If{$nvar(x) + L_2 > 0$}
-\State $\tilde{\alpha} = \dfrac{ncov(x,y) + L_1}{nvar(x) + L_2}$\\
+\State $\tilde{\beta} = \dfrac{ncov(x,y) + L_1}{nvar(x) + L_2}$\\
 \State $\Delta_3 = (1/n)(1 + |\tilde{\alpha}|)$
 \State Sample $L_3 \sim Lap(0, 3\Delta_3/\epsilon)$
-\State $\tilde{\beta} = (\bar{y} - \tilde{\alpha}\bar{x}) + L_3$
-\State \Return $(\tilde{\alpha}, \tilde{\beta})$
+\State $\tilde{\alpha} = (\bar{y} - \tilde{\alpha}\bar{x}) + L_3$
+\State \Return $(ncov(x,y) + L_1, nvar(x) + L_2, \tilde{\alpha})$
 \EndIf
 \State \Return NA
 \end{algorithmic}
 \end{algorithm}
 
 \subsection*{Sampling from likelihood under complete data}
-likelihood function
+likelihood function $f(x) \sim Unif(0,1)$.
 \begin{align*}
 f(y \mid x,  \alpha, \beta, \mu_x, \log \sigma_x) 
 &= f(x \mid \mu_x, \sigma_x)f(y \mid x, \alpha, \beta)\\
@@ -87,19 +87,19 @@ f(y \mid x,  \alpha, \beta, \mu_x, \log \sigma_x)
 lik_smpl <- function(theta) {
   alpha <- theta[1]
   beta <- theta[2]
-  mux <- theta[3]
-  sx <- exp(theta[4])
-  sy <- exp(theta[5])
-  
-  x <- rnorm(1, mean = mux, sd = sx)
-  y <- rnorm(1, mean = alpha + beta * x, sd = sy) 
-  
-  c(y,x)
+  rnorm(1, mean = alpha + beta * x, sd = 3) 
 }
 @
 
 \subsection*{Posterior given complete data}
-
+<<echo = TRUE>>=
+post_smpl <- function(dmat, theta) {
+  x <- dmat[,1]
+  y <- dmat[,2]
+  beta <-cov(x,y)/var(x)
+  alpha <- mean(y) - beta 
+}
+@
 
 \subsection*{Statistic}
 \textbf{NoisyStat} computes three summary statistics
