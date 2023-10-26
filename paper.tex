@@ -124,10 +124,22 @@ called \textbf{NoisyStats}
 \end{algorithmic}
 \end{algorithm}
 
+Suppose we would like to explore the potential impact 
+of the \text{NoisyStats} mechanism on analysis. Assume
+the true data generating process is 
+\begin{align*}
+x_i &\sim Unif(0,1)\\
+y_i &\sim N(-2 + 3 x_i, 3^2)
+\end{align*}
+
 \subsection*{Sampling from likelihood under complete data}
 likelihood function $f(x) \sim Unif(0,1)$.
 \begin{align*}
+<<<<<<< HEAD
 f(y \mid x,  \alpha, \beta, \mu_x, \log \sigma_x) 
+=======
+f(y \mid x,  \alpha, \beta) 
+>>>>>>> 3dae26538e7498467aa2d42842efd7c89d0307fc
 &= f(x \mid \mu_x, \sigma_x)f(y \mid x, \alpha, \beta)\\
 &= \phi(x; \mu_x, \sigma_x)\phi(y; \alpha + \beta x, \sigma)
 \end{align*}
@@ -138,13 +150,25 @@ f(y \mid x,  \alpha, \beta, \mu_x, \log \sigma_x)
 \hlstd{lik_smpl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{theta}\hlstd{) \{}
   \hlstd{alpha} \hlkwb{<-} \hlstd{theta[}\hlnum{1}\hlstd{]}
   \hlstd{beta} \hlkwb{<-} \hlstd{theta[}\hlnum{2}\hlstd{]}
+<<<<<<< HEAD
   \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{= alpha} \hlopt{+} \hlstd{beta} \hlopt{*} \hlstd{x,} \hlkwc{sd} \hlstd{=} \hlnum{3}\hlstd{)}
+=======
+  \hlstd{mux} \hlkwb{<-} \hlstd{theta[}\hlnum{3}\hlstd{]}
+  \hlstd{sx} \hlkwb{<-} \hlkwd{exp}\hlstd{(theta[}\hlnum{4}\hlstd{])}
+  \hlstd{sy} \hlkwb{<-} \hlkwd{exp}\hlstd{(theta[}\hlnum{5}\hlstd{])}
+
+  \hlstd{x} \hlkwb{<-} \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{= mux,} \hlkwc{sd} \hlstd{= sx)}
+  \hlstd{y} \hlkwb{<-} \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{= alpha} \hlopt{+} \hlstd{beta} \hlopt{*} \hlstd{x,} \hlkwc{sd} \hlstd{= sy)}
+
+  \hlkwd{c}\hlstd{(y,x)}
+>>>>>>> 3dae26538e7498467aa2d42842efd7c89d0307fc
 \hlstd{\}}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
 \subsection*{Posterior given complete data}
+<<<<<<< HEAD
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
@@ -157,6 +181,9 @@ f(y \mid x,  \alpha, \beta, \mu_x, \log \sigma_x)
 \end{alltt}
 \end{kframe}
 \end{knitrout}
+=======
+
+>>>>>>> 3dae26538e7498467aa2d42842efd7c89d0307fc
 
 \subsection*{Statistic}
 \textbf{NoisyStat} computes three summary statistics
@@ -188,13 +215,21 @@ Privatize by adding noise, $\eta \sim N(0, 4000)$:
 \hlstd{n_g} \hlopt{+} \hlstd{eta[}\hlnum{1}\hlstd{]}
 \end{alltt}
 \begin{verbatim}
+<<<<<<< HEAD
 ## [1] 245635.5
+=======
+## [1] 240897.5
+>>>>>>> 3dae26538e7498467aa2d42842efd7c89d0307fc
 \end{verbatim}
 \begin{alltt}
 \hlstd{n_b} \hlopt{+} \hlstd{eta[}\hlnum{2}\hlstd{]}
 \end{alltt}
 \begin{verbatim}
+<<<<<<< HEAD
 ## [1] 247383.2
+=======
+## [1] 252921
+>>>>>>> 3dae26538e7498467aa2d42842efd7c89d0307fc
 \end{verbatim}
 \end{kframe}
 \end{knitrout}

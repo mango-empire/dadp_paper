@@ -75,10 +75,20 @@ called \textbf{NoisyStats}
 \end{algorithmic}
 \end{algorithm}
 
+Suppose we would like to explore the potential impact 
+of the \textbf{NoisyStats} mechanism on analysis. Assume
+the true data generating process is 
+\begin{align*}
+x_i &\sim Unif(0,1)\\
+y_i &\sim N(-2 + 3 x_i, 3^2)
+\end{align*}
+We would like to perform inference on $(\alpha, \beta)$ 
+given privatized statistic $(\tilde{s}_1, \tilde{s}_2)$.
+
 \subsection*{Sampling from likelihood under complete data}
 likelihood function $f(x) \sim Unif(0,1)$.
 \begin{align*}
-f(y \mid x,  \alpha, \beta, \mu_x, \log \sigma_x) 
+f(y \mid x,  \alpha, \beta) 
 &= f(x \mid \mu_x, \sigma_x)f(y \mid x, \alpha, \beta)\\
 &= \phi(x; \mu_x, \sigma_x)\phi(y; \alpha + \beta x, \sigma)
 \end{align*}
