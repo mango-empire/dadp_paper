@@ -1,5 +1,5 @@
 % !TeX root = RJwrapper.tex
-\title{ToOoOlTiPs: An R Package for Customizable Tooltips in Interactive Graphics}
+\title{gdpR: An R Package for studying differentially private algorithms}
 
 
 \author{by Jordan A. Awan, Kevin Eng, Robin Gong, Nianqiao Phyllis Ju, and Vinayak A. Rao}
@@ -7,15 +7,23 @@
 \maketitle
 
 \abstract{%
-An abstract of less than 150 words.
+This paper serves as a reference and introduction on using the \(gdpR\) R package. The goal of this package is to provide some tools for exploring the impact of different privacy regimes on a Bayesian analysis. A strength of this framework is the ability to target the exact posterior in settings where the likelihood is too complex to analytically express.
 }
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
-Interactive data graphics provides plots that allow users to interact them. One of the most basic types of interaction is through tooltips, where users are provided additional information about elements in the plot by moving the cursor over the plot.
+The ease and pervasiveness of modern data collection technologies has raised
+concerns about data privacy. (Dwork and Roth 2013) introduced the differential privacy
+framework as a means to rigorously define privacy. The framework has lead to the
+development of many ``privitized'\,' versions of existing statistical methods. The
+process of privitizing usually consist of introducing random noise in someway using
+a known distribution.
 
-This paper will first review some R packages on interactive graphics and their tooltip implementations. A new package \CRANpkg{ToOoOlTiPs} that provides customized tooltips for plot, is introduced. Some example plots will then be given to showcase how these tooltips help users to better read the graphics.
+\hypertarget{overview-of-the-gdpr-packge}{%
+\section{overview of the gdpR packge}\label{overview-of-the-gdpr-packge}}
+
+This section reviews This will show a verbatim inline R expression \texttt{\textasciigrave{}r\ 1+1\textasciigrave{}} in the output.
 
 \hypertarget{background}{%
 \section{Background}\label{background}}
@@ -90,6 +98,9 @@ We have displayed various tooltips that are available in the package \pkg{ToOoOl
 \begin{CSLReferences}{1}{0}
 \leavevmode\vadjust pre{\hypertarget{ref-crosstalk}{}}%
 Cheng, Joe, and Carson Sievert. 2021. \emph{{crosstalk}: Inter-Widget Interactivity for HTML Widgets}. \url{https://CRAN.R-project.org/package=crosstalk}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Dwork2013}{}}%
+Dwork, Cynthia, and Aaron Roth. 2013. {``The Algorithmic Foundations of Differential Privacy.''} \emph{Foundations and Trends{\textregistered} in Theoretical Computer Science} 9 (3-4): 211--407. \url{https://doi.org/10.1561/0400000042}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-palmerpenguins}{}}%
 Horst, Allison Marie, Alison Presmanes Hill, and Kristen B Gorman. 2020. \emph{{palmerpenguins}: Palmer Archipelago (Antarctica) Penguin Data}. \url{https://allisonhorst.github.io/palmerpenguins/}.

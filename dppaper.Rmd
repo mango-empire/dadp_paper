@@ -2,7 +2,11 @@
 title: "gdpR: An R Package for studying differentially private algorithms"
 date: "2022-11-09"
 abstract: >
-  An abstract of less than 150 words.
+    This paper serves as a reference and introduction on using the $gdpR$ R
+    package. The goal of this package is to provide some tools for exploring the
+    impact of different privacy regimes on a Bayesian analysis. A strength of
+    this framework is the ability to target the exact posterior in settings
+    where the likelihood is too complex to analytically express.
 draft: true
 author:  
   - name: Jordan A. Awan
@@ -57,11 +61,22 @@ library(palmerpenguins)
 library(kableExtra)
 ```
 
+
+
 # Introduction
 
-Interactive data graphics provides plots that allow users to interact them. One of the most basic types of interaction is through tooltips, where users are provided additional information about elements in the plot by moving the cursor over the plot.
+The ease and pervasiveness of modern data collection technologies has raised
+concerns about data privacy. [@Dwork2013] introduced the differential privacy
+framework as a means to rigorously define privacy. The framework has lead to the
+development of many ``privitized'' versions of existing statistical methods. The
+process of privitizing usually consist of introducing random noise in someway using
+a known distribution.
 
-This paper will first review some R packages on interactive graphics and their tooltip implementations. A new package \CRANpkg{ToOoOlTiPs} that provides customized tooltips for plot, is introduced. Some example plots will then be given to showcase how these tooltips help users to better read the graphics. 
+# overview of the gdpR packge
+
+This section reviews This will show a verbatim inline R expression `` `r
+1+1` `` in the output.
+
 
 # Background
 
