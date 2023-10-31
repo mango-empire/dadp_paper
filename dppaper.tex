@@ -1,5 +1,5 @@
 % !TeX root = RJwrapper.tex
-\title{ToOoOlTiPs: An R Package for Customizable Tooltips in Interactive Graphics}
+\title{gdpR: An R Package for studying differentially private algorithms}
 
 
 \author{by Jordan A. Awan, Kevin Eng, Robin Gong, Nianqiao Phyllis Ju, and Vinayak A. Rao}
@@ -17,6 +17,46 @@ Interactive data graphics provides plots that allow users to interact them. One 
 
 This paper will first review some R packages on interactive graphics and their tooltip implementations. A new package \CRANpkg{ToOoOlTiPs} that provides customized tooltips for plot, is introduced. Some example plots will then be given to showcase how these tooltips help users to better read the graphics.
 
+\hypertarget{using}{%
+\section{\texorpdfstring{Using \CRANpkg{gdpR}}{Using }}\label{using}}
+
+\hypertarget{sampling-function}{%
+\subsection{Sampling function}\label{sampling-function}}
+
+The main function in the \CRANpkg{gdpR} is the \texttt{gdp\_sample} function. The call
+signature of the function is:
+
+\texttt{gdp\_sample(data\_model,\ sdp,\ nobs,\ init\_par,\ niter\ =\ 2000,\ warmup\ =\ floor(niter\ /\ 2),\ \ \ \ \ \ \ \ \ \ \ \ chains\ =\ 1,\ varnames\ =\ NULL)}
+
+The three required inputs into \texttt{gdp\_sample} function are the privacy model (\texttt{data\_model}), the value
+of the observed privatized statistic (\texttt{sdp}), and the total number of observations
+in the complete data (\texttt{nobs}) {[}MAKE SURE NOTATION IS INTRODUCED{]}. The \CRANpkg{gdpR}
+package is best suited for problems where the complete data can be represented in
+tabular form. This is because internally, it is represented as a matrix.
+
+The optional arguments are the number of mcmc draws (\texttt{niter}), the
+burn in period (\texttt{warmup}), number of chains (\texttt{chains}) and character
+vector that names the parameters. Running multiple chains can be done in parallel
+using the \CRANpkg{furrr} package. Additionally, progress can be monitored
+using the \CRANpkg{progressr} package.
+
+\hypertarget{creating-a-privacy-object}{%
+\subsection{\texorpdfstring{Creating a \texttt{privacy} object}{Creating a privacy object}}\label{creating-a-privacy-object}}
+
+Creating a \texttt{privacy} object is done via the \texttt{new\_privacy} function.
+
+\texttt{new\_privacy(post\_smpl\ =\ NULL,\ lik\_smpl\ =\ NULL,\ ll\_priv\_mech\ =\ NULL,\ \ \ \ \ \ \ \ \ \ \ \ \ st\_calc\ =\ NULL,\ add\ =\ FALSE,\ npar\ =\ NULL)}
+
+. The \texttt{data\_model} input is a \texttt{privacy}
+object that can be constructed using the \texttt{new\_privacy} constructor. The
+process of constructing a \texttt{privacy} object will be discussed in the next section.
+
+Parallel computing is implemented
+using the \CRANpkg{futures} package.
+
+The \texttt{new\_privacy} function creates a new data model for input in the
+\texttt{gdp\_sample} function.
+
 \hypertarget{background}{%
 \section{Background}\label{background}}
 
@@ -26,56 +66,6 @@ Some packages on interactive graphics include \CRANpkg{plotly} (Sievert 2020) th
 \section{\texorpdfstring{Customizing tooltip design with \pkg{ToOoOlTiPs}}{Customizing tooltip design with }}\label{customizing-tooltip-design-with}}
 
 \pkg{ToOoOlTiPs} is a packages for customizing tooltips in interactive graphics, it features these possibilities.
-
-\hypertarget{a-gallery-of-tooltips-examples}{%
-\section{A gallery of tooltips examples}\label{a-gallery-of-tooltips-examples}}
-
-The \CRANpkg{palmerpenguins} data (Horst, Hill, and Gorman 2020) features three penguin species which has a lovely illustration by Alison Horst in Figure \ref{fig:penguins-alison}.
-
-\begin{figure}
-\includegraphics[width=1\linewidth,height=0.3\textheight]{figures/penguins} \caption{Artwork by \@allison\_horst}\label{fig:penguins-alison}
-\end{figure}
-
-Table \ref{tab:penguins-tab-static} prints at the first few rows of the \texttt{penguins} data:
-
-\begin{table}
-
-\caption{\label{tab:penguins-tab-static}A basic table}
-\centering
-\fontsize{7}{9}\selectfont
-\begin{tabular}[t]{l|l|r|r|r|r|l|r}
-\hline
-species & island & bill\_length\_mm & bill\_depth\_mm & flipper\_length\_mm & body\_mass\_g & sex & year\\
-\hline
-Adelie & Torgersen & 39.1 & 18.7 & 181 & 3750 & male & 2007\\
-\hline
-Adelie & Torgersen & 39.5 & 17.4 & 186 & 3800 & female & 2007\\
-\hline
-Adelie & Torgersen & 40.3 & 18.0 & 195 & 3250 & female & 2007\\
-\hline
-Adelie & Torgersen & NA & NA & NA & NA & NA & 2007\\
-\hline
-Adelie & Torgersen & 36.7 & 19.3 & 193 & 3450 & female & 2007\\
-\hline
-Adelie & Torgersen & 39.3 & 20.6 & 190 & 3650 & male & 2007\\
-\hline
-\end{tabular}
-\end{table}
-
-Figure \ref{fig:penguins-ggplot} shows an plot of the penguins data, made using the \CRANpkg{ggplot2} package.
-
-\begin{verbatim}
-penguins %>% 
-  ggplot(aes(x = bill_depth_mm, y = bill_length_mm, 
-             color = species)) + 
-  geom_point()
-\end{verbatim}
-
-\begin{figure}
-\centering
-\includegraphics{dppaper_files/figure-latex/penguins-ggplot-1.pdf}
-\caption{\label{fig:penguins-ggplot}A basic non-interactive plot made with the ggplot2 package on palmer penguin data. Three species of penguins are plotted with bill depth on the x-axis and bill length on the y-axis. Visit the online article to access the interactive version made with the plotly package.}
-\end{figure}
 
 \hypertarget{summary}{%
 \section{Summary}\label{summary}}
@@ -90,9 +80,6 @@ We have displayed various tooltips that are available in the package \pkg{ToOoOl
 \begin{CSLReferences}{1}{0}
 \leavevmode\vadjust pre{\hypertarget{ref-crosstalk}{}}%
 Cheng, Joe, and Carson Sievert. 2021. \emph{{crosstalk}: Inter-Widget Interactivity for HTML Widgets}. \url{https://CRAN.R-project.org/package=crosstalk}.
-
-\leavevmode\vadjust pre{\hypertarget{ref-palmerpenguins}{}}%
-Horst, Allison Marie, Alison Presmanes Hill, and Kristen B Gorman. 2020. \emph{{palmerpenguins}: Palmer Archipelago (Antarctica) Penguin Data}. \url{https://allisonhorst.github.io/palmerpenguins/}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-plotly}{}}%
 Sievert, Carson. 2020. \emph{{Interactive Web-Based Data Visualizatio}n with r, Plotly, and Shiny}. Chapman; Hall/CRC. \url{https://plotly-r.com}.
