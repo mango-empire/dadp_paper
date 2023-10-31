@@ -23,10 +23,18 @@ a known distribution.
 \hypertarget{using}{%
 \section{\texorpdfstring{Using \CRANpkg{gdpR}}{Using }}\label{using}}
 
+The package is structured around the two functions \texttt{gdp\_sample} and
+\texttt{new\_privacy}. The first function is used to draw samples from the
+posterior. The second function is used to create the privacy model. Since the
+input to these functions are R functions, there is a great deal of freedom
+left up to user. The next two sections describe in detail the inputs into
+these functions and highlight some considerations that should be taken
+into account in order avoid slow or unexpected behavior.
+
 \hypertarget{sampling}{%
 \subsection{Sampling}\label{sampling}}
 
-The main function in \pkg{gplsim} is the \texttt{gdp\_sample} function. The call
+The main function in \pkg{gdpR} is the \texttt{gdp\_sample} function. The call
 signature of the function is:
 
 \begin{verbatim}
@@ -83,10 +91,136 @@ some care in how each component in constructed.
   the Metropolis-Hastings loop is implemented in C which incurs a very large overhead
   in \texttt{gdp\_sample} since it is reinitialized every iteration. In general, repeatedly calling
   an R function that hooks into C code is slow. (NOT QUITE ACCURATE FIX LATER)
+\item
+  \texttt{ll\_priv\_mech} is an R function that represents the log-likelihood of
+  \(\eta(s_{sdp} \mid x)\). The function can output the log likelihood
+  up to an additive constant.
+\item
+  \texttt{st\_calc} is an R function which calculates the summary statistic. The optional
+  argument \texttt{add} is a flag which represents whether \(T\) is additive or not.
 \end{itemize}
 
-\hypertarget{example}{%
-\section{Example}\label{example}}
+\hypertarget{examples}{%
+\section{Examples}\label{examples}}
+
+\hypertarget{x2-contingency-table}{%
+\subsection{2x2 Contingency Table}\label{x2-contingency-table}}
+
+A common procedure when analyzing contingency tables is to estimate the
+odds ratio. Something something about safetab to connect back to DP (dont forget citation!).
+As a demonstration, we analyze the UC Berkeley admissions data, which is often
+used as an illustrative example of Simpson's paradox. The question is whether
+the data suggest there is bias against females during the college admissions
+process. Below is a table of the aggregate admissions result from six departments based on sex.
+
+Below we walk through the process of defining a privacy model.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \texttt{lik\_smpl}: Conditional on the table total, the table counts follow a multinomial
+  distribution. We can easily draw from this distribution using the
+  \texttt{rmultinom} function in the \texttt{base} stats package. Note, in this example,
+  the return value of one sample from \texttt{rmultinom} is a \(4 \times 1\) matrix. In order to
+  conform with \texttt{gdp\_sample} we must convert the matrix to a vector.
+
+\begin{verbatim}
+lik_smpl <- function(theta) {
+  c(rmultinom(1, 4526, theta))
+}
+\end{verbatim}
+\item
+  \texttt{post\_smpl}: Given confidential data \(X\) we can derive the posterior analytically
+  using a Dirichlet prior. In this example, we use a flat prior which
+  corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
+  can be generated using the gamma distribution via the following relation (INSERT)
+
+\begin{verbatim}
+post_smpl <- function(dmat, theta) {
+  x <- c(dmat)
+  t1 <- rgamma(length(theta), x + 1, 1)
+  t1/sum(t1)
+}
+\end{verbatim}
+\item
+  \texttt{st\_calc}: The complete data can be represented in two ways. Micro vs cell totals.
+  (what section to introduce?) This function must return a vector.
+
+\begin{verbatim}
+st_calc <- function(dmat) {
+  c(dmat)
+}
+\end{verbatim}
+\item
+  \texttt{ll\_priv\_mech}: Privacy Mechanism
+  Guassian white noise is added to each cell total. Hence given
+  confidential data \((n_{11}, n_{22}, n_{12}, n_{21})\)
+  \[
+  \eta(s_{dp} \mid x) = \prod \phi(s_{sd}; n_{ij}, 100^2)
+  \]
+
+\begin{verbatim}
+ll_priv_mech <- function(sdp, x) {
+  dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
+}
+\end{verbatim}
+\end{enumerate}
+
+Once privacy model has been defined we can run \texttt{gdp\_sample}
+
+results can be quickly summarized using the \texttt{summary} function
+
+\begin{verbatim}
+#> [1] "Average Acceptance Probability: 0.672666666666667"
+\end{verbatim}
+
+\begin{verbatim}
+#> # A tibble: 4 x 10
+#>   variable   mean median     sd    mad     q5   q95  rhat ess_bulk ess_tail
+#>   <chr>     <num>  <num>  <num>  <num>  <num> <num> <num>    <num>    <num>
+#> 1 pi_11    0.250   0.251 0.0258 0.0241 0.201  0.289  1.02     55.0    112. 
+#> 2 pi_21    0.335   0.335 0.0220 0.0223 0.298  0.371  1.07     23.3    164. 
+#> 3 pi_12    0.0999  0.100 0.0280 0.0283 0.0497 0.145  1.03     22.5     48.2
+#> 4 pi_22    0.316   0.314 0.0256 0.0271 0.275  0.358  1.02     63.5    169.
+\end{verbatim}
+
+Diagnostic checks can be done using the \pkg{Bayesplot} package.
+\includegraphics{dppaper_files/figure-latex/unnamed-chunk-11-1.pdf}
+
+{[}Insert gdp Analysis Here{]}
+
+For clean data, a estimate for the odds ratio and a confidence interval
+can be constructed using Woolf's method (i.e.~A wald confidence interval).
+It uses the fact that the log of the odds ratio is approximately
+normal for large sample sizes.
+\[
+\log\left(\dfrac{n_{11} \cdot n_{22}}{n_{12} \cdot n_{21}}\right) 
+  \pm z_{\alpha/2}\sqrt{\dfrac{1}{n_{11}} + \dfrac{1}{n_{22}} + \dfrac{1}{n_{12}} + \dfrac{1}{n_{21}}}
+\]
+
+\begin{verbatim}
+or_confint <- function(x, alpha) {
+  or <- log(x[1] * x[4]/ (x[2] * x[3]))
+  se <- sqrt(sum(1/x))
+  c(or - qnorm(alpha/2) * se, or + qnorm(alpha/2) * se)
+}
+
+#clean data
+exp(or_confint(x, .95))
+\end{verbatim}
+
+\begin{verbatim}
+#> [1] 1.848471 1.833718
+\end{verbatim}
+
+\begin{verbatim}
+#privitized data
+exp(or_confint(sdp, .95))
+\end{verbatim}
+
+\begin{verbatim}
+#> [1] 2.293115 2.274220
+\end{verbatim}
 
 \hypertarget{background}{%
 \section{Background}\label{background}}

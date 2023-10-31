@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.26)  26 OCT 2023 22:47
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.26)  31 OCT 2023 17:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -434,7 +434,7 @@ Package hyperref Info: Option `colorlinks' set `true' on input line 68.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/setspace/setspace.sty
 Package: setspace 2022/12/04 v6.7b set line spacing
 ) (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/titlesec/titlesec.sty
-Package: titlesec 2023/10/17 v2.15 Sectioning titles
+Package: titlesec 2023/10/27 v2.16 Sectioning titles
 \ttl@box=\box63
 \beforetitleunit=\skip61
 \aftertitleunit=\skip62
@@ -445,7 +445,7 @@ Package: titlesec 2023/10/17 v2.15 Sectioning titles
 \titlewidthlast=\dimen265
 \titlewidthfirst=\dimen266
 ) (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/titlesec/titletoc.sty
-Package: titletoc 2023/10/17 v2.15 TOC entries
+Package: titletoc 2023/10/27 v2.16 TOC entries
 \ttl@leftsep=\dimen267
 ) (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/placeins/placeins.sty
 Package: placeins 2005/04/18  v 2.2
@@ -779,58 +779,31 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-Package textcomp Info: Symbol \textasciigrave not provided by
-(textcomp)             font family zi4 in TS1 encoding.
-(textcomp)             Default family used instead on input line 26.
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 26.
-(c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/t1cmtt.fd
-File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
-)
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `cmtt' (encoding: T1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-LaTeX Font Info:    Trying to load font information for TS1+cmtt on input line 26.
-(c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/ts1cmtt.fd
-File: ts1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
-)
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `cmtt' (encoding: TS1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-Package textcomp Info: Symbol \textasciigrave not provided by
-(textcomp)             font family zi4 in TS1 encoding.
-(textcomp)             Default family used instead on input line 26.
-<figures/penguins.png, id=43, 72.27pt x 42.9605pt>
-File: figures/penguins.png Graphic file (type png)
-<use figures/penguins.png>
-Package pdftex.def Info: figures/penguins.png  used on input line 44.
-(pdftex.def)             Requested size: 398.44772pt x 212.57635pt.
-<dppaper_files/figure-latex/penguins-ggplot-1.pdf, id=48, 469.755pt x 361.35pt>
-File: dppaper_files/figure-latex/penguins-ggplot-1.pdf Graphic file (type pdf)
-<use dppaper_files/figure-latex/penguins-ggplot-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/penguins-ggplot-1.pdf  used on input line 84.
-(pdftex.def)             Requested size: 469.75386pt x 361.34912pt.
-
-Overfull \hbox (71.41528pt too wide) in paragraph at lines 84--85
- [][] 
- []
-
-[1{c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}
-
-{c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}] [2 <./figures/penguins.png> <./dppaper_files/figure-latex/penguins-ggplot-1.pdf>]
-LaTeX Font Info:    Trying to load font information for TS1+ppl on input line 103.
+LaTeX Font Info:    Trying to load font information for TS1+ppl on input line 78.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/psnfss/ts1ppl.fd
 File: ts1ppl.fd 2001/06/04 font definitions for TS1/ppl.
-)
+) [1{c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}
+
+{c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}] [2]
+<dppaper_files/figure-latex/unnamed-chunk-11-1.pdf, id=88, 469.755pt x 325.215pt>
+File: dppaper_files/figure-latex/unnamed-chunk-11-1.pdf Graphic file (type pdf)
+<use dppaper_files/figure-latex/unnamed-chunk-11-1.pdf>
+Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-11-1.pdf  used on input line 188.
+(pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
+
+Overfull \hbox (320.27464pt too wide) in paragraph at lines 187--189
+[]\T1/ppl/m/n/9 (-20) Diagnostic checks can be done us-ing the \T1/ppl/b/n/9 (-20) Bayesplot \T1/ppl/m/n/9 (-20) pack-age. [] 
+ []
+
+[3 <./dppaper_files/figure-latex/unnamed-chunk-11-1.pdf>]
 No file RJwrapper.bbl.
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 126.
+(Font)              using `T1/zi4/m/n' instead on input line 268.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 126.
-) [3] (./RJwrapper.aux)
+(Font)              scaled to size 9.18004pt on input line 268.
+) [4] [5] (./RJwrapper.aux)
  ***********
 LaTeX2e <2023-06-01> patch level 1
 L3 programming layer <2023-10-23>
@@ -839,21 +812,21 @@ L3 programming layer <2023-10-23>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
-(rerunfilecheck)             Checksum: 3AC5FE3FFEA4843B7887EB2587F4A631;1454.
+(rerunfilecheck)             Checksum: 3B1F3EA67D85557AE3DCFA288CC7BE48;1622.
  ) 
 Here is how much of TeX's memory you used:
- 26602 strings out of 476364
- 488572 string characters out of 5798182
- 1947036 words of memory out of 5000000
- 47779 multiletter control sequences out of 15000+600000
- 589199 words of font info for 163 fonts, out of 8000000 for 9000
+ 26612 strings out of 476364
+ 487306 string characters out of 5798182
+ 1941036 words of memory out of 5000000
+ 47729 multiletter control sequences out of 15000+600000
+ 594886 words of font info for 204 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 117i,11n,131p,1006b,667s stack positions out of 10000i,1000n,20000p,200000b,200000s
- <c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-var/fonts/pk/ljfour/jknappen/ec/tctt0900.600pk><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (3 pages, 134552 bytes).
+ 117i,11n,131p,1006b,841s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
+Output written on RJwrapper.pdf (5 pages, 202391 bytes).
 PDF statistics:
- 141 PDF objects out of 1000 (max. 8388607)
- 121 compressed objects within 2 object streams
- 29 named destinations out of 1000 (max. 500000)
- 54359 words of extra memory for PDF output out of 61914 (max. 10000000)
+ 188 PDF objects out of 1000 (max. 8388607)
+ 159 compressed objects within 2 object streams
+ 37 named destinations out of 1000 (max. 500000)
+ 59498 words of extra memory for PDF output out of 61914 (max. 10000000)
 

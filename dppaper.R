@@ -3,10 +3,10 @@
 
 ## ----setup, include=FALSE-----------------------------------------------------
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
-library(plotly)
 library(ggplot2)
-library(palmerpenguins)
 library(kableExtra)
+library(tidyverse)
+library(knitr)
 
 
 ## ----echo = TRUE, eval = FALSE------------------------------------------------
@@ -17,4 +17,92 @@ library(kableExtra)
 ## ----echo=TRUE, eval=FALSE----------------------------------------------------
 #> new_privacy(post_smpl = NULL, lik_smpl = NULL, ll_priv_mech = NULL,
 #>             st_calc = NULL, add = FALSE, npar = NULL)
+
+
+## ----echo = FALSE-------------------------------------------------------------
+set.seed(1)
+tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
+adm_cnf <- Reduce('+', tmp)
+adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100))
+
+
+## ----echo = FALSE-------------------------------------------------------------
+#generate 2x2 table data
+x <- c(adm_cnf)
+sdp <- c(adm_prv)
+
+
+## ----echo = TRUE--------------------------------------------------------------
+lik_smpl <- function(theta) {
+  c(rmultinom(1, 4526, theta))
+}
+
+
+## ----echo = TRUE--------------------------------------------------------------
+post_smpl <- function(dmat, theta) {
+  x <- c(dmat)
+  t1 <- rgamma(length(theta), x + 1, 1)
+  t1/sum(t1)
+}
+
+
+## ----echo = TRUE--------------------------------------------------------------
+st_calc <- function(dmat) {
+  c(dmat)
+}
+
+
+## ----echo = TRUE--------------------------------------------------------------
+ll_priv_mech <- function(sdp, x) {
+  dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
+}
+
+
+## -----------------------------------------------------------------------------
+library(DPloglin)
+dmod <- new_privacy(post_smpl = post_smpl,
+                    lik_smpl = lik_smpl,
+                    ll_priv_mech = ll_priv_mech,
+                    st_calc = st_calc,
+                    add = FALSE,
+                    npar = 4)
+
+gdp_out <- gdp_sample(dmod,
+                  sdp = c(adm_prv),
+                  nobs = 1,
+                  niter = 4000,
+                  warmup = 1000,
+                  chains = 1,
+                  init_par = rep(.25,4),
+                  varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
+
+
+## -----------------------------------------------------------------------------
+summary(gdp_out)
+
+
+## -----------------------------------------------------------------------------
+bayesplot::mcmc_trace(gdp_out$chain)
+
+
+## ----include=FALSE------------------------------------------------------------
+tv <- tmp$chain
+or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
+quantile(or, c(.025, .50, .975))
+
+ggplot(tibble(x=or), aes(x)) + geom_histogram() + xlim(-1,10)
+
+
+## ----echo = TRUE--------------------------------------------------------------
+or_confint <- function(x, alpha) {
+  or <- log(x[1] * x[4]/ (x[2] * x[3]))
+  se <- sqrt(sum(1/x))
+  c(or - qnorm(alpha/2) * se, or + qnorm(alpha/2) * se)
+}
+
+#clean data
+exp(or_confint(x, .95))
+
+#privitized data
+exp(or_confint(sdp, .95))
 
