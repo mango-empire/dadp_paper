@@ -58,7 +58,7 @@ ll_priv_mech <- function(sdp, x) {
 }
 
 
-## -----------------------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 library(DPloglin)
 dmod <- new_privacy(post_smpl = post_smpl,
                     lik_smpl = lik_smpl,
@@ -70,23 +70,23 @@ dmod <- new_privacy(post_smpl = post_smpl,
 gdp_out <- gdp_sample(dmod,
                   sdp = c(adm_prv),
                   nobs = 1,
-                  niter = 4000,
+                  niter = 6000,
                   warmup = 1000,
                   chains = 1,
                   init_par = rep(.25,4),
                   varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
 
 
-## -----------------------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 summary(gdp_out)
 
 
+## ----fig.height=3, fig.width=5, fig.align='center'----------------------------
+plot(gdp_out)
+
+
 ## -----------------------------------------------------------------------------
-bayesplot::mcmc_trace(gdp_out$chain)
-
-
-## ----include=FALSE------------------------------------------------------------
-tv <- tmp$chain
+tv <- gdp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 quantile(or, c(.025, .50, .975))
 

@@ -65,13 +65,10 @@ library(knitr)
 
 # Introduction
 
-
+(cliche...)
 The ease and pervasiveness of modern data collection technologies has raised
 concerns about data privacy. [@Dwork2013] introduced the differential privacy
-framework as a means to rigorously define privacy. The framework has lead to the
-development of many ``privitized'' versions of existing statistical methods. The
-process of privitizing usually consist of introducing random noise in someway using
-a known distribution.
+framework as a means to rigorously define privacy. 
 
 
 # Using \CRANpkg{gdpR}
@@ -221,11 +218,11 @@ confidential data $(n_{11}, n_{22}, n_{12}, n_{21})$
     ```
 
 
-
-
+<!-- end of list -->
 
 Once privacy model has been defined we can run `gdp_sample`
-```{r}
+
+```{r, echo = TRUE}
 library(DPloglin)
 dmod <- new_privacy(post_smpl = post_smpl,
                     lik_smpl = lik_smpl,
@@ -237,31 +234,35 @@ dmod <- new_privacy(post_smpl = post_smpl,
 gdp_out <- gdp_sample(dmod,
                   sdp = c(adm_prv),
                   nobs = 1,
-                  niter = 4000,
+                  niter = 6000,
                   warmup = 1000,
                   chains = 1,
                   init_par = rep(.25,4),
                   varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
 ```
+
 results can be quickly summarized using the `summary` function
-```{r}
+
+```{r,echo = FALSE}
 summary(gdp_out)
 ```
 
 Diagnostic checks can be done using the \pkg{Bayesplot} package.
-```{r}
-bayesplot::mcmc_trace(gdp_out$chain)
+
+```{r, fig.height=3, fig.width=5, fig.align='center'}
+plot(gdp_out)
 ```
 
+log odds distribution
 
-```{r, include=FALSE}
-tv <- tmp$chain
+```{r}
+tv <- gdp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 quantile(or, c(.025, .50, .975))
 
 ggplot(tibble(x=or), aes(x)) + geom_histogram() + xlim(-1,10)
 ```
-[Insert gdp Analysis Here]
+(Insert gdp Analysis Here)
 
 For clean data, a estimate for the odds ratio and a confidence interval
 can be constructed using Woolf's method (i.e. A wald confidence interval).
@@ -286,13 +287,7 @@ exp(or_confint(x, .95))
 exp(or_confint(sdp, .95))
 ```
 
-# Background
-
-Some packages on interactive graphics include \CRANpkg{plotly} [@plotly] that interfaces with Javascript for web-based interactive graphics, \CRANpkg{crosstalk} [@crosstalk] that specializes cross-linking elements across individual graphics.  The recent R Journal paper \CRANpkg{tsibbletalk} [@RJ-2021-050] provides a good example of including interactive graphics into an article for the journal. It has both a set of linked plots, and also an animated gif example, illustrating linking between time series plots and feature summaries.
-
-# Customizing tooltip design with \pkg{ToOoOlTiPs}
-
 
 # Summary
 
-We have displayed various tooltips that are available in the package \pkg{ToOoOlTiPs}. 
+This package is cool. You should install it.
