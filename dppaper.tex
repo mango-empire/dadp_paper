@@ -111,6 +111,28 @@ used as an illustrative example of Simpson's paradox. The question is whether
 the data suggest there is bias against females during the college admissions
 process. Below is a table of the aggregate admissions result from six departments based on sex.
 
+\begin{table}[!h]
+
+\centering
+\begin{tabular}[t]{lrr}
+\toprule
+  & Male & Female\\
+\midrule
+Admitted & 1198 & 557\\
+Rejected & 1493 & 1278\\
+\bottomrule
+\end{tabular}
+\centering
+\begin{tabular}[t]{lrr}
+\toprule
+  & Male & Female\\
+\midrule
+Admitted & 1135 & 473\\
+Rejected & 1511 & 1438\\
+\bottomrule
+\end{tabular}
+\end{table}
+
 Below we walk through the process of defining a privacy model.
 
 \begin{enumerate}
@@ -199,7 +221,7 @@ results can be quickly summarized using the \texttt{summary} function
 
 Diagnostic checks can be done using the \pkg{Bayesplot} package.
 
-\begin{center}\includegraphics{dppaper_files/figure-latex/unnamed-chunk-11-1} \end{center}
+\begin{center}\includegraphics{dppaper_files/figure-latex/unnamed-chunk-12-1} \end{center}
 
 log odds distribution
 
@@ -208,7 +230,8 @@ log odds distribution
 #> 1.215316 2.321789 6.062528
 \end{verbatim}
 
-\includegraphics{dppaper_files/figure-latex/unnamed-chunk-12-1.pdf}
+\begin{center}\includegraphics{dppaper_files/figure-latex/unnamed-chunk-13-1} \end{center}
+
 (Insert gdp Analysis Here)
 
 For clean data, a estimate for the odds ratio and a confidence interval

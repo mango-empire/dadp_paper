@@ -27,6 +27,11 @@ adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100))
 
 
 ## ----echo = FALSE-------------------------------------------------------------
+kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
+  kable_styling(position = 'center', latex_options = c("hold_position"))
+
+
+## ----echo = FALSE-------------------------------------------------------------
 #generate 2x2 table data
 x <- c(adm_cnf)
 sdp <- c(adm_prv)
@@ -85,7 +90,7 @@ summary(gdp_out)
 plot(gdp_out)
 
 
-## -----------------------------------------------------------------------------
+## ----fig.height=3, fig.width=5, fig.align='center'----------------------------
 tv <- gdp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 quantile(or, c(.025, .50, .975))
