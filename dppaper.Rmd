@@ -295,6 +295,46 @@ exp(or_confint(sdp, .95))
 ```
 
 
+## Logistic Regression
+```{r, eval = FALSE, include= FALSE}
+post_factory <- function(dmat) {
+  y <- aggregate(dmat[,1], list(dmat[,2]), sum)$x
+  nt <- as.numeric(table(dmat[,2]))
+  logpost <- function(p) {
+    alpha <- p[1]
+    beta  <- p[2]
+    if(alpha < 0 | beta < 0) return (-Inf)
+    lp <- -(5/2) * log(alpha + beta)
+    lp <- lp + length(y) * (log(gamma(alpha + beta)) - 
+                       log(gamma(alpha)) - log(gamma(beta)))
+    lp <- lp + sum(log(gamma(alpha + y))) + sum(log(gamma(beta + nt - y))) -
+               sum(log(gamma(alpha + beta + nt)))
+    lp
+  }
+}
+
+
+g <- post_factory(as.matrix(rat_data))
+g(rep(.5, 2))
+
+alpha <- tmp[,1]
+beta <- tmp[,2]
+x <- as.numeric(log(alpha/beta))
+y <- as.numeric(log(alpha + beta))
+plot(x,y)
+
+tmp <- fmcmc::MCMC(g, initial = rep(.5, 2), 
+                   kernel = fmcmc::kernel_adapt(),
+                   nsteps = 5000,
+                   burnin = 2000)
+
+
+post_smpl <- function(dmat, theta) {
+  
+}
+
+```
+
 # Summary
 
 This package is cool. You should install it.
