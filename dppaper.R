@@ -39,7 +39,7 @@ sdp <- c(adm_prv)
 
 ## ----echo = TRUE--------------------------------------------------------------
 lik_smpl <- function(theta) {
-  c(rmultinom(1, 4526, theta))
+  t(rmultinom(1, 4526, theta))
 }
 
 
@@ -70,16 +70,17 @@ dmod <- new_privacy(post_smpl = post_smpl,
                     ll_priv_mech = ll_priv_mech,
                     st_calc = st_calc,
                     add = FALSE,
-                    npar = 4)
+                    npar = 4,
+                    varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
 
+set.seed(2)
 gdp_out <- gdp_sample(dmod,
                   sdp = c(adm_prv),
                   nobs = 1,
-                  niter = 6000,
+                  niter = 10000,
                   warmup = 1000,
                   chains = 1,
-                  init_par = rep(.25,4),
-                  varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
+                  init_par = rep(.25,4))
 
 
 ## ----echo = FALSE-------------------------------------------------------------
@@ -110,4 +111,9 @@ exp(or_confint(x, .95))
 
 #privitized data
 exp(or_confint(sdp, .95))
+
+
+## ----eval = FALSE, include= FALSE---------------------------------------------
+#> 
+#> 
 
