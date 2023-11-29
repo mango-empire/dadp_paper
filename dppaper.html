@@ -2816,7 +2816,22 @@ font-size: 20px;
 The ease and pervasiveness of modern data collection technologies has raised
 concerns about data privacy. <span class="citation" data-cites="Dwork2013">(<a href="#ref-Dwork2013" role="doc-biblioref">Dwork and Roth 2013</a>)</span> introduced the differential privacy
 framework as a means to rigorously define privacy.</p>
-<h2 data-number="2" id="using"><span class="header-section-number">2</span> Using <a href="https://cran.r-project.org/package=gdpR">gdpR</a></h2>
+<h2 data-number="2" id="methodology"><span class="header-section-number">2</span> Methodology</h2>
+<p>Statistical regression models typically assume no covariate measurement error. In the presence
+of such errors, standard estimators can exhibit significant bias. Historically,
+mis-measured covariates were often associated with data collected issues.
+However, In the context of privacy, confidential data is purposely
+infused with noise in order to preserve anonymity.</p>
+<p>One approach, to account for the added noise, is to treat the confidential data
+as latent quantities within a statistical model. In such settings, it is common
+to conduct inference by specifying a complete likelihood. Once the complete likelihood
+has been specified, parameter estimation can be done using the EM algorithm or
+its Bayesian analogue, the data augmentation method. In the case of gdpr,
+inference is done via data augmentation. A notable benefit of the Bayesian
+approach is that both uncertainty quantification and estimation are done
+simultaneously. The EM approach only provides an estimate.</p>
+<p>The data augmentation approach considers the joint distribution <span class="math inline">\(p(\theta, x \mid s_{dp}\)</span>.</p>
+<h2 data-number="3" id="using"><span class="header-section-number">3</span> Using <a href="https://cran.r-project.org/package=gdpR">gdpR</a></h2>
 <p>The package is structured around the two functions <code>gdp_sample</code> and
 <code>new_privacy</code>. The first function is used to draw samples from the
 posterior. The second function is used to create the privacy model. Since the
@@ -2835,7 +2850,7 @@ equivalent, but the <span class="math inline">\(2 \times 2\)</span> matrix will 
 In general, the representation that uses the least amount of memory should be
 used. Correctly specifying the privacy model will require a consistent
 representation among all components.</p>
-<h3 data-number="2.1" id="sampling"><span class="header-section-number">2.1</span> Sampling</h3>
+<h3 data-number="3.1" id="sampling"><span class="header-section-number">3.1</span> Sampling</h3>
 <p>The main function in <a href="#">gdpR</a> is the <code>gdp_sample</code> function. The call
 signature of the function is:</p>
 <div class="layout-chunk" data-layout="l-body">
@@ -2857,7 +2872,7 @@ using the <a href="https://cran.r-project.org/package=progressr">progressr</a> p
 <p>The <code>data_model</code> input is a <code>privacy</code>
 object that can be constructed using the <code>new_privacy</code> constructor. The
 process of constructing a <code>privacy</code> object will be discussed in the next section.</p>
-<h3 data-number="2.2" id="privacy-model"><span class="header-section-number">2.2</span> Privacy Model</h3>
+<h3 data-number="3.2" id="privacy-model"><span class="header-section-number">3.2</span> Privacy Model</h3>
 <p>Creating a privacy model is done using the <code>new_privacy</code> constructor. The
 main arguments consist of the four components as outlined in the methodology
 section.</p>
@@ -2891,8 +2906,8 @@ up to an additive constant.</p></li>
 <li><p><code>st_calc</code> is an R function which calculates the summary statistic. The optional
 argument <code>add</code> is a flag which represents whether <span class="math inline">\(T\)</span> is additive or not.</p></li>
 </ul>
-<h2 data-number="3" id="examples"><span class="header-section-number">3</span> Examples</h2>
-<h3 data-number="3.1" id="x2-contingency-table"><span class="header-section-number">3.1</span> 2x2 Contingency Table</h3>
+<h2 data-number="4" id="examples"><span class="header-section-number">4</span> Examples</h2>
+<h3 data-number="4.1" id="x2-contingency-table"><span class="header-section-number">4.1</span> 2x2 Contingency Table</h3>
 <p>A common procedure when analyzing contingency tables is to estimate the
 odds ratio. Something something about safetab to connect back to DP (dont forget citation!).
 As a demonstration, we analyze the UC Berkeley admissions data, which is often
@@ -3114,13 +3129,13 @@ normal for large sample sizes.
 </div>
 <pre><code>[1] 2.293115 2.274220</code></pre>
 </div>
-<h3 data-number="3.2" id="logistic-regression"><span class="header-section-number">3.2</span> Logistic Regression</h3>
-<h2 data-number="4" id="summary"><span class="header-section-number">4</span> Summary</h2>
+<h3 data-number="4.2" id="logistic-regression"><span class="header-section-number">4.2</span> Logistic Regression</h3>
+<h2 data-number="5" id="summary"><span class="header-section-number">5</span> Summary</h2>
 <p>This package is cool. You should install it.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
-<h3 class="appendix" data-number="4.1" id="cran-packages-used"><span class="header-section-number">4.1</span> CRAN packages used</h3>
+<h3 class="appendix" data-number="5.1" id="cran-packages-used"><span class="header-section-number">5.1</span> CRAN packages used</h3>
 <p><a href="https://cran.r-project.org/package=gdpR">gdpR</a>, <a href="https://cran.r-project.org/package=furrr">furrr</a>, <a href="https://cran.r-project.org/package=progressr">progressr</a>, <a href="https://cran.r-project.org/package=rstan">rstan</a>, <a href="https://cran.r-project.org/package=fmcmc">fmcmc</a>, <a href="https://cran.r-project.org/package=adaptMCMC">adaptMCMC</a>, <a href="https://cran.r-project.org/package=mcmc">mcmc</a></p>
-<h3 class="appendix" data-number="4.2" id="cran-task-views-implied-by-cited-packages"><span class="header-section-number">4.2</span> CRAN Task Views implied by cited packages</h3>
+<h3 class="appendix" data-number="5.2" id="cran-task-views-implied-by-cited-packages"><span class="header-section-number">5.2</span> CRAN Task Views implied by cited packages</h3>
 <p><a href="https://cran.r-project.org/view=Bayesian">Bayesian</a>, <a href="https://cran.r-project.org/view=HighPerformanceComputing">HighPerformanceComputing</a>, <a href="https://cran.r-project.org/view=MixedModels">MixedModels</a></p>
 <div id="refs" class="references csl-bib-body hanging-indent" role="list">
 <div id="ref-Dwork2013" class="csl-entry" role="listitem">

@@ -18,6 +18,26 @@ The ease and pervasiveness of modern data collection technologies has raised
 concerns about data privacy. (Dwork and Roth 2013) introduced the differential privacy
 framework as a means to rigorously define privacy.
 
+\hypertarget{methodology}{%
+\section{Methodology}\label{methodology}}
+
+Statistical regression models typically assume no covariate measurement error. In the presence
+of such errors, standard estimators can exhibit significant bias. Historically,
+mis-measured covariates were often associated with data collected issues.
+However, In the context of privacy, confidential data is purposely
+infused with noise in order to preserve anonymity.
+
+One approach, to account for the added noise, is to treat the confidential data
+as latent quantities within a statistical model. In such settings, it is common
+to conduct inference by specifying a complete likelihood. Once the complete likelihood
+has been specified, parameter estimation can be done using the EM algorithm or
+its Bayesian analogue, the data augmentation method. In the case of gdpr,
+inference is done via data augmentation. A notable benefit of the Bayesian
+approach is that both uncertainty quantification and estimation are done
+simultaneously. The EM approach only provides an estimate.
+
+The data augmentation approach considers the joint distribution \(p(\theta, x \mid s_{dp}\).
+
 \hypertarget{using}{%
 \section{\texorpdfstring{Using \CRANpkg{gdpR}}{Using }}\label{using}}
 
