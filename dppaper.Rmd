@@ -278,7 +278,6 @@ dmod <- new_privacy(post_smpl = post_smpl,
                   
 dp_out <- dapper_sample(dmod,
                   sdp = c(adm_prv),
-                  nobs = 1,
                   niter = 10000,
                   warmup = 1000,
                   chains = 1,
