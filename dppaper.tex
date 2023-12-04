@@ -36,7 +36,13 @@ inference is done via data augmentation. A notable benefit of the Bayesian
 approach is that both uncertainty quantification and estimation are done
 simultaneously. The EM approach only provides an estimate.
 
-The data augmentation approach considers the joint distribution \(p(\theta, x \mid s_{dp}\).
+The data augmentation approach considers the joint distribution \(p(\theta, x \mid s_{dp})\).
+\[
+p(\theta, x \mid s_{dp}) \propto p(\theta)f(x \mid \theta) \eta(s_{dp} \mid x).
+\]
+
+The problem now is to figure out how to sample for this joint posterior. This is
+accomplished using a Metropolis-within-Gibbs sampler. Each
 
 \hypertarget{using}{%
 \section{\texorpdfstring{Using \CRANpkg{gdpR}}{Using }}\label{using}}
@@ -173,8 +179,8 @@ Below we walk through the process of defining a privacy model.
   \texttt{lik\_smpl}: Conditional on the table total, the table counts follow a multinomial
   distribution. We can easily draw from this distribution using the
   \texttt{rmultinom} function in the \texttt{base} stats package. Note, in this example,
-  the return value of one sample from \texttt{rmultinom} is a \(4 \times 1\) matrix, which
-  we must convert to a \(1 \times 4\) matrix to conform with the complete data table.
+  the return value of one sample from \texttt{rmultinom} is a \(4 \times 1\) matrix. In order to
+  conform with \texttt{dapper\_sample} we must convert the matrix to a vector.
 
 \begin{verbatim}
 lik_smpl <- function(theta) {
@@ -229,11 +235,9 @@ dmod <- new_privacy(post_smpl = post_smpl,
                     add = FALSE,
                     npar = 4,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
-
-set.seed(2)
-gdp_out <- gdp_sample(dmod,
+                  
+dp_out <- dapper_sample(dmod,
                   sdp = c(adm_prv),
-                  nobs = 1,
                   niter = 10000,
                   warmup = 1000,
                   chains = 1,
@@ -246,10 +250,10 @@ results can be quickly summarized using the \texttt{summary} function
 #> # A tibble: 4 x 10
 #>   variable  mean median     sd    mad     q5   q95  rhat ess_bulk ess_tail
 #>   <chr>    <num>  <num>  <num>  <num>  <num> <num> <num>    <num>    <num>
-#> 1 pi_11    0.248  0.248 0.0251 0.0257 0.208  0.289  1.02    164.      409.
-#> 2 pi_21    0.330  0.330 0.0253 0.0260 0.289  0.373  1.01    182.      478.
-#> 3 pi_12    0.107  0.106 0.0270 0.0286 0.0628 0.150  1.01     88.1     225.
-#> 4 pi_22    0.315  0.315 0.0264 0.0263 0.271  0.359  1.00    171.      289.
+#> 1 pi_11    0.248  0.249 0.0254 0.0257 0.206  0.288  1.00    191.      388.
+#> 2 pi_21    0.334  0.333 0.0261 0.0254 0.291  0.377  1.00    210.      329.
+#> 3 pi_12    0.103  0.103 0.0272 0.0271 0.0586 0.149  1.02     76.0     159.
+#> 4 pi_22    0.315  0.315 0.0256 0.0261 0.275  0.358  1.00    164.      460.
 \end{verbatim}
 
 Diagnostic checks can be done using the \pkg{Bayesplot} package.
@@ -260,7 +264,7 @@ log odds distribution
 
 \begin{verbatim}
 #>     2.5%      50%    97.5% 
-#> 1.277471 2.231298 4.595791
+#> 1.297400 2.289552 4.785425
 \end{verbatim}
 
 \begin{center}\includegraphics{dppaper_files/figure-latex/unnamed-chunk-13-1} \end{center}

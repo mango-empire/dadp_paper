@@ -287,19 +287,19 @@ dp_out <- dapper_sample(dmod,
 results can be quickly summarized using the `summary` function
 
 ```{r,echo = FALSE}
-summary(gdp_out)
+summary(dp_out)
 ```
 
 Diagnostic checks can be done using the \pkg{Bayesplot} package.
 
 ```{r, fig.height=3, fig.width=5, fig.align='center'}
-plot(gdp_out)
+plot(dp_out)
 ```
 
 log odds distribution
 
 ```{r, fig.height=3, fig.width=5, fig.align='center'}
-tv <- gdp_out$chain
+tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 quantile(or, c(.025, .50, .975))
 
