@@ -65,10 +65,35 @@ library(knitr)
 
 # Introduction
 
-(cliche...)
+
+(could use some work)
 The ease and pervasiveness of modern data collection technologies has raised
 concerns about data privacy. [@Dwork2013] introduced the differential privacy
 framework as a means to rigorously define privacy. 
+
+# Methodology
+Statistical regression models typically assume no covariate measurement error. In the presence
+of such errors, standard estimators can exhibit significant bias. Historically,
+mis-measured covariates were often associated with data collected issues. 
+However, In the context of privacy, confidential data is purposely
+infused with noise in order to preserve anonymity. 
+
+One approach, to account for the added noise, is to treat the confidential data
+as latent quantities within a statistical model. In such settings, it is common
+to conduct inference by specifying a complete likelihood. Once the complete likelihood
+has been specified, parameter estimation can be done using the EM algorithm or
+its Bayesian analogue, the data augmentation method. In the case of gdpr,
+inference is done via data augmentation. A notable benefit of the Bayesian
+approach is that both uncertainty quantification and estimation are done 
+simultaneously. The EM approach only provides an estimate.
+
+The data augmentation approach considers the joint distribution $p(\theta, x \mid s_{dp})$.
+\[
+p(\theta, x \mid s_{dp}) \propto p(\theta)f(x \mid \theta) \eta(s_{dp} \mid x).
+\]
+
+The problem now is to figure out how to sample for this joint posterior. This is
+accomplished using a Metropolis-within-Gibbs sampler. Each
 
 
 # Using \CRANpkg{gdpR}
@@ -80,6 +105,18 @@ input to these functions are R functions, there is a great deal of freedom
 left up to user. The next two sections describe in detail the inputs into
 these functions and highlight some considerations that should be taken
 into account in order avoid slow or unexpected behavior.
+
+(not yet sure where to put this tid bit, here looks about right)
+Before delving into  the specifics of each component, it is necessary to clearly
+define how the confidential data is represented. Internally, the 
+confidential database is encoded as a 2D matrix. There are often multiple ways
+of doing this. For example, if our data consist 
+of 100 responses from a two question, yes/no, survey. Then we can either encode
+the data as a $2 \times 2$ matrix, or a $100 \times 2$ matrix. Both are mathematically
+equivalent, but the $2 \times 2$ matrix will be much more memory efficient.
+In general, the representation that uses the least amount of memory should be
+used. Correctly specifying the privacy model will require a consistent 
+representation among all components.
 
 ## Sampling
 
@@ -120,14 +157,14 @@ new_privacy(post_smpl = NULL, lik_smpl = NULL, ll_priv_mech = NULL,
 ```
 
 The internal implementation of the DA algorithm in `gdp_sample` requires
-some care in how each component in constructed. 
+some care in how each component is constructed. 
 
 * `lik_smpl` is an R function that samples from the likelihood. Its
 call signature should be `lik_smpl(theta)` where `theta` is a vector
 representing the likelihood model parameters being estimated. This function
 must work with the supplied initial parameter provide in the `init_par`
-argument of `gdp_sample`. The sampler need not be vectorized and vectorizing
-the sampler will not add any speed benefits.
+argument of `gdp_sample` and its output should be a $n \times k$ matrix. $k$ the
+dimension of the complete data table.
 
 
 * `post_smpl` is a function which represents the posterior sampler. It should
@@ -191,7 +228,7 @@ the return value of one sample from `rmultinom` is a $4 \times 1$ matrix. In ord
 conform with `dapper_sample` we must convert the matrix to a vector.
     ```{r, echo = TRUE}
     lik_smpl <- function(theta) {
-      c(rmultinom(1, 4526, theta))
+      t(rmultinom(1, 4526, theta))
     }
     ```
 2. `post_smpl`: Given confidential data $X$ we can derive the posterior analytically
@@ -238,10 +275,11 @@ dmod <- new_privacy(post_smpl = post_smpl,
                     add = FALSE,
                     npar = 4,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
-
+                  
 dp_out <- dapper_sample(dmod,
                   sdp = c(adm_prv),
-                  niter = 6000,
+                  nobs = 1,
+                  niter = 10000,
                   warmup = 1000,
                   chains = 1,
                   init_par = rep(.25,4))
@@ -295,42 +333,9 @@ exp(or_confint(sdp, .95))
 
 
 ## Logistic Regression
+
 ```{r, eval = FALSE, include= FALSE}
-post_factory <- function(dmat) {
-  y <- aggregate(dmat[,1], list(dmat[,2]), sum)$x
-  nt <- as.numeric(table(dmat[,2]))
-  logpost <- function(p) {
-    alpha <- p[1]
-    beta  <- p[2]
-    if(alpha < 0 | beta < 0) return (-Inf)
-    lp <- -(5/2) * log(alpha + beta)
-    lp <- lp + length(y) * (log(gamma(alpha + beta)) - 
-                       log(gamma(alpha)) - log(gamma(beta)))
-    lp <- lp + sum(log(gamma(alpha + y))) + sum(log(gamma(beta + nt - y))) -
-               sum(log(gamma(alpha + beta + nt)))
-    lp
-  }
-}
 
-
-g <- post_factory(as.matrix(rat_data))
-g(rep(.5, 2))
-
-alpha <- tmp[,1]
-beta <- tmp[,2]
-x <- as.numeric(log(alpha/beta))
-y <- as.numeric(log(alpha + beta))
-plot(x,y)
-
-tmp <- fmcmc::MCMC(g, initial = rep(.5, 2), 
-                   kernel = fmcmc::kernel_adapt(),
-                   nsteps = 5000,
-                   burnin = 2000)
-
-
-post_smpl <- function(dmat, theta) {
-  
-}
 
 ```
 

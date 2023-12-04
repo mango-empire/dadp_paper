@@ -13,10 +13,30 @@ This paper serves as a reference and introduction on using the \(gdpR\) R packag
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
-(cliche\ldots)
+(could use some work)
 The ease and pervasiveness of modern data collection technologies has raised
 concerns about data privacy. (Dwork and Roth 2013) introduced the differential privacy
 framework as a means to rigorously define privacy.
+
+\hypertarget{methodology}{%
+\section{Methodology}\label{methodology}}
+
+Statistical regression models typically assume no covariate measurement error. In the presence
+of such errors, standard estimators can exhibit significant bias. Historically,
+mis-measured covariates were often associated with data collected issues.
+However, In the context of privacy, confidential data is purposely
+infused with noise in order to preserve anonymity.
+
+One approach, to account for the added noise, is to treat the confidential data
+as latent quantities within a statistical model. In such settings, it is common
+to conduct inference by specifying a complete likelihood. Once the complete likelihood
+has been specified, parameter estimation can be done using the EM algorithm or
+its Bayesian analogue, the data augmentation method. In the case of gdpr,
+inference is done via data augmentation. A notable benefit of the Bayesian
+approach is that both uncertainty quantification and estimation are done
+simultaneously. The EM approach only provides an estimate.
+
+The data augmentation approach considers the joint distribution \(p(\theta, x \mid s_{dp}\).
 
 \hypertarget{using}{%
 \section{\texorpdfstring{Using \CRANpkg{gdpR}}{Using }}\label{using}}
@@ -28,6 +48,18 @@ input to these functions are R functions, there is a great deal of freedom
 left up to user. The next two sections describe in detail the inputs into
 these functions and highlight some considerations that should be taken
 into account in order avoid slow or unexpected behavior.
+
+(not yet sure where to put this tid bit, here looks about right)
+Before delving into the specifics of each component, it is necessary to clearly
+define how the confidential data is represented. Internally, the
+confidential database is encoded as a 2D matrix. There are often multiple ways
+of doing this. For example, if our data consist
+of 100 responses from a two question, yes/no, survey. Then we can either encode
+the data as a \(2 \times 2\) matrix, or a \(100 \times 2\) matrix. Both are mathematically
+equivalent, but the \(2 \times 2\) matrix will be much more memory efficient.
+In general, the representation that uses the least amount of memory should be
+used. Correctly specifying the privacy model will require a consistent
+representation among all components.
 
 \hypertarget{sampling}{%
 \subsection{Sampling}\label{sampling}}
@@ -69,7 +101,7 @@ new_privacy(post_smpl = NULL, lik_smpl = NULL, ll_priv_mech = NULL,
 \end{verbatim}
 
 The internal implementation of the DA algorithm in \texttt{gdp\_sample} requires
-some care in how each component in constructed.
+some care in how each component is constructed.
 
 \begin{itemize}
 \item
@@ -77,8 +109,8 @@ some care in how each component in constructed.
   call signature should be \texttt{lik\_smpl(theta)} where \texttt{theta} is a vector
   representing the likelihood model parameters being estimated. This function
   must work with the supplied initial parameter provide in the \texttt{init\_par}
-  argument of \texttt{gdp\_sample}. The sampler need not be vectorized and vectorizing
-  the sampler will not add any speed benefits.
+  argument of \texttt{gdp\_sample} and its output should be a \(n \times k\) matrix. \(k\) the
+  dimension of the complete data table.
 \item
   \texttt{post\_smpl} is a function which represents the posterior sampler. It should
   have the call signature \texttt{post\_smpl(dmat,\ theta)}. Where \texttt{dmat} is the
@@ -141,12 +173,12 @@ Below we walk through the process of defining a privacy model.
   \texttt{lik\_smpl}: Conditional on the table total, the table counts follow a multinomial
   distribution. We can easily draw from this distribution using the
   \texttt{rmultinom} function in the \texttt{base} stats package. Note, in this example,
-  the return value of one sample from \texttt{rmultinom} is a \(4 \times 1\) matrix. In order to
-  conform with \texttt{gdp\_sample} we must convert the matrix to a vector.
+  the return value of one sample from \texttt{rmultinom} is a \(4 \times 1\) matrix, which
+  we must convert to a \(1 \times 4\) matrix to conform with the complete data table.
 
 \begin{verbatim}
 lik_smpl <- function(theta) {
-  c(rmultinom(1, 4526, theta))
+  t(rmultinom(1, 4526, theta))
 }
 \end{verbatim}
 \item
@@ -195,16 +227,17 @@ dmod <- new_privacy(post_smpl = post_smpl,
                     ll_priv_mech = ll_priv_mech,
                     st_calc = st_calc,
                     add = FALSE,
-                    npar = 4)
+                    npar = 4,
+                    varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
 
+set.seed(2)
 gdp_out <- gdp_sample(dmod,
                   sdp = c(adm_prv),
                   nobs = 1,
-                  niter = 6000,
+                  niter = 10000,
                   warmup = 1000,
                   chains = 1,
-                  init_par = rep(.25,4),
-                  varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
+                  init_par = rep(.25,4))
 \end{verbatim}
 
 results can be quickly summarized using the \texttt{summary} function
@@ -213,10 +246,10 @@ results can be quickly summarized using the \texttt{summary} function
 #> # A tibble: 4 x 10
 #>   variable  mean median     sd    mad     q5   q95  rhat ess_bulk ess_tail
 #>   <chr>    <num>  <num>  <num>  <num>  <num> <num> <num>    <num>    <num>
-#> 1 pi_11    0.248  0.249 0.0258 0.0256 0.203  0.288  1.00     96.1     183.
-#> 2 pi_21    0.335  0.335 0.0238 0.0239 0.293  0.373  1.01    107.      157.
-#> 3 pi_12    0.102  0.101 0.0305 0.0321 0.0486 0.152  1.02     34.8     100.
-#> 4 pi_22    0.316  0.316 0.0247 0.0256 0.275  0.356  1.00    119.      241.
+#> 1 pi_11    0.248  0.248 0.0251 0.0257 0.208  0.289  1.02    164.      409.
+#> 2 pi_21    0.330  0.330 0.0253 0.0260 0.289  0.373  1.01    182.      478.
+#> 3 pi_12    0.107  0.106 0.0270 0.0286 0.0628 0.150  1.01     88.1     225.
+#> 4 pi_22    0.315  0.315 0.0264 0.0263 0.271  0.359  1.00    171.      289.
 \end{verbatim}
 
 Diagnostic checks can be done using the \pkg{Bayesplot} package.
@@ -227,7 +260,7 @@ log odds distribution
 
 \begin{verbatim}
 #>     2.5%      50%    97.5% 
-#> 1.215316 2.321789 6.062528
+#> 1.277471 2.231298 4.595791
 \end{verbatim}
 
 \begin{center}\includegraphics{dppaper_files/figure-latex/unnamed-chunk-13-1} \end{center}
@@ -266,6 +299,9 @@ exp(or_confint(sdp, .95))
 \begin{verbatim}
 #> [1] 2.293115 2.274220
 \end{verbatim}
+
+\hypertarget{logistic-regression}{%
+\subsection{Logistic Regression}\label{logistic-regression}}
 
 \hypertarget{summary}{%
 \section{Summary}\label{summary}}
