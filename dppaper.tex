@@ -13,10 +13,32 @@ This paper serves as a reference and introduction on using the \(gdpR\) R packag
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
-(could use some work)
-The ease and pervasiveness of modern data collection technologies has raised
-concerns about data privacy. (Dwork and Roth 2013) introduced the differential privacy
-framework as a means to rigorously define privacy.
+Differential privacy provides a rigorous framework for protecting
+confidential information. One of it's goal is to allow the widespread dissemination
+of summary statistics while hiding sensitive characteristics of the data upon which these statistics are based off of. For example, a data aggregation service might
+collect salary information for the purpose of helping its users negotiate salaries.
+Such information is typically considered sensitive, so there is a strong desire
+to keep the salary information of individuals anonymous. Differential privacy
+offers a principle way of evaluating how random noise can be injected to product
+individual salary information.
+
+Compared to older statistical disclosure methods, such as random swapping. The
+hallmark of DP based methods is the design of the privacy mechanism is
+known by both the data curator and the data user. In the salary aggregation example,
+the data aggregation service would make public, the process by which they
+added noise.
+
+In the context of statistical models,
+the bulk of DP research has concentrated on protecting privacy by
+either adding noise to a model parameter estimate or adding noise to the
+estimating process itself. Adding noise directly to the data is a less
+studied approach and is the case which this paper address.
+In both cases, the added noise induces biases which
+must be accounted for in order to perform sound inference.
+
+The goal of dapper, is to provide a tool to help privacy researchers
+evaluate how their analysis might be affected by directly infusing
+the confidential data with noise.
 
 \hypertarget{methodology}{%
 \section{Methodology}\label{methodology}}
@@ -45,7 +67,7 @@ The problem now is to figure out how to sample for this joint posterior. This is
 accomplished using a Metropolis-within-Gibbs sampler. Each
 
 \hypertarget{using}{%
-\section{\texorpdfstring{Using \CRANpkg{gdpR}}{Using }}\label{using}}
+\section{\texorpdfstring{Using \CRANpkg{dapper}}{Using }}\label{using}}
 
 The package is structured around the two functions \texttt{gdp\_sample} and
 \texttt{new\_privacy}. The first function is used to draw samples from the
@@ -313,15 +335,7 @@ exp(or_confint(sdp, .95))
 This package is cool. You should install it.
 
 \hypertarget{references}{%
-\section*{References}\label{references}}
-\addcontentsline{toc}{section}{References}
-
-\hypertarget{refs}{}
-\begin{CSLReferences}{1}{0}
-\leavevmode\vadjust pre{\hypertarget{ref-Dwork2013}{}}%
-Dwork, Cynthia, and Aaron Roth. 2013. {``The Algorithmic Foundations of Differential Privacy.''} \emph{Foundations and Trends{\textregistered} in Theoretical Computer Science} 9 (3-4): 211--407. \url{https://doi.org/10.1561/0400000042}.
-
-\end{CSLReferences}
+\section{References}\label{references}}
 
 \bibliography{RJreferences.bib}
 
