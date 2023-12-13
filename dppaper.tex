@@ -1,5 +1,5 @@
 % !TeX root = RJwrapper.tex
-\title{gdpR: An R Package for studying differentially private algorithms}
+\title{dapper: An R Package for studying differentially private algorithms}
 
 
 \author{by Jordan A. Awan, Kevin Eng, Robin Gong, Nianqiao Phyllis Ju, and Vinayak A. Rao}
@@ -15,30 +15,35 @@ This paper serves as a reference and introduction on using the \(gdpR\) R packag
 
 Differential privacy provides a rigorous framework for protecting
 confidential information. One of it's goal is to allow the widespread dissemination
-of summary statistics while hiding sensitive characteristics of the data upon which these statistics are based off of. For example, a data aggregation service might
+of summary statistics while hiding sensitive characteristics of the data.
+For example, a data aggregation service might
 collect salary information for the purpose of helping its users negotiate salaries.
 Such information is typically considered sensitive, so there is a strong desire
 to keep the salary information of individuals anonymous. Differential privacy
 offers a principle way of evaluating how random noise can be injected to product
 individual salary information.
 
-Compared to older statistical disclosure methods, such as random swapping. The
-hallmark of DP based methods is the design of the privacy mechanism is
-known by both the data curator and the data user. In the salary aggregation example,
-the data aggregation service would make public, the process by which they
-added noise.
-
 In the context of statistical models,
 the bulk of DP research has concentrated on protecting privacy by
 either adding noise to a model parameter estimate or adding noise to the
 estimating process itself. Adding noise directly to the data is a less
-studied approach and is the case which this paper address.
+studied approach and is the case which this paper addresses.
 In both cases, the added noise induces biases which
 must be accounted for in order to perform sound inference.
+This paper will go over the dapper package. It implements
+the Bayesian framework described in {[}-{]}. The intent of the dapper package is to help privacy researchers
+evaluate how their analysis might be affected by directly infusing data with noise.
 
-The goal of dapper, is to provide a tool to help privacy researchers
-evaluate how their analysis might be affected by directly infusing
-the confidential data with noise.
+\hypertarget{framework}{%
+\section{Framework}\label{framework}}
+
+Let \(x = (x_1, \ldots, x_n) \in \mathcal{X}^n\) represent a confidential
+database containing \(n\) records. Usually the goal of collecting data
+is to learn some characteristic about the population it was collected
+from. To accomplish this task, a common approach is to assume the population
+is represented by some statistical model \(f( \cdot \mid \theta)\) with \(\theta\)
+having some relevant meaning to the scientific question at hand. In this case,
+learning characteristics of a population reduces to learning about \(\theta\).
 
 \hypertarget{methodology}{%
 \section{Methodology}\label{methodology}}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.8.28) (preloaded format=pdflatex 2022.9.7)  6 DEC 2023 17:24
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.8.28) (preloaded format=pdflatex 2022.9.7)  7 DEC 2023 18:00
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -974,13 +974,13 @@ LaTeX Font Info:    Font shape `U/msb/m/n' will be
 (Font)              scaled to size 7.29405pt on input line 11.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
 (Font)              scaled to size 5.21004pt on input line 11.
-LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 72
+LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 77
 .
 (C:\Users\kevin\AppData\Local\Programs\MiKTeX\tex/latex/inconsolata\t1zi4.fd
 File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 9.18004pt on input line 72.
+(Font)              scaled to size 9.18004pt on input line 77.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
@@ -989,63 +989,63 @@ Package microtype Info: Loading generic protrusion settings for font family
 
 ]
 LaTeX Font Info:    Trying to load font information for TS1+ppl on input line 1
-36.
+41.
 (C:\Users\kevin\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ts1ppl.fd
 File: ts1ppl.fd 2001/06/04 font definitions for TS1/ppl.
 ) [2]
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 177.
+(Font)              scaled to size 10.42007pt on input line 182.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 177.
+(Font)              scaled to size 7.91925pt on input line 182.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 177.
+(Font)              scaled to size 6.25204pt on input line 182.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 177.
+(Font)              scaled to size 10.42007pt on input line 182.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 177.
+(Font)              scaled to size 7.91925pt on input line 182.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 177.
+(Font)              scaled to size 6.25204pt on input line 182.
 [3]
-<dppaper_files/figure-latex/unnamed-chunk-12-1.pdf, id=94, 361.35pt x 216.81pt>
+<dppaper_files/figure-latex/unnamed-chunk-12-1.pdf, id=99, 361.35pt x 216.81pt>
 
 File: dppaper_files/figure-latex/unnamed-chunk-12-1.pdf Graphic file (type pdf)
 
 <use dppaper_files/figure-latex/unnamed-chunk-12-1.pdf>
 Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-12-1.pdf  use
-d on input line 283.
+d on input line 288.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
-<dppaper_files/figure-latex/unnamed-chunk-13-1.pdf, id=95, 361.35pt x 216.81pt>
-
+<dppaper_files/figure-latex/unnamed-chunk-13-1.pdf, id=100, 361.35pt x 216.81pt
+>
 File: dppaper_files/figure-latex/unnamed-chunk-13-1.pdf Graphic file (type pdf)
 
 <use dppaper_files/figure-latex/unnamed-chunk-13-1.pdf>
 Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-13-1.pdf  use
-d on input line 292.
+d on input line 297.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
 [4 <./dppaper_files/figure-latex/unnamed-chunk-12-1.pdf> <./dppaper_files/figur
 e-latex/unnamed-chunk-13-1.pdf>]
 No file RJwrapper.bbl.
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 350.
+(Font)              using `T1/zi4/m/n' instead on input line 355.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 350.
+(Font)              scaled to size 9.18004pt on input line 355.
 ) [5] [6] (RJwrapper.aux)
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
-(rerunfilecheck)             Checksum: 32D50D21E9982ECAE44D4E8A9774357A;1559.
+(rerunfilecheck)             Checksum: D3A1B831C599461F9C5387B815244668;1670.
  ) 
 Here is how much of TeX's memory you used:
- 27020 strings out of 477843
- 498986 string characters out of 2823600
- 805846 words of memory out of 3000000
- 45212 multiletter control sequences out of 15000+600000
- 513220 words of font info for 219 fonts, out of 8000000 for 9000
+ 27027 strings out of 477843
+ 499054 string characters out of 2823600
+ 805882 words of memory out of 3000000
+ 45214 multiletter control sequences out of 15000+600000
+ 513369 words of font info for 221 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 115i,12n,131p,1008b,773s stack positions out of 10000i,1000n,20000p,200000b,80000s
+ 115i,12n,131p,1008b,777s stack positions out of 10000i,1000n,20000p,200000b,80000s
 {C:/Users/kevin/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/inconsolata/i4-
 t1-0.enc}{C:/Users/kevin/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.
 enc}<C:/Users/kevin/AppData/Local/Programs/MiKTeX/fonts/type1/public/inconsolat
@@ -1058,9 +1058,9 @@ ocal/Programs/MiKTeX/fonts/type1/public/mathpazo/fplmri.pfb><C:/Users/kevin/App
 Data/Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplb8a.pfb><C:/Users/kevin/
 AppData/Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplr8a.pfb><C:/Users/kev
 in/AppData/Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (6 pages, 328395 bytes).
+Output written on RJwrapper.pdf (6 pages, 330703 bytes).
 PDF statistics:
- 180 PDF objects out of 1000 (max. 8388607)
- 35 named destinations out of 1000 (max. 500000)
- 63087 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 188 PDF objects out of 1000 (max. 8388607)
+ 37 named destinations out of 1000 (max. 500000)
+ 63095 words of extra memory for PDF output out of 74296 (max. 10000000)
 
