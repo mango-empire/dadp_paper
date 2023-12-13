@@ -18,10 +18,9 @@ confidential information. One of it's goal is to allow the widespread disseminat
 of summary statistics while hiding sensitive characteristics of the data.
 For example, a data aggregation service might
 collect salary information for the purpose of helping its users negotiate salaries.
-Such information is typically considered sensitive, so there is a strong desire
-to keep the salary information of individuals anonymous. Differential privacy
-offers a principle way of evaluating how random noise can be injected to product
-individual salary information.
+Such information is typically considered both sensitive. In this scenario, there is a strong desire
+to simultaneously keep the salary information of individuals anonymous and make
+public, aggregate salary data so others can negotiate better salaries.
 
 In the context of statistical models,
 the bulk of DP research has concentrated on protecting privacy by
@@ -34,16 +33,53 @@ This paper will go over the dapper package. It implements
 the Bayesian framework described in {[}-{]}. The intent of the dapper package is to help privacy researchers
 evaluate how their analysis might be affected by directly infusing data with noise.
 
-\hypertarget{framework}{%
-\section{Framework}\label{framework}}
+The rest of this article is organized as follows. Section 2 covers the necessary background to understand the mathematical notation
+and ideas used throughout the paper. Section 3 goes over the main algorithm without
+going into mathematical detail, for specifics see {[}Ju et al.{]}. Section 4 provides
+an overview of the dapper package and discusses important implementation details.
+Section 5 contains two example of how one might use the package to analyze the
+impact of adding noise for privacy.
+
+\hypertarget{background}{%
+\section{Background}\label{background}}
 
 Let \(x = (x_1, \ldots, x_n) \in \mathcal{X}^n\) represent a confidential
 database containing \(n\) records. Usually the goal of collecting data
-is to learn some characteristic about the population it was collected
-from. To accomplish this task, a common approach is to assume the population
-is represented by some statistical model \(f( \cdot \mid \theta)\) with \(\theta\)
-having some relevant meaning to the scientific question at hand. In this case,
+is to learn some characteristic about the underlying population.
+To accomplish this task, a common approach is to assume the population
+is represented by some statistical model \(f( \cdot \mid \theta)\). It is often the case that
+some function of \(\theta\) has relevant meaning to the scientific question at hand. In this setting,
 learning characteristics of a population reduces to learning about \(\theta\).
+
+In the Bayesian framework, this is accomplished by drawing samples from the
+posterior \(p(\theta \mid x) \propto f(x \mid \theta) p(\theta)\). For
+large data sets, it is common to work with a summary statistic \(s = s(x)\)
+that has much smaller dimension than the original data. Doing so can
+greatly simplify calculations. In general, there can be information
+loss with using summary statistics, but for models with a sufficient
+statistic, there is no loss. In the context of privacy, providing
+a summary statistic can offer a level of anonymity.
+
+\hypertarget{differential-privacy}{%
+\subsection{Differential Privacy}\label{differential-privacy}}
+
+While a summary statistic can already anonymize the data, it is still
+possible to deduce information about an individual entry depending on
+the distribution of \(x\). For additional anonymity, one idea is to
+add noise to the summary statistic \(s\). More formally we write
+\(s_{dp} \sim \eta(\cdot \mid x)\). Here, \(s_{dp}\) is the noise infused version of \(s\) and
+\(\eta\) is a known noise infusion process. The privacy mechansim
+\(\eta\) is said to be \(\epsilon\)-differentially private {[}Dwork{]} if for all values of
+\(s_{dp}\), and all ``neighboring'' databases \((x,x') \in \mathcal{X}^n \times \mathcal{X}^n\) differing
+by one record (denoated by \(d(x,x')\)), the probability ratio is bounded:
+\[
+\dfrac{\eta(s_{dp} \mid x)}{\eta(s_{dp} \mid x')} \leq \exp(\epsilon), \quad \epsilon > 0.
+\]
+The parameter \(\epsilon\) is called the privacy loss budget, and controls how informative \(s_{dp}\)
+is about \(x\). Larger values of \(\epsilon\) correspond to less noise being added.
+
+\hypertarget{data-augmentation}{%
+\subsection{Data Augmentation}\label{data-augmentation}}
 
 \hypertarget{methodology}{%
 \section{Methodology}\label{methodology}}
@@ -70,6 +106,12 @@ p(\theta, x \mid s_{dp}) \propto p(\theta)f(x \mid \theta) \eta(s_{dp} \mid x).
 
 The problem now is to figure out how to sample for this joint posterior. This is
 accomplished using a Metropolis-within-Gibbs sampler. Each
+
+\begin{figure}
+\centering
+\includegraphics[width=0.8\textwidth,height=\textheight]{figures/crop_algo.png}
+\caption{A nice image.}
+\end{figure}
 
 \hypertarget{using}{%
 \section{\texorpdfstring{Using \CRANpkg{dapper}}{Using }}\label{using}}

@@ -9,41 +9,41 @@ library(tidyverse)
 library(knitr)
 
 
-## ---- echo = TRUE, eval = FALSE-----------------------------------------------
+## ----echo = TRUE, eval = FALSE------------------------------------------------
 #> gdp_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter / 2),
 #>            chains = 1, varnames = NULL)
 
 
-## ---- echo=TRUE, eval=FALSE---------------------------------------------------
+## ----echo=TRUE, eval=FALSE----------------------------------------------------
 #> new_privacy(post_smpl = NULL, lik_smpl = NULL, ll_priv_mech = NULL,
 #>             st_calc = NULL, add = FALSE, npar = NULL)
 
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 set.seed(1)
 tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
 adm_cnf <- Reduce('+', tmp)
 adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100))
 
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
 
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 #generate 2x2 table data
 x <- c(adm_cnf)
 sdp <- c(adm_prv)
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 lik_smpl <- function(theta) {
   t(rmultinom(1, 4526, theta))
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 post_smpl <- function(dmat, theta) {
   x <- c(dmat)
   t1 <- rgamma(length(theta), x + 1, 1)
@@ -51,19 +51,19 @@ post_smpl <- function(dmat, theta) {
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 st_calc <- function(dmat) {
   c(dmat)
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 ll_priv_mech <- function(sdp, x) {
   dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 library(DPloglin)
 dmod <- new_privacy(post_smpl = post_smpl,
                     lik_smpl = lik_smpl,
@@ -85,11 +85,11 @@ dp_out <- dapper_sample(dmod,
 summary(dp_out)
 
 
-## ---- fig.height=3, fig.width=5, fig.align='center'---------------------------
+## ----fig.height=3, fig.width=5, fig.align='center'----------------------------
 plot(dp_out)
 
 
-## ---- fig.height=3, fig.width=5, fig.align='center'---------------------------
+## ----fig.height=3, fig.width=5, fig.align='center'----------------------------
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 quantile(or, c(.025, .50, .975))
@@ -97,7 +97,7 @@ quantile(or, c(.025, .50, .975))
 ggplot(tibble(x=or), aes(x)) + geom_histogram() + xlim(-1,10)
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 or_confint <- function(x, alpha) {
   or <- log(x[1] * x[4]/ (x[2] * x[3]))
   se <- sqrt(sum(1/x))
@@ -111,7 +111,7 @@ exp(or_confint(x, .95))
 exp(or_confint(sdp, .95))
 
 
-## ---- eval = FALSE, include= FALSE--------------------------------------------
+## ----eval = FALSE, include= FALSE---------------------------------------------
 #> 
 #> 
 
