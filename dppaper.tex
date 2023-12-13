@@ -7,7 +7,7 @@
 \maketitle
 
 \abstract{%
-This paper serves as a reference and introduction on using the \(gdpR\) R package. The goal of this package is to provide some tools for exploring the impact of different privacy regimes on a Bayesian analysis. A strength of this framework is the ability to target the exact posterior in settings where the likelihood is too complex to analytically express.
+This paper serves as a reference and introduction on using the dapper R package. The goal of this package is to provide some tools for exploring the impact of different privacy regimes on a Bayesian analysis. A strength of this framework is the ability to target the exact posterior in settings where the likelihood is too complex to analytically express.
 }
 
 \hypertarget{introduction}{%
@@ -27,11 +27,21 @@ the bulk of DP research has concentrated on protecting privacy by
 either adding noise to a model parameter estimate or adding noise to the
 estimating process itself. Adding noise directly to the data is a less
 studied approach and is the case which this paper addresses.
-In both cases, the added noise induces biases which
-must be accounted for in order to perform sound inference.
-This paper will go over the dapper package. It implements
-the Bayesian framework described in {[}-{]}. The intent of the dapper package is to help privacy researchers
-evaluate how their analysis might be affected by directly infusing data with noise.
+
+Statistical regression models typically assume no measurement error in the observed data. In the presence
+of such errors, standard estimators can exhibit significant bias. Historically,
+mis-measured observations were often associated with data collected issues.
+However, In the context of privacy, confidential data is purposely
+infused with noise in order to preserve anonymity.
+
+One approach, to account for the added noise, is to treat the confidential data
+as latent quantities within a statistical model. In such settings, it is common
+to conduct inference by specifying a complete likelihood. Once the complete likelihood
+has been specified, parameter estimation can be done using the EM algorithm or
+its Bayesian analogue, the data augmentation method. In the case of dapper,
+inference is done using data augmentation as described in {[}Ju et al.{]}. A notable benefit of the Bayesian
+approach is that both uncertainty quantification and estimation are done
+simultaneously. The EM approach only provides an estimate.
 
 The rest of this article is organized as follows. Section 2 covers the necessary background to understand the mathematical notation
 and ideas used throughout the paper. Section 3 goes over the main algorithm without
@@ -81,25 +91,34 @@ is about \(x\). Larger values of \(\epsilon\) correspond to less noise being add
 \hypertarget{data-augmentation}{%
 \subsection{Data Augmentation}\label{data-augmentation}}
 
+When sampling from a density \(f_{A}\) is difficult, the data augmentation method
+instead considers sampling from a joint distribution \(f(a,b)\). The joint
+distribution should be chosen so that (i) the marginal distribution
+with respects to \(a\) is \(f_{A}\) and (ii) \(f(a \mid b)\) and \(f(b \mid a)\)
+are easy to sample from. The choice \(f\) is not unique and can require
+some foresight.
+
 \hypertarget{methodology}{%
 \section{Methodology}\label{methodology}}
 
-Statistical regression models typically assume no covariate measurement error. In the presence
-of such errors, standard estimators can exhibit significant bias. Historically,
-mis-measured covariates were often associated with data collected issues.
-However, In the context of privacy, confidential data is purposely
-infused with noise in order to preserve anonymity.
+Given data \(s_{dp}\), the goal of Bayesian inference is to sample from the
+posterior distribution \(p(\theta \mid s_{dp})\). Since the observed likelihood,
+\(p(s_{dp} \mid \theta)\) often has no simple closed form expression, most standard
+sampling schemes do not apply. To conduct privacy aware Bayesian inference, the dapper package implements
+the data augmentation algorithm which allows us to sample from \(p(\theta \mid s_{dp})\)
+without needing to specify \(p(s_{dp} \mid \theta)\).
 
-One approach, to account for the added noise, is to treat the confidential data
-as latent quantities within a statistical model. In such settings, it is common
-to conduct inference by specifying a complete likelihood. Once the complete likelihood
-has been specified, parameter estimation can be done using the EM algorithm or
-its Bayesian analogue, the data augmentation method. In the case of gdpr,
-inference is done via data augmentation. A notable benefit of the Bayesian
-approach is that both uncertainty quantification and estimation are done
-simultaneously. The EM approach only provides an estimate.
+The algorithm considers the joint distribution \(p(\theta, x \mid s_{dp})\) and
+loops through the two steps:
 
-The data augmentation approach considers the joint distribution \(p(\theta, x \mid s_{dp})\).
+\begin{itemize}
+\tightlist
+\item
+  Step 1: \(p(\theta \mid x, s_{dp})\)
+\item
+  Step 2: \(p(x \mid \theta, s_{dp})\)
+\end{itemize}
+
 \[
 p(\theta, x \mid s_{dp}) \propto p(\theta)f(x \mid \theta) \eta(s_{dp} \mid x).
 \]
