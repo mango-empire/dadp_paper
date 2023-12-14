@@ -20,32 +20,42 @@ For example, a data aggregation service might
 collect salary information for the purpose of helping its users negotiate salaries.
 Such information is typically considered both sensitive. In this scenario, there is a strong desire
 to simultaneously keep the salary information of individuals anonymous and make
-public, aggregate salary data so others can negotiate better salaries.
+queries of the salary database publicly available.
 
 In the context of statistical models,
-the bulk of DP research has concentrated on protecting privacy by
-either adding noise to a model parameter estimate or adding noise to the
-estimating process itself. Adding noise directly to the data is a less
+considerable effort has been put in ensuring privacy is
+achieved by using two methods. The first method consist of first fitting the model to the
+confidential data set and then adding noise to its output. The second method
+injects noise at some point in the model fitting process. The fitting process in many models can be
+viewed as minimizing a loss function. Privacy can be achieved by
+adding random perturbations to the loss function. See (Ji, Lipton, and Elkan 2014) for a
+survey that covers the two methods applied to variety of commonly used
+machine learning models. On the other hand, adding noise directly to the data is a less
 studied approach and is the case which this paper addresses.
 
-Statistical regression models typically assume no measurement error in the observed data. In the presence
-of such errors, standard estimators can exhibit significant bias. Historically,
-mis-measured observations were often associated with data collected issues.
-However, In the context of privacy, confidential data is purposely
-infused with noise in order to preserve anonymity.
+Statistical regression models typically assume no measurement error in the observed covariate data.
+In the presence of such errors, standard estimators can exhibit significant bias (Gong 2022).
+Therefore, fitting standard statistical models after adding noise directly to the data for privacy can lead to incorrect
+inference. Adjusting models to take into account noisy covariates has a rich history
+spanning several decades. For textbook length treatments see (Yi 2017; Carroll et al. 2006).
+Prior work mostly focuses on methods which did not require fully specifying the
+measurement error model, since this was often unknown.
+However, in differential privacy, the measurement error model is exactly known.
+This difference, makes feasible some ideas which the measurement
+error community has not previously considered (Smith 2011; Karwa, Kifer, and Slavković 2015).
 
 One approach, to account for the added noise, is to treat the confidential data
 as latent quantities within a statistical model. In such settings, it is common
 to conduct inference by specifying a complete likelihood. Once the complete likelihood
 has been specified, parameter estimation can be done using the EM algorithm or
 its Bayesian analogue, the data augmentation method. In the case of dapper,
-inference is done using data augmentation as described in {[}Ju et al.{]}. A notable benefit of the Bayesian
+inference is done using data augmentation as described in (Ju et al. 2022). A notable benefit of the Bayesian
 approach is that both uncertainty quantification and estimation are done
 simultaneously. The EM approach only provides an estimate.
 
 The rest of this article is organized as follows. Section 2 covers the necessary background to understand the mathematical notation
 and ideas used throughout the paper. Section 3 goes over the main algorithm without
-going into mathematical detail, for specifics see {[}Ju et al.{]}. Section 4 provides
+going into mathematical detail, for specifics see (Ju et al. 2022). Section 4 provides
 an overview of the dapper package and discusses important implementation details.
 Section 5 contains two example of how one might use the package to analyze the
 impact of adding noise for privacy.
@@ -78,8 +88,8 @@ possible to deduce information about an individual entry depending on
 the distribution of \(x\). For additional anonymity, one idea is to
 add noise to the summary statistic \(s\). More formally we write
 \(s_{dp} \sim \eta(\cdot \mid x)\). Here, \(s_{dp}\) is the noise infused version of \(s\) and
-\(\eta\) is a known noise infusion process. The privacy mechansim
-\(\eta\) is said to be \(\epsilon\)-differentially private {[}Dwork{]} if for all values of
+\(\eta\) is a known noise infusion process. The privacy mechanism
+\(\eta\) is said to be \(\epsilon\)-differentially private (Dwork and Roth 2013) if for all values of
 \(s_{dp}\), and all ``neighboring'' databases \((x,x') \in \mathcal{X}^n \times \mathcal{X}^n\) differing
 by one record (denoated by \(d(x,x')\)), the probability ratio is bounded:
 \[
@@ -91,8 +101,10 @@ is about \(x\). Larger values of \(\epsilon\) correspond to less noise being add
 \hypertarget{data-augmentation}{%
 \subsection{Data Augmentation}\label{data-augmentation}}
 
-When sampling from a density \(f_{A}\) is difficult, the data augmentation method
-instead considers sampling from a joint distribution \(f(a,b)\). The joint
+The idea behind data augmentation is to run a Gibbs sampler on a coupling of two random variables where one
+of the marginals is the target distribution. Suppose we wish to sample from a density \(f_{A}\) which is difficult.
+The data augmentation method instead considers sampling from a joint distribution \(f(a,b)\). Since
+we are ultimately interested in samples from \(f_A\), the joint
 distribution should be chosen so that (i) the marginal distribution
 with respects to \(a\) is \(f_{A}\) and (ii) \(f(a \mid b)\) and \(f(b \mid a)\)
 are easy to sample from. The choice \(f\) is not unique and can require
@@ -109,33 +121,62 @@ the data augmentation algorithm which allows us to sample from \(p(\theta \mid s
 without needing to specify \(p(s_{dp} \mid \theta)\).
 
 The algorithm considers the joint distribution \(p(\theta, x \mid s_{dp})\) and
-loops through the two steps:
+alternates sampling from the two distributions
 
 \begin{itemize}
 \tightlist
 \item
-  Step 1: \(p(\theta \mid x, s_{dp})\)
+  \(p(\theta \mid x, s_{dp})\)
 \item
-  Step 2: \(p(x \mid \theta, s_{dp})\)
+  \(p(x \mid \theta, s_{dp})\)
 \end{itemize}
 
-\[
-p(\theta, x \mid s_{dp}) \propto p(\theta)f(x \mid \theta) \eta(s_{dp} \mid x).
-\]
+Since \(s_{dp}\) is derived from \(x\), we have \(p(\theta \mid x, s_{dp}) = p(\theta \mid x)\) which
+is just the usual posterior distribution given the confidential data \(x\). The dapper
+package assumes the user has access to a sampler for \(p(\theta \mid x)\). This can
+come from any R package such as fmcmc. For the second distribution, \(p(x \mid \theta, s_{dp})\), may
+only be known up to a constant. The dapper package samples from this distribution by
+running a Gibbs like sampler. Each of the \(n\) components of \(x\) is individually
+updated. However unlike the standard Gibbs sampler, each component is updated
+using a Metropolis-Hasting algorithm. This method is sometimes called the Metropolis within Gibbs sampler (Robert and Casella 2004).
 
-The problem now is to figure out how to sample for this joint posterior. This is
-accomplished using a Metropolis-within-Gibbs sampler. Each
+In some cases, sampling from \(p(x \mid \theta, s_{dp})\) can be made more efficient
+when the summary statistic can be written as the sum of individual
+contributions from each observation. More precisely, we say a statistic satisfies
+the record additivity property if \(\eta(s_{dp} \mid x) = g(s_{dp}, \sum_{i=1}^{n}t_i(x_i, s_{dp}))\)
+for some known and tractable functions \(g, t_1, \ldots, t_n\).
 
-\begin{figure}
-\centering
-\includegraphics[width=0.8\textwidth,height=\textheight]{figures/crop_algo.png}
-\caption{A nice image.}
-\end{figure}
+The algorithm is in the following pseudo code:
 
-\hypertarget{using}{%
-\section{\texorpdfstring{Using \CRANpkg{dapper}}{Using }}\label{using}}
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Sample \(\theta^{t+1}\) from \(p(\cdot \mid x^{(t)})\).
+\item
+  Sample from \(p(x \mid \theta, s_{dp})\) using a three step process
 
-The package is structured around the two functions \texttt{gdp\_sample} and
+  \begin{itemize}
+  \tightlist
+  \item
+    Propose \(x_{i}^{*} \sim f(\cdot \mid \theta)\).
+  \item
+    If \(s\) satisfies the record additive property then
+    update \(s(x^*, s_{dp}) = t(x,s_{dp}) - t_i(x_i,s_{dp}) + t_{i}(x_i^*, s_{dp})\).
+  \item
+    Accept the proposed state with probability \(\alpha(x_i^* \mid x_i, x_{-i}, \theta)\)
+    given by:
+  \end{itemize}
+
+  \[
+     \alpha(x_i^* \mid x_i, x_{-i}, \theta) = \min \left\{ \dfrac{\eta(s_{dp} \mid x_i^*, x_{-i})}{\eta(s_{dp} \mid x_i, x_{-i})} \right\}.
+   \]
+\end{enumerate}
+
+\hypertarget{using-dapper}{%
+\section{Using dapper}\label{using-dapper}}
+
+The package is structured around the two functions \texttt{dapper\_sample} and
 \texttt{new\_privacy}. The first function is used to draw samples from the
 posterior. The second function is used to create the privacy model. Since the
 input to these functions are R functions, there is a great deal of freedom
@@ -143,7 +184,6 @@ left up to user. The next two sections describe in detail the inputs into
 these functions and highlight some considerations that should be taken
 into account in order avoid slow or unexpected behavior.
 
-(not yet sure where to put this tid bit, here looks about right)
 Before delving into the specifics of each component, it is necessary to clearly
 define how the confidential data is represented. Internally, the
 confidential database is encoded as a 2D matrix. There are often multiple ways
@@ -158,7 +198,7 @@ representation among all components.
 \hypertarget{sampling}{%
 \subsection{Sampling}\label{sampling}}
 
-The main function in \pkg{gdpR} is the \texttt{gdp\_sample} function. The call
+The main function in \pkg{dapper} is the \texttt{gdp\_sample} function. The call
 signature of the function is:
 
 \begin{verbatim}
@@ -168,7 +208,7 @@ gdp_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter /
 
 The three required inputs into \texttt{gdp\_sample} function are the privacy model (\texttt{data\_model}), the value
 of the observed privatized statistic (\texttt{sdp}), and the total number of observations
-in the complete data (\texttt{nobs}) {[}MAKE SURE NOTATION IS INTRODUCED{]}. The \CRANpkg{gdpR}
+in the complete data (\texttt{nobs}). The dapper
 package is best suited for problems where the complete data can be represented in
 tabular form. This is because internally, it is represented as a matrix.
 
@@ -194,7 +234,7 @@ new_privacy(post_smpl = NULL, lik_smpl = NULL, ll_priv_mech = NULL,
             st_calc = NULL, add = FALSE, npar = NULL)
 \end{verbatim}
 
-The internal implementation of the DA algorithm in \texttt{gdp\_sample} requires
+The internal implementation of the DA algorithm in \texttt{dapper\_sample} requires
 some care in how each component is constructed.
 
 \begin{itemize}
@@ -203,7 +243,7 @@ some care in how each component is constructed.
   call signature should be \texttt{lik\_smpl(theta)} where \texttt{theta} is a vector
   representing the likelihood model parameters being estimated. This function
   must work with the supplied initial parameter provide in the \texttt{init\_par}
-  argument of \texttt{gdp\_sample} and its output should be a \(n \times k\) matrix. \(k\) the
+  argument of \texttt{dapper\_sample} function and its output should be a \(n \times k\) matrix. \(k\) the
   dimension of the complete data table.
 \item
   \texttt{post\_smpl} is a function which represents the posterior sampler. It should
@@ -401,7 +441,39 @@ exp(or_confint(sdp, .95))
 This package is cool. You should install it.
 
 \hypertarget{references}{%
-\section{References}\label{references}}
+\section*{References}\label{references}}
+\addcontentsline{toc}{section}{References}
+
+\hypertarget{refs}{}
+\begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-Carroll2006}{}}%
+Carroll, Raymond J., David Ruppert, Leonard A. Stefanski, and Ciprian M. Crainiceanu. 2006. \emph{Measurement Error in Nonlinear Models}. Chapman; Hall/CRC. \url{https://doi.org/10.1201/9781420010138}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Dwork2013}{}}%
+Dwork, Cynthia, and Aaron Roth. 2013. {``The Algorithmic Foundations of Differential Privacy.''} \emph{Foundations and Trends{\textregistered} in Theoretical Computer Science} 9 (3-4): 211--407. \url{https://doi.org/10.1561/0400000042}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Gong2022}{}}%
+Gong, Ruobin. 2022. {``Transparent Privacy Is Principled Privacy.''} \emph{Harvard Data Science Review}, no. Special Issue 2 (June). \url{https://doi.org/10.1162/99608f92.b5d3faaa}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Ji2014}{}}%
+Ji, Zhanglong, Zachary C. Lipton, and Charles Elkan. 2014. {``Differential Privacy and Machine Learning: A Survey and Review.''} \url{https://arxiv.org/abs/1412.7584}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Ju2022}{}}%
+Ju, Nianqiao, Jordan Awan, Ruobin Gong, and Vinayak Rao. 2022. {``Data Augmentation {MCMC} for Bayesian Inference from Privatized Data.''} In \emph{Advances in Neural Information Processing Systems}, edited by Alice H. Oh, Alekh Agarwal, Danielle Belgrave, and Kyunghyun Cho. \url{https://openreview.net/forum?id=tTWCQrgjuM}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Karwa2015}{}}%
+Karwa, Vishesh, Dan Kifer, and Aleksandra B. Slavković. 2015. {``Private Posterior Distributions from Variational Approximations.''} \url{https://arxiv.org/abs/1511.07896}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Robert2004}{}}%
+Robert, Christian P., and George Casella. 2004. \emph{Monte Carlo Statistical Methods}. \emph{Springer Texts in Statistics}. Springer New York. \url{https://doi.org/10.1007/978-1-4757-4145-2}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Smith2011}{}}%
+Smith, Adam. 2011. {``Privacy-Preserving Statistical Estimation with Optimal Convergence Rates.''} In \emph{Proceedings of the Forty-Third Annual ACM Symposium on Theory of Computing}. STOC'11. ACM. \url{https://doi.org/10.1145/1993636.1993743}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Yi2017}{}}%
+Yi, Grace Y. 2017. \emph{Statistical Analysis with Measurement Error or Misclassification}. \emph{Springer Series in Statistics}. Springer New York. \url{https://doi.org/10.1007/978-1-4939-6640-0}.
+
+\end{CSLReferences}
 
 \bibliography{RJreferences.bib}
 
