@@ -9,14 +9,14 @@ library(tidyverse)
 library(knitr)
 
 
-## ----echo = TRUE, eval = FALSE------------------------------------------------
-#> gdp_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter / 2),
-#>            chains = 1, varnames = NULL)
-
-
 ## ----echo=TRUE, eval=FALSE----------------------------------------------------
 #> new_privacy(post_smpl = NULL, lik_smpl = NULL, ll_priv_mech = NULL,
 #>             st_calc = NULL, add = FALSE, npar = NULL)
+
+
+## ----echo = TRUE, eval = FALSE------------------------------------------------
+#> dapper_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter / 2),
+#>            chains = 1, varnames = NULL)
 
 
 ## ----echo = FALSE-------------------------------------------------------------

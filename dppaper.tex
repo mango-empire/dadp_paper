@@ -1,8 +1,8 @@
 % !TeX root = RJwrapper.tex
-\title{dapper: An R Package for studying differentially private algorithms}
+\title{DAPPER: Data Augmentation for Private Posterior Estimation in R}
 
 
-\author{by Jordan A. Awan, Kevin Eng, Robin Gong, Nianqiao Phyllis Ju, and Vinayak A. Rao}
+\author{by Kevin Eng, Jordan A. Awan, Ruobin Gong, Nianqiao Phyllis Ju, and Vinayak A. Rao}
 
 \maketitle
 
@@ -14,13 +14,30 @@ This paper serves as a reference and introduction on using the dapper R package.
 \section{Introduction}\label{introduction}}
 
 Differential privacy provides a rigorous framework for protecting
-confidential information. One of it's goal is to allow the widespread dissemination
+confidential information. In this framework, privacy is obtained
+through the injection of random noise in the data analysis workflow.
+It has served as the theoretical foundation for recent advances in privacy technology. Several high profile
+examples include Apple (), Google (), Microsoft (), and the
+U.S. Census Bureau ().
+
+One of it's goal is to allow the widespread dissemination
 of summary statistics while hiding sensitive characteristics of the data.
 For example, a data aggregation service might
 collect salary information for the purpose of helping its users negotiate salaries.
-Such information is typically considered both sensitive. In this scenario, there is a strong desire
+Such information is typically considered sensitive. In this scenario, there is a strong desire
 to simultaneously keep the salary information of individuals anonymous and make
 queries of the salary database publicly available.
+
+There are several approaches for constructing or modifying a data analysis workflow
+to provide privacy guarantees and maybe loosely grouped into the three categories: direct, query, and dissemination.
+The approaches mainly differ in where privacy noise is injected in the workflow. The DAPPER package
+address approaches falling under the dissemination category. In this setting,
+data needs to be released to the public and privacy is maintained by first
+perturbing the data with random noise before being released. The U.S. Census Bureau's ``TopDown'\,'
+algorithm (Bureau 2023) is a recent high profile application of differential privacy
+in the dissemination setting. For a nice survey of the direct and query based methods, see the paper by
+(Ji, Lipton, and Elkan 2014) which provides details on how to modify several popular machine learning
+algorithms to have privacy guarantees.
 
 In the context of statistical models,
 considerable effort has been put in ensuring privacy is
@@ -33,12 +50,13 @@ survey that covers the two methods applied to variety of commonly used
 machine learning models. On the other hand, adding noise directly to the data is a less
 studied approach and is the case which this paper addresses.
 
-Statistical regression models typically assume no measurement error in the observed covariate data.
+While the aforementioned modifications will guarantee some form of privacy, they will not guarantee correct statistical inference.
+The statistical workflow typically assumes no measurement error in the observed covariate data.
 In the presence of such errors, standard estimators can exhibit significant bias (Gong 2022).
 Therefore, fitting standard statistical models after adding noise directly to the data for privacy can lead to incorrect
 inference. Adjusting models to take into account noisy covariates has a rich history
 spanning several decades. For textbook length treatments see (Yi 2017; Carroll et al. 2006).
-Prior work mostly focuses on methods which did not require fully specifying the
+Prior work mostly focuses on methods which do not require fully specifying the
 measurement error model, since this was often unknown.
 However, in differential privacy, the measurement error model is exactly known.
 This difference, makes feasible some ideas which the measurement
@@ -173,13 +191,18 @@ The algorithm is in the following pseudo code:
    \]
 \end{enumerate}
 
-\hypertarget{using-dapper}{%
-\section{Using dapper}\label{using-dapper}}
+\hypertarget{the-structure-of-dapper}{%
+\section{The Structure of DAPPER}\label{the-structure-of-dapper}}
 
 The package is structured around the two functions \texttt{dapper\_sample} and
 \texttt{new\_privacy}. The first function is used to draw samples from the
-posterior. The second function is used to create the privacy model. Since the
-input to these functions are R functions, there is a great deal of freedom
+posterior. The second function is used to create a privacy data model object
+which the \texttt{dapper\_sample} function requires as input. The purpose of the data model
+object is to collect all the components specific to the data augmentation algorithm
+into one bundle. This way, the other arguments into \texttt{dapper\_sample} pertain only
+to sampling parameters such as the number of iterations.
+
+Since the input to these functions are R functions, there is a great deal of freedom
 left up to user. The next two sections describe in detail the inputs into
 these functions and highlight some considerations that should be taken
 into account in order avoid slow or unexpected behavior.
@@ -194,33 +217,6 @@ equivalent, but the \(2 \times 2\) matrix will be much more memory efficient.
 In general, the representation that uses the least amount of memory should be
 used. Correctly specifying the privacy model will require a consistent
 representation among all components.
-
-\hypertarget{sampling}{%
-\subsection{Sampling}\label{sampling}}
-
-The main function in \pkg{dapper} is the \texttt{gdp\_sample} function. The call
-signature of the function is:
-
-\begin{verbatim}
-gdp_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter / 2),
-           chains = 1, varnames = NULL)
-\end{verbatim}
-
-The three required inputs into \texttt{gdp\_sample} function are the privacy model (\texttt{data\_model}), the value
-of the observed privatized statistic (\texttt{sdp}), and the total number of observations
-in the complete data (\texttt{nobs}). The dapper
-package is best suited for problems where the complete data can be represented in
-tabular form. This is because internally, it is represented as a matrix.
-
-The optional arguments are the number of mcmc draws (\texttt{niter}), the
-burn in period (\texttt{warmup}), number of chains (\texttt{chains}) and character
-vector that names the parameters. Running multiple chains can be done in parallel
-using the \CRANpkg{furrr} package. Additionally, progress can be monitored
-using the \CRANpkg{progressr} package.
-
-The \texttt{data\_model} input is a \texttt{privacy}
-object that can be constructed using the \texttt{new\_privacy} constructor. The
-process of constructing a \texttt{privacy} object will be discussed in the next section.
 
 \hypertarget{privacy-model}{%
 \subsection{Privacy Model}\label{privacy-model}}
@@ -240,11 +236,11 @@ some care in how each component is constructed.
 \begin{itemize}
 \item
   \texttt{lik\_smpl} is an R function that samples from the likelihood. Its
-  call signature should be \texttt{lik\_smpl(theta)} where \texttt{theta} is a vector
+  syntax should be \texttt{lik\_smpl(theta)} where \texttt{theta} is a vector
   representing the likelihood model parameters being estimated. This function
   must work with the supplied initial parameter provide in the \texttt{init\_par}
-  argument of \texttt{dapper\_sample} function and its output should be a \(n \times k\) matrix. \(k\) the
-  dimension of the complete data table.
+  argument of \texttt{dapper\_sample} function. The output should be a \(n \times k\) matrix
+  where \(k\) is the dimension of the vector of likelihood parameters.
 \item
   \texttt{post\_smpl} is a function which represents the posterior sampler. It should
   have the call signature \texttt{post\_smpl(dmat,\ theta)}. Where \texttt{dmat} is the
@@ -263,6 +259,32 @@ some care in how each component is constructed.
   \texttt{st\_calc} is an R function which calculates the summary statistic. The optional
   argument \texttt{add} is a flag which represents whether \(T\) is additive or not.
 \end{itemize}
+
+\hypertarget{sampling}{%
+\subsection{Sampling}\label{sampling}}
+
+The main function in \pkg{DAPPER} is the \texttt{dapper\_sample} function. The syntax of the function is:
+
+\begin{verbatim}
+dapper_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter / 2),
+           chains = 1, varnames = NULL)
+\end{verbatim}
+
+The three required inputs into \texttt{dapper\_sample} function are the privacy model (\texttt{data\_model}), the value
+of the observed privatized statistic (\texttt{sdp}), and the total number of observations
+in the complete data (\texttt{nobs}). The dapper
+package is best suited for problems where the complete data can be represented in
+tabular form. This is because internally, it is represented as a matrix.
+
+The optional arguments are the number of mcmc draws (\texttt{niter}), the
+burn in period (\texttt{warmup}), number of chains (\texttt{chains}) and character
+vector that names the parameters. Running multiple chains can be done in parallel
+using the \CRANpkg{furrr} package. Additionally, progress can be monitored
+using the \CRANpkg{progressr} package.
+
+The \texttt{data\_model} input is a \texttt{privacy}
+object that can be constructed using the \texttt{new\_privacy} constructor. The
+process of constructing a \texttt{privacy} object will be discussed in the next section.
 
 \hypertarget{examples}{%
 \section{Examples}\label{examples}}
@@ -446,6 +468,9 @@ This package is cool. You should install it.
 
 \hypertarget{refs}{}
 \begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-TopDown}{}}%
+Bureau, U. S. Census. 2023. {``Disclosure Avoidance and the 2020 Census: How the TopDown Algorithm Works.''} 2023. \url{https://www.census.gov/library/publications/2023/decennial/c2020br-04.html}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-Carroll2006}{}}%
 Carroll, Raymond J., David Ruppert, Leonard A. Stefanski, and Ciprian M. Crainiceanu. 2006. \emph{Measurement Error in Nonlinear Models}. Chapman; Hall/CRC. \url{https://doi.org/10.1201/9781420010138}.
 
@@ -478,16 +503,6 @@ Yi, Grace Y. 2017. \emph{Statistical Analysis with Measurement Error or Misclass
 \bibliography{RJreferences.bib}
 
 \address{%
-Jordan A. Awan\\
-Purdue University\\%
-Department of Statistics\\ West Lafayette, IN 47907\\
-%
-\url{https://www.britannica.com/animal/quokka}\\%
-%
-\href{mailto:jawan@purdue.edu}{\nolinkurl{jawan@purdue.edu}}%
-}
-
-\address{%
 Kevin Eng\\
 Rutgers University\\%
 Department of Statistics\\ Piscataway, NJ 08854\\
@@ -498,7 +513,17 @@ Department of Statistics\\ Piscataway, NJ 08854\\
 }
 
 \address{%
-Robin Gong\\
+Jordan A. Awan\\
+Purdue University\\%
+Department of Statistics\\ West Lafayette, IN 47907\\
+%
+\url{https://www.britannica.com/animal/quokka}\\%
+%
+\href{mailto:jawan@purdue.edu}{\nolinkurl{jawan@purdue.edu}}%
+}
+
+\address{%
+Ruobin Gong\\
 Rutgers University\\%
 Department of Statistics\\ Piscataway, NJ 08854\\
 %
