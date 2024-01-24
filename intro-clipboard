@@ -1,0 +1,116 @@
+
+Differential privacy provides a rigorous framework for protecting 
+confidential information. In this framework, privacy is obtained
+through the injection of random noise in the data analysis workflow.
+It has served as the theoretical foundation for recent advances in privacy technology. Several high profile
+examples include Apple (), Google (), Microsoft (), and the 
+U.S. Census Bureau ().
+
+<mark>
+One of it's goal is to allow the widespread dissemination
+of summary statistics while hiding sensitive characteristics of the data. 
+For example, a data aggregation service might 
+collect salary information for the purpose of helping its users negotiate salaries.
+Such information is typically considered sensitive. In this scenario, there is a strong desire
+to simultaneously keep the salary information of individuals anonymous and make
+queries of the salary database publicly available.
+</mark>
+
+There are several approaches for constructing or modifying a data analysis workflow
+to provide privacy guarantees which loosely fall into three categories: direct, query, and dissemination.
+The approaches mainly differ in where privacy noise is injected in the workflow. The DAPPER package
+address approaches falling under the dissemination category. In this setting,
+data needs to be released to the public and privacy is maintained by first
+perturbing the data with random noise before being released. The U.S. Census Bureau's `TopDown`
+algorithm [@TopDown] is a recent high profile application of differential privacy
+in the dissemination setting. For a nice survey of the direct and query based methods, see the paper by
+[@Ji2014] which provides details on how to modify several popular machine learning
+algorithms to have privacy guarantees.
+
+<mark>
+In the context of statistical models, 
+considerable effort has been put in ensuring privacy is
+achieved by using two methods. The first method consist of first fitting the model to the 
+confidential data set and then adding noise to its output. The second method
+injects noise at some point in the model fitting process. The fitting process in many models can be
+viewed as minimizing a loss function. Privacy can be achieved by 
+adding random perturbations to the loss function. See [@Ji2014] for a 
+survey that covers the two methods applied to variety of commonly used
+machine learning models. On the other hand, adding noise directly to the data is a less
+studied approach and is the case which this paper addresses. 
+</mark>
+
+While the aforementioned modifications will guarantee some form of privacy, they will not, however, guarantee correct statistical inference.
+As an example, one instance of implementing the dissemination approach for tabular data involves directly
+adding independent, random error to each cell. In the regression setting,
+this corresponds to having data with measurement errors
+in the covariates. This, unfortunately, violate most statistical modeling assumptions. 
+In the presence of such errors, standard estimators can exhibit significant bias [@Gong2022].
+Therefore, fitting models without accounting for the added privacy noise can lead to incorrect inference.
+
+However, the marginal likelihood that would result from correctly accounting for the injected
+privacy noise, is often analytically intractable. As a result,
+it is difficult or impossible to apply common maximum likelihood methods
+to derive estimators. In particular, the marginal likelihood can involve a complex
+integral where it is not possible to even evaluate the likelihood
+at a point. This makes gradient based methods, like the Newton-Raphson method,
+impractical.
+
+The DAPPER package provides a tool for conducting
+valid statistical inference in the presence of privacy noise.
+It implements a Bayesian framework proposed in [@Ju2022]. This framework describes how to modify
+an existing Bayesian model to account for privacy noise. DAPPER
+serves as user-friendly R interface. It allows the user to modify a wide variety
+of Bayesian workflows by automatically modifying an existing sampler
+to account for pivacy noise 
+
+
+
+With respects to the dissemination approach
+described in the previous paragraph, there is a large body of literature
+establishing methods for fitting regression models with measurement errors 
+in the covariates. Though, work in this area mostly focused on methods which did not require fully specifying the 
+measurement error model, since this was often assumed unknown.
+
+
+The statistical workflow typically assumes no measurement error in the observed covariate data. 
+In the presence of such errors, standard estimators can exhibit significant bias [@Gong2022].
+Therefore, fitting standard statistical models after adding noise directly to the data for privacy can lead to incorrect
+inference. Adjusting models to take into account noisy covariates has a rich history
+spanning several decades. For textbook length treatments see [@Yi2017; @Carroll2006].
+Prior work mostly focuses on methods which do not require fully specifying the 
+measurement error model, since this was often unknown.
+However, in differential privacy, the measurement error model is exactly known.
+This difference, makes feasible some ideas which the measurement
+error community has not previously considered [@Smith2011; @Karwa2015].
+
+
+<mark>
+While the aforementioned modifications will guarantee some form of privacy, they will not guarantee correct statistical inference.
+The statistical workflow typically assumes no measurement error in the observed covariate data. 
+In the presence of such errors, standard estimators can exhibit significant bias [@Gong2022].
+Therefore, fitting standard statistical models after adding noise directly to the data for privacy can lead to incorrect
+inference. Adjusting models to take into account noisy covariates has a rich history
+spanning several decades. For textbook length treatments see [@Yi2017; @Carroll2006].
+Prior work mostly focuses on methods which do not require fully specifying the 
+measurement error model, since this was often unknown.
+However, in differential privacy, the measurement error model is exactly known.
+This difference, makes feasible some ideas which the measurement
+error community has not previously considered [@Smith2011; @Karwa2015].
+</mark>
+
+One approach, to account for the added noise, is to treat the confidential data
+as latent quantities within a statistical model. In such settings, it is common
+to conduct inference by specifying a complete likelihood. Once the complete likelihood
+has been specified, parameter estimation can be done using the EM algorithm or
+its Bayesian analogue, the data augmentation method. In the case of dapper,
+inference is done using data augmentation as described in [@Ju2022]. A notable benefit of the Bayesian
+approach is that both uncertainty quantification and estimation are done 
+simultaneously. The EM approach only provides an estimate.
+
+The rest of this article is organized as follows. Section 2 covers the necessary background to understand the mathematical notation
+and ideas used throughout the paper. Section 3 goes over the main algorithm without
+going into mathematical detail, for specifics see [@Ju2022]. Section 4 provides
+an overview of the dapper package and discusses important implementation details.
+Section 5 contains two example of how one might use the package to analyze the 
+impact of adding noise for privacy.
