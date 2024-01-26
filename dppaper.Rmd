@@ -115,10 +115,10 @@ of dissemination methods.
 
 The DAPPER package provides a tool for conducting
 valid statistical inference in the presence of privacy noise.
-It implements a Bayesian framework proposed in [@Ju2022]. This framework describes how to modify
+It implements the Bayesian framework proposed in [@Ju2022]. This framework describes how to modify
 an existing Bayesian model to account for privacy noise. DAPPER
-serves as user-friendly interface for implementing the framework in R. It is a flexible interface that allows the user to input
-a sampler from an existing Bayesian workflow, unadjusted for privacy noise, and 
+serves as user-friendly interface for implementing the framework in R. It allows the
+user to specify a sampler from an existing Bayesian model and
 automatically constructing a valid posterior sampler that accounts for the 
 added privacy noise.
 
@@ -131,7 +131,6 @@ measurement error model, since this is often assumed unknown.
 However, in differential privacy, the measurement error model is exactly known.
 This difference, makes feasible some ideas which the measurement
 error community has not previously considered [@Smith2011; @Karwa2015].
-
 
 The rest of this article is organized as follows. Section 2 covers the necessary background to understand the mathematical notation
 and ideas used throughout the paper. Section 3 goes over the main algorithm without
