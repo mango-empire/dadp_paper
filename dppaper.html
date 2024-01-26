@@ -2828,51 +2828,53 @@ It has served as the theoretical foundation for recent advances in privacy techn
 examples include Apple (), Google (), Microsoft (), and the
 U.S. Census Bureau ().</p>
 <p>There are several approaches for constructing or modifying a data analysis workflow
-to provide privacy guarantees which loosely fall into three categories: direct, query, and dissemination.
-The approaches mainly differ in where privacy noise is injected in the workflow. The DAPPER package
-address approaches falling under the dissemination category. In this setting,
-data needs to be released to the public and privacy is maintained by first
-perturbing the data with random noise before being released. The U.S. Census Bureau’s <code>TopDown</code>
-algorithm <span class="citation" data-cites="TopDown">(<a href="#ref-TopDown" role="doc-biblioref">Bureau 2023</a>)</span> is a recent high profile application of differential privacy
-in the dissemination setting. For a nice survey of the direct and query based methods, see the paper by
-<span class="citation" data-cites="Ji2014">(<a href="#ref-Ji2014" role="doc-biblioref">Ji et al. 2014</a>)</span> which provides details on how to modify several popular machine learning
-algorithms to have privacy guarantees.</p>
-<p>While the aforementioned modifications will guarantee some form of privacy, they will not, however, guarantee correct statistical inference.
+to provide privacy guarantees, which loosely fall into three categories: direct, query, and dissemination.
+The approaches mainly differ in where in the workflow privacy noise is injected.
+In the dissemination setting, data needs to be released to the public, and privacy is maintained by first
+perturbing the data with random noise before being released. There is strong interest
+in further developing this approach because data curators are often interested
+in releasing data to the public without knowledge of how their data will
+be used or analyzed. In this scenario, it can be impossible to apply the direct or
+query method because they require knowing before hand how the data will be analyzed.
+For a recent example of a high profile application of the dissemination approach
+see the the U.S. Census Bureau’s <code>TopDown</code> algorithm <span class="citation" data-cites="TopDown">(<a href="#ref-TopDown" role="doc-biblioref">Bureau 2023</a>)</span>. <span class="citation" data-cites="Ji2014">(<a href="#ref-Ji2014" role="doc-biblioref">Ji et al. 2014</a>)</span>
+provide a nice survey of the direct and query based methods applied to
+common machine learning algorithms.</p>
+<p>Correctly carrying out statistical inference in the dissemination setting
+requires adjusting statistical workflows to account for privacy noise.
 As an example, one instance of implementing the dissemination approach for tabular data involves directly
-adding independent, random error to each cell. In the regression setting,
+adding independent, random error to each cell. For regression models,
 this corresponds to having data with measurement errors
 in the covariates. This, unfortunately, violates the assumptions of most statistical models.
 In the presence of such errors, standard estimators can exhibit significant bias <span class="citation" data-cites="Gong2022">(<a href="#ref-Gong2022" role="doc-biblioref">Gong 2022</a>)</span>.
 Therefore, fitting models without accounting for the added privacy noise can lead to incorrect inference.</p>
-<p>However, the marginal likelihood that would result from correctly accounting for the injected
-privacy noise, is often analytically intractable. As a result,
+<p>Unfortunately, making the necessary adjustments poses formidable mathematical
+challenges, even for seemingly simple models like linear regression.
+The difficulty can be seen from considering the marginal likelihood that results from correctly accounting for the injected
+privacy noise. This function is often analytically intractable and as a result,
 it is difficult or impossible to apply common maximum likelihood methods
 to derive estimators. In particular, the marginal likelihood can involve a complex
 integral where it is not possible to even evaluate the likelihood
 at a point. This makes gradient based methods, like the Newton-Raphson method,
 impractical. And approximating the likelihood can be computationally
-unfeasible since the integral is also of high dimension.</p>
+unfeasible since the integral is also of high dimension.
+Few tools are available to researchers to address these issues,
+and their absence is a serious barrier to the wider adoption
+of dissemination methods.</p>
 <p>The DAPPER package provides a tool for conducting
 valid statistical inference in the presence of privacy noise.
 It implements a Bayesian framework proposed in <span class="citation" data-cites="Ju2022">(<a href="#ref-Ju2022" role="doc-biblioref">Ju et al. 2022</a>)</span>. This framework describes how to modify
 an existing Bayesian model to account for privacy noise. DAPPER
-serves as user-friendly interface for implementing the framework in R. It gives the user
-a great deal of flexibility by allowing the user to input
+serves as user-friendly interface for implementing the framework in R. It is a flexible interface that allows the user to input
 a sampler from an existing Bayesian workflow, unadjusted for privacy noise, and
 automatically constructing a valid posterior sampler that accounts for the
 added privacy noise.</p>
-<p>With respects to the dissemination approach
-described in the previous paragraph, there is a large body of literature
-establishing methods for fitting regression models with measurement errors
-in the covariates. Though, work in this area mostly focused on methods which did not require fully specifying the
-measurement error model, since this was often assumed unknown.</p>
-<p>The statistical workflow typically assumes no measurement error in the observed covariate data.
-In the presence of such errors, standard estimators can exhibit significant bias <span class="citation" data-cites="Gong2022">(<a href="#ref-Gong2022" role="doc-biblioref">Gong 2022</a>)</span>.
-Therefore, fitting standard statistical models after adding noise directly to the data for privacy can lead to incorrect
-inference. Adjusting models to take into account noisy covariates has a rich history
-spanning several decades. For textbook length treatments see <span class="citation" data-cites="Yi2017 Carroll2006">(<a href="#ref-Carroll2006" role="doc-biblioref">Carroll et al. 2006</a>; <a href="#ref-Yi2017" role="doc-biblioref">Yi 2017</a>)</span>.
-Prior work mostly focuses on methods which do not require fully specifying the
-measurement error model, since this was often unknown.
+<p>In the previously mentioned case where privacy noise is
+directly added to each cell of a data table, there exist
+readily available methods from measurement error literature for making adjustments.
+For textbook length treatments on the topic see <span class="citation" data-cites="Yi2017 Carroll2006">(<a href="#ref-Carroll2006" role="doc-biblioref">Carroll et al. 2006</a>; <a href="#ref-Yi2017" role="doc-biblioref">Yi 2017</a>)</span>.
+Work in this area mostly focuses on methods which do not require fully specifying the
+measurement error model, since this is often assumed unknown.
 However, in differential privacy, the measurement error model is exactly known.
 This difference, makes feasible some ideas which the measurement
 error community has not previously considered <span class="citation" data-cites="Smith2011 Karwa2015">(<a href="#ref-Smith2011" role="doc-biblioref">Smith 2011</a>; <a href="#ref-Karwa2015" role="doc-biblioref">Karwa et al. 2015</a>)</span>.</p>
@@ -2960,7 +2962,7 @@ update <span class="math inline">\(s(x^*, s_{dp}) = t(x,s_{dp}) - t_i(x_i,s_{dp}
 given by:</li>
 </ul>
 <span class="math display">\[
-   \alpha(x_i^* \mid x_i, x_{-i}, \theta) = \min \left\{ \dfrac{\eta(s_{dp} \mid x_i^*, x_{-i})}{\eta(s_{dp} \mid x_i, x_{-i})} \right\}.
+   \alpha(x_i^* \mid x_i, x_{-i}, \theta) = \min \left\{ 1, \dfrac{\eta(s_{dp} \mid x_i^*, x_{-i})}{\eta(s_{dp} \mid x_i, x_{-i})} \right\}.
 \]</span></li>
 </ol>
 <h2 data-number="4" id="the-structure-of-dapper"><span class="header-section-number">4</span> The Structure of DAPPER</h2>
@@ -3261,7 +3263,8 @@ normal for large sample sizes.
 </div>
 <pre><code>[1] 2.293115 2.274220</code></pre>
 </div>
-<h3 data-number="5.2" id="logistic-regression"><span class="header-section-number">5.2</span> Logistic Regression</h3>
+<h3 data-number="5.2" id="linear-regression"><span class="header-section-number">5.2</span> Linear Regression</h3>
+<h3 data-number="5.3" id="logistic-regression"><span class="header-section-number">5.3</span> Logistic Regression</h3>
 <h2 data-number="6" id="summary"><span class="header-section-number">6</span> Summary</h2>
 <p>This package is cool. You should install it.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>

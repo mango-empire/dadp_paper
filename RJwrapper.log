@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.1.24)  24 JAN 2024 02:00
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.1.24)  26 JAN 2024 02:04
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -725,12 +725,12 @@ Package: ltcaption 2021/01/08 v1.4c longtable captions (AR)
 )
 Package caption Info: End \AtBeginDocument code.
 (./dppaper.tex
-LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 28.
+LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 33.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd
 File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 9.18004pt on input line 28.
+(Font)              scaled to size 9.18004pt on input line 33.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
@@ -738,23 +738,23 @@ Package microtype Info: Loading generic protrusion settings for font family
 [1{c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}
 
 {c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}]
-LaTeX Font Info:    Trying to load font information for OT1+ppl on input line 88.
+LaTeX Font Info:    Trying to load font information for OT1+ppl on input line 89.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/psnfss/ot1ppl.fd
 File: ot1ppl.fd 2001/06/04 font definitions for OT1/ppl.
 )
-LaTeX Font Info:    Trying to load font information for OML+zplm on input line 88.
+LaTeX Font Info:    Trying to load font information for OML+zplm on input line 89.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/psnfss/omlzplm.fd
 File: omlzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OML/zplm.
 )
-LaTeX Font Info:    Trying to load font information for OMS+zplm on input line 88.
+LaTeX Font Info:    Trying to load font information for OMS+zplm on input line 89.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/psnfss/omszplm.fd
 File: omszplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMS/zplm.
 )
-LaTeX Font Info:    Trying to load font information for OMX+zplm on input line 88.
+LaTeX Font Info:    Trying to load font information for OMX+zplm on input line 89.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/psnfss/omxzplm.fd
 File: omxzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMX/zplm.
 )
-LaTeX Font Info:    Trying to load font information for OT1+zplm on input line 88.
+LaTeX Font Info:    Trying to load font information for OT1+zplm on input line 89.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/psnfss/ot1zplm.fd
 File: ot1zplm.fd 2002/09/08 Fontinst v1.914 font definitions for OT1/zplm.
 )
@@ -763,64 +763,64 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 9.37807pt on input line 88.
+(Font)              scaled to size 9.37807pt on input line 89.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 7.29405pt on input line 88.
+(Font)              scaled to size 7.29405pt on input line 89.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 5.21004pt on input line 88.
+(Font)              scaled to size 5.21004pt on input line 89.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 9.37807pt on input line 88.
+(Font)              scaled to size 9.37807pt on input line 89.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 7.29405pt on input line 88.
+(Font)              scaled to size 7.29405pt on input line 89.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 5.21004pt on input line 88.
-LaTeX Font Info:    Trying to load font information for TS1+ppl on input line 151.
+(Font)              scaled to size 5.21004pt on input line 89.
+LaTeX Font Info:    Trying to load font information for TS1+ppl on input line 152.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/psnfss/ts1ppl.fd
 File: ts1ppl.fd 2001/06/04 font definitions for TS1/ppl.
 ) [2]
-Overfull \hbox (1.7663pt too wide) in paragraph at lines 242--249
+Overfull \hbox (1.7663pt too wide) in paragraph at lines 243--250
 []\T1/zi4/m/n/9 lik_smpl \T1/ppl/m/n/9 (-20) is an R func-tion that sam-ples from the like-li-hood. Its syn-tax should be \T1/zi4/m/n/9 lik_smpl(theta)
  []
 
 [3]
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 309.
+(Font)              scaled to size 10.42007pt on input line 310.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 309.
+(Font)              scaled to size 7.91925pt on input line 310.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 309.
+(Font)              scaled to size 6.25204pt on input line 310.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 309.
+(Font)              scaled to size 10.42007pt on input line 310.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 309.
+(Font)              scaled to size 7.91925pt on input line 310.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 309.
+(Font)              scaled to size 6.25204pt on input line 310.
 [4]
-<dppaper_files/figure-latex/unnamed-chunk-12-1.pdf, id=113, 361.35pt x 216.81pt>
+<dppaper_files/figure-latex/unnamed-chunk-12-1.pdf, id=118, 361.35pt x 216.81pt>
 File: dppaper_files/figure-latex/unnamed-chunk-12-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/unnamed-chunk-12-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-12-1.pdf  used on input line 415.
+Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-12-1.pdf  used on input line 416.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
 [5 <./dppaper_files/figure-latex/unnamed-chunk-12-1.pdf>]
-<dppaper_files/figure-latex/unnamed-chunk-13-1.pdf, id=125, 361.35pt x 216.81pt>
+<dppaper_files/figure-latex/unnamed-chunk-13-1.pdf, id=129, 361.35pt x 216.81pt>
 File: dppaper_files/figure-latex/unnamed-chunk-13-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/unnamed-chunk-13-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-13-1.pdf  used on input line 424.
+Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-13-1.pdf  used on input line 425.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
 [6 <./dppaper_files/figure-latex/unnamed-chunk-13-1.pdf>]
 No file RJwrapper.bbl.
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 517.
+(Font)              using `T1/zi4/m/n' instead on input line 521.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 517.
+(Font)              scaled to size 9.18004pt on input line 521.
 ) [7] (./RJwrapper.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
@@ -830,21 +830,21 @@ L3 programming layer <2024-01-22>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
-(rerunfilecheck)             Checksum: 49622208706D77804C5884C6521D6CAC;2061.
+(rerunfilecheck)             Checksum: D67E01A2ED751C46EF6B7FC7C6464BAA;2211.
  ) 
 Here is how much of TeX's memory you used:
- 26754 strings out of 476182
- 490453 string characters out of 5793842
+ 26755 strings out of 476182
+ 490499 string characters out of 5793842
  1941978 words of memory out of 5000000
- 47955 multiletter control sequences out of 15000+600000
- 606147 words of font info for 277 fonts, out of 8000000 for 9000
+ 47957 multiletter control sequences out of 15000+600000
+ 605988 words of font info for 275 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 117i,11n,131p,1006b,981s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 117i,12n,131p,1006b,981s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (7 pages, 336115 bytes).
+Output written on RJwrapper.pdf (7 pages, 336273 bytes).
 PDF statistics:
- 238 PDF objects out of 1000 (max. 8388607)
- 202 compressed objects within 3 object streams
- 54 named destinations out of 1000 (max. 500000)
- 67207 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 244 PDF objects out of 1000 (max. 8388607)
+ 208 compressed objects within 3 object streams
+ 56 named destinations out of 1000 (max. 500000)
+ 67215 words of extra memory for PDF output out of 74296 (max. 10000000)
 
