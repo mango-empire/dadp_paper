@@ -142,38 +142,47 @@ impact of adding noise for privacy.
 # Background
 
 Let $x = (x_1, \ldots, x_n) \in \mathcal{X}^n$ represent a confidential 
-database containing $n$ records. Usually the goal of collecting data 
+database containing $n$ records. Usually, the goal of collecting data 
 is to learn some characteristic about the underlying population. 
 To accomplish this task, a common approach is to assume the population
 is represented by some statistical model $f( \cdot \mid \theta)$. It is often the case that
 some function of $\theta$ has relevant meaning to the scientific question at hand. In this setting,
 learning characteristics of a population reduces to learning about $\theta$. 
 
-In the Bayesian framework, this is accomplished by drawing samples from the 
+In the Bayesian statistical framework, learning about $\theta$ is accomplished by drawing samples from the 
 posterior $p(\theta \mid x) \propto f(x \mid \theta) p(\theta)$. For 
 large data sets, it is common to work with a summary statistic $s = s(x)$
 that has much smaller dimension than the original data. Doing so can
 greatly simplify calculations. In general, there can be information
 loss with using summary statistics, but for models with a sufficient 
-statistic, there is no loss. In the context of privacy, providing
-a summary statistic can offer a level of anonymity.
+statistic, there is no loss. Curators of large databases
+often use summary statistics to publicize data since it allows them
+to efficiently communicate information contained in large data sets.
+For this reason, summary statistics are a natural target for
+dissemination based privacy approaches.
 
 
 ## Differential Privacy
-While a summary statistic can already anonymize the data, it is still 
+While a summary statistic can already partially anonymize data, it is still 
 possible to deduce information about an individual entry depending on
-the distribution of $x$. For additional anonymity, one idea is to 
-add noise to the summary statistic $s$. More formally we write 
-$s_{dp} \sim \eta(\cdot \mid x)$. Here, $s_{dp}$ is the noise infused version of $s$ and
-$\eta$ is a known noise infusion process. The privacy mechanism
+the distribution of $x$. Differential privacy
+solves this problem by taking a summary statistic $s$, and adding noise to it to produce a noisy summary statistic $s_{dp}$.
+While this method is not new [insert citation on swapping and randomized responses], differential privacy
+provides a rigorous framework for specify where and how much
+noise to add. 
+
+We now describe the $\epsilon$-DP privacy framework in more detail. For the noisy summary 
+statistic, we write $s_{dp} \sim \eta(\cdot \mid x)$. Here,
+$\eta$ is a known noise infusion process designed to meet a certain property: The privacy mechanism
 $\eta$ is said to be $\epsilon$-differentially private [@Dwork2013] if for all values of
 $s_{dp}$, and all "neighboring" databases $(x,x') \in \mathcal{X}^n \times \mathcal{X}^n$ differing
-by one record (denoated by $d(x,x')$), the probability ratio is bounded:
+by one record (denoted by $d(x,x')$), the probability ratio is bounded:
 \[
 \dfrac{\eta(s_{dp} \mid x)}{\eta(s_{dp} \mid x')} \leq \exp(\epsilon), \quad \epsilon > 0.
 \]
-The parameter $\epsilon$ is called the privacy loss budget, and controls how informative $s_{dp}$
-is about $x$. Larger values of $\epsilon$ correspond to less noise being added. 
+The parameter $\epsilon$ is called the privacy loss budget, and controls how 
+strong the privacy guarantee is. Larger values of $\epsilon$ correspond to weaker
+privacy guarantees which in turn means less noise being added.
 
 ## Data Augmentation
 The idea behind data augmentation is to run a Gibbs sampler on a coupling of two random variables where one 
@@ -188,8 +197,8 @@ some foresight.
 # Methodology
 Given data $s_{dp}$, the goal of Bayesian inference is to sample from the 
 posterior distribution $p(\theta \mid s_{dp})$. Since the observed likelihood,
-$p(s_{dp} \mid \theta)$ often has no simple closed form expression, most standard
-sampling schemes do not apply. To conduct privacy aware Bayesian inference, the dapper package implements
+$p(s_{dp} \mid \theta)$, often has no simple closed form expression, most standard
+sampling schemes do not apply. To conduct privacy-aware Bayesian inference, the dapper package implements
 the data augmentation algorithm which allows us to sample from $p(\theta \mid s_{dp})$
 without needing to specify $p(s_{dp} \mid \theta)$.
 
@@ -204,15 +213,19 @@ is just the usual posterior distribution given the confidential data $x$. The da
 package assumes the user has access to a sampler for $p(\theta \mid x)$. This can
 come from any R package such as fmcmc. For the second distribution, $p(x \mid \theta, s_{dp})$, may
 only be known up to a constant. The dapper package samples from this distribution by
-running a Gibbs like sampler. Each of the $n$ components of $x$ is individually
+running a Gibbs-like sampler. Each of the $n$ components of $x$ is individually
 updated. However unlike the standard Gibbs sampler, each component is updated
 using a Metropolis-Hasting algorithm. This method is sometimes called the Metropolis within Gibbs sampler [@Robert2004].
 
 In some cases, sampling from $p(x \mid \theta, s_{dp})$ can be made more efficient
-when the summary statistic can be written as the sum of individual
-contributions from each observation. More precisely, we say a statistic satisfies
-the record additivity property if $\eta(s_{dp} \mid x) = g(s_{dp}, \sum_{i=1}^{n}t_i(x_i, s_{dp}))$
-for some known and tractable functions $g, t_1, \ldots, t_n$. 
+when the privacy mechanism can be written as a function of $s_{dp}$ and
+a sum consisting of contribution from each individual record. More precisely, we say the privacy mechanism satisfies
+the record additivity property if 
+\[
+\eta(s_{dp} \mid x) = g(s_{dp}, \sum_{i=1}^{n}t_i(x_i, s_{dp}))
+\]
+for some known and tractable functions $g, t_1, \ldots, t_n$. The sample mean is a
+example of a summary statistic satisfying record additivity where $t_i(x_i, s_{dp}) = x_i$.
 
 
 The algorithm is in the following pseudo code:
@@ -332,9 +345,10 @@ process of constructing a `privacy` object will be discussed in the next section
 A common procedure when analyzing contingency tables is to estimate the 
 odds ratio. Something something about safetab to connect back to DP (dont forget citation!). 
 As a demonstration, we analyze the UC Berkeley admissions data, which is often
-used as an illustrative example of Simpson's paradox. The question is whether
+used as an illustrative example of Simpson's paradox. The question posed is whether
 the data suggest there is bias against females during the college admissions 
-process. Below is a table of the aggregate admissions result from six departments based on sex.
+process. Below is a table of the aggregate admissions result from six departments based on sex
+for a total of $N = 4526$ applicants.
 
 
 ```{r, echo = FALSE}
@@ -361,7 +375,7 @@ sdp <- c(adm_prv)
 Below we walk through the process of defining a privacy model.
 
 
-1. `lik_smpl`: Conditional on the table total, the table counts follow a multinomial
+1. `lik_f`: Conditional on the table total, the table counts follow a multinomial
 distribution. We can easily draw from this distribution using the
 `rmultinom` function in the `base` stats package. Note, in this example,
 the return value of one sample from `rmultinom` is a $4 \times 1$ matrix. In order to 
@@ -371,7 +385,7 @@ conform with `dapper_sample` we must convert the matrix to a vector.
       t(rmultinom(1, 4526, theta))
     }
     ```
-2. `post_smpl`: Given confidential data $X$ we can derive the posterior analytically
+2. `post_f`: Given confidential data $X$ we can derive the posterior analytically
 using a Dirichlet prior. In this example, we use a flat prior which
 corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
 can be generated using the gamma distribution via the following relation (INSERT)
@@ -470,14 +484,64 @@ exp(or_confint(x, .95))
 exp(or_confint(sdp, .95))
 ```
 
+
 ## Linear Regression
+[@Ju2022] consider applying a Laplace privacy 
+mechanism to a sufficient summary statistic for a linear regression model. 
+In their paper, the distribution of the covariates come from a multivariate normal
+distribution which necessitates using a clamping function to guarantee
+$\epsilon$-differential privacy. In this example, the covariates will come
+from a uniform distribution, which will automatically be bounded.
 
-## Logistic Regression
+Suppose data are generated by the process 
+\[
+y = \beta_0 + \beta_1x_2 + \beta_2x_2
+\]
 
-```{r, eval = FALSE, include= FALSE}
+1. `lik_f`: Conditional on the table total, the table counts follow a multinomial
+distribution. We can easily draw from this distribution using the
+`rmultinom` function in the `base` stats package. Note, in this example,
+the return value of one sample from `rmultinom` is a $4 \times 1$ matrix. In order to 
+conform with `dapper_sample` we must convert the matrix to a vector.
+    ```{r, echo = TRUE}
+    lik_smpl <- function(theta) {
+      t(rmultinom(1, 4526, theta))
+    }
+    ```
+2. `post_f`: Given confidential data $X$ we can derive the posterior analytically
+using a Dirichlet prior. In this example, we use a flat prior which
+corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
+can be generated using the gamma distribution via the following relation (INSERT)
+    ```{r, echo = TRUE}
+    post_smpl <- function(dmat, theta) {
+      x <- c(dmat)
+      t1 <- rgamma(length(theta), x + 1, 1)
+      t1/sum(t1)
+    }
+    ```
+3. `st_calc`: The complete data can be represented in two ways. Micro vs cell totals.
+(what section to introduce?) This function must return a vector.
+    ```{r, echo = TRUE}
+    st_calc <- function(dmat) {
+      c(dmat)
+    }
+    ```
+4. `ll_priv_mech`: Privacy Mechanism
+Guassian white noise is added to each cell total. Hence given
+confidential data $(n_{11}, n_{22}, n_{12}, n_{21})$
+\[
+\eta(s_{dp} \mid x) = \prod \phi(s_{sd}; n_{ij}, 100^2)
+\]
+    ```{r, echo = TRUE}
+    ll_priv_mech <- function(sdp, x) {
+      dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
+    }
+    ```
 
 
-```
+
+
+
 
 # Summary
 

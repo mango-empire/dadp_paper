@@ -111,7 +111,28 @@ exp(or_confint(x, .95))
 exp(or_confint(sdp, .95))
 
 
-## ----eval = FALSE, include= FALSE---------------------------------------------
-#> 
-#> 
+## ----echo = TRUE--------------------------------------------------------------
+lik_smpl <- function(theta) {
+  t(rmultinom(1, 4526, theta))
+}
+
+
+## ----echo = TRUE--------------------------------------------------------------
+post_smpl <- function(dmat, theta) {
+  x <- c(dmat)
+  t1 <- rgamma(length(theta), x + 1, 1)
+  t1/sum(t1)
+}
+
+
+## ----echo = TRUE--------------------------------------------------------------
+st_calc <- function(dmat) {
+  c(dmat)
+}
+
+
+## ----echo = TRUE--------------------------------------------------------------
+ll_priv_mech <- function(sdp, x) {
+  dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
+}
 

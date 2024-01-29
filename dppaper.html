@@ -2863,10 +2863,10 @@ and their absence is a serious barrier to the wider adoption
 of dissemination methods.</p>
 <p>The DAPPER package provides a tool for conducting
 valid statistical inference in the presence of privacy noise.
-It implements a Bayesian framework proposed in <span class="citation" data-cites="Ju2022">(<a href="#ref-Ju2022" role="doc-biblioref">Ju et al. 2022</a>)</span>. This framework describes how to modify
+It implements the Bayesian framework proposed in <span class="citation" data-cites="Ju2022">(<a href="#ref-Ju2022" role="doc-biblioref">Ju et al. 2022</a>)</span>. This framework describes how to modify
 an existing Bayesian model to account for privacy noise. DAPPER
-serves as user-friendly interface for implementing the framework in R. It is a flexible interface that allows the user to input
-a sampler from an existing Bayesian workflow, unadjusted for privacy noise, and
+serves as user-friendly interface for implementing the framework in R. It allows the
+user to specify a sampler from an existing Bayesian model and
 automatically constructing a valid posterior sampler that accounts for the
 added privacy noise.</p>
 <p>In the previously mentioned case where privacy noise is
@@ -2886,35 +2886,43 @@ Section 5 contains two example of how one might use the package to analyze the
 impact of adding noise for privacy.</p>
 <h2 data-number="2" id="background"><span class="header-section-number">2</span> Background</h2>
 <p>Let <span class="math inline">\(x = (x_1, \ldots, x_n) \in \mathcal{X}^n\)</span> represent a confidential
-database containing <span class="math inline">\(n\)</span> records. Usually the goal of collecting data
+database containing <span class="math inline">\(n\)</span> records. Usually, the goal of collecting data
 is to learn some characteristic about the underlying population.
 To accomplish this task, a common approach is to assume the population
 is represented by some statistical model <span class="math inline">\(f( \cdot \mid \theta)\)</span>. It is often the case that
 some function of <span class="math inline">\(\theta\)</span> has relevant meaning to the scientific question at hand. In this setting,
 learning characteristics of a population reduces to learning about <span class="math inline">\(\theta\)</span>.</p>
-<p>In the Bayesian framework, this is accomplished by drawing samples from the
+<p>In the Bayesian statistical framework, learning about <span class="math inline">\(\theta\)</span> is accomplished by drawing samples from the
 posterior <span class="math inline">\(p(\theta \mid x) \propto f(x \mid \theta) p(\theta)\)</span>. For
 large data sets, it is common to work with a summary statistic <span class="math inline">\(s = s(x)\)</span>
 that has much smaller dimension than the original data. Doing so can
 greatly simplify calculations. In general, there can be information
 loss with using summary statistics, but for models with a sufficient
-statistic, there is no loss. In the context of privacy, providing
-a summary statistic can offer a level of anonymity.</p>
+statistic, there is no loss. Curators of large databases
+often use summary statistics to publicize data since it allows them
+to efficiently communicate information contained in large data sets.
+For this reason, summary statistics are a natural target for
+dissemination based privacy approaches.</p>
 <h3 data-number="2.1" id="differential-privacy"><span class="header-section-number">2.1</span> Differential Privacy</h3>
-<p>While a summary statistic can already anonymize the data, it is still
+<p>While a summary statistic can already partially anonymize data, it is still
 possible to deduce information about an individual entry depending on
-the distribution of <span class="math inline">\(x\)</span>. For additional anonymity, one idea is to
-add noise to the summary statistic <span class="math inline">\(s\)</span>. More formally we write
-<span class="math inline">\(s_{dp} \sim \eta(\cdot \mid x)\)</span>. Here, <span class="math inline">\(s_{dp}\)</span> is the noise infused version of <span class="math inline">\(s\)</span> and
-<span class="math inline">\(\eta\)</span> is a known noise infusion process. The privacy mechanism
+the distribution of <span class="math inline">\(x\)</span>. Differential privacy
+solves this problem by taking a summary statistic <span class="math inline">\(s\)</span>, and adding noise to it to produce a noisy summary statistic <span class="math inline">\(s_{dp}\)</span>.
+While this method is not new [insert citation on swapping and randomized responses], differential privacy
+provides a rigorous framework for specify where and how much
+noise to add.</p>
+<p>We now describe the <span class="math inline">\(\epsilon\)</span>-DP privacy framework in more detail. For the noisy summary
+statistic, we write <span class="math inline">\(s_{dp} \sim \eta(\cdot \mid x)\)</span>. Here,
+<span class="math inline">\(\eta\)</span> is a known noise infusion process designed to meet a certain property: The privacy mechanism
 <span class="math inline">\(\eta\)</span> is said to be <span class="math inline">\(\epsilon\)</span>-differentially private <span class="citation" data-cites="Dwork2013">(<a href="#ref-Dwork2013" role="doc-biblioref">Dwork and Roth 2013</a>)</span> if for all values of
 <span class="math inline">\(s_{dp}\)</span>, and all “neighboring” databases <span class="math inline">\((x,x&#39;) \in \mathcal{X}^n \times \mathcal{X}^n\)</span> differing
-by one record (denoated by <span class="math inline">\(d(x,x&#39;)\)</span>), the probability ratio is bounded:
+by one record (denoted by <span class="math inline">\(d(x,x&#39;)\)</span>), the probability ratio is bounded:
 <span class="math display">\[
 \dfrac{\eta(s_{dp} \mid x)}{\eta(s_{dp} \mid x&#39;)} \leq \exp(\epsilon), \quad \epsilon &gt; 0.
 \]</span>
-The parameter <span class="math inline">\(\epsilon\)</span> is called the privacy loss budget, and controls how informative <span class="math inline">\(s_{dp}\)</span>
-is about <span class="math inline">\(x\)</span>. Larger values of <span class="math inline">\(\epsilon\)</span> correspond to less noise being added.</p>
+The parameter <span class="math inline">\(\epsilon\)</span> is called the privacy loss budget, and controls how
+strong the privacy guarantee is. Larger values of <span class="math inline">\(\epsilon\)</span> correspond to weaker
+privacy guarantees which in turn means less noise being added.</p>
 <h3 data-number="2.2" id="data-augmentation"><span class="header-section-number">2.2</span> Data Augmentation</h3>
 <p>The idea behind data augmentation is to run a Gibbs sampler on a coupling of two random variables where one
 of the marginals is the target distribution. Suppose we wish to sample from a density <span class="math inline">\(f_{A}\)</span> which is difficult.
@@ -2927,8 +2935,8 @@ some foresight.</p>
 <h2 data-number="3" id="methodology"><span class="header-section-number">3</span> Methodology</h2>
 <p>Given data <span class="math inline">\(s_{dp}\)</span>, the goal of Bayesian inference is to sample from the
 posterior distribution <span class="math inline">\(p(\theta \mid s_{dp})\)</span>. Since the observed likelihood,
-<span class="math inline">\(p(s_{dp} \mid \theta)\)</span> often has no simple closed form expression, most standard
-sampling schemes do not apply. To conduct privacy aware Bayesian inference, the dapper package implements
+<span class="math inline">\(p(s_{dp} \mid \theta)\)</span>, often has no simple closed form expression, most standard
+sampling schemes do not apply. To conduct privacy-aware Bayesian inference, the dapper package implements
 the data augmentation algorithm which allows us to sample from <span class="math inline">\(p(\theta \mid s_{dp})\)</span>
 without needing to specify <span class="math inline">\(p(s_{dp} \mid \theta)\)</span>.</p>
 <p>The algorithm considers the joint distribution <span class="math inline">\(p(\theta, x \mid s_{dp})\)</span> and
@@ -2942,14 +2950,18 @@ is just the usual posterior distribution given the confidential data <span class
 package assumes the user has access to a sampler for <span class="math inline">\(p(\theta \mid x)\)</span>. This can
 come from any R package such as fmcmc. For the second distribution, <span class="math inline">\(p(x \mid \theta, s_{dp})\)</span>, may
 only be known up to a constant. The dapper package samples from this distribution by
-running a Gibbs like sampler. Each of the <span class="math inline">\(n\)</span> components of <span class="math inline">\(x\)</span> is individually
+running a Gibbs-like sampler. Each of the <span class="math inline">\(n\)</span> components of <span class="math inline">\(x\)</span> is individually
 updated. However unlike the standard Gibbs sampler, each component is updated
 using a Metropolis-Hasting algorithm. This method is sometimes called the Metropolis within Gibbs sampler <span class="citation" data-cites="Robert2004">(<a href="#ref-Robert2004" role="doc-biblioref">Robert and Casella 2004</a>)</span>.</p>
 <p>In some cases, sampling from <span class="math inline">\(p(x \mid \theta, s_{dp})\)</span> can be made more efficient
-when the summary statistic can be written as the sum of individual
-contributions from each observation. More precisely, we say a statistic satisfies
-the record additivity property if <span class="math inline">\(\eta(s_{dp} \mid x) = g(s_{dp}, \sum_{i=1}^{n}t_i(x_i, s_{dp}))\)</span>
-for some known and tractable functions <span class="math inline">\(g, t_1, \ldots, t_n\)</span>.</p>
+when the privacy mechanism can be written as a function of <span class="math inline">\(s_{dp}\)</span> and
+a sum consisting of contribution from each individual record. More precisely, we say the privacy mechanism satisfies
+the record additivity property if
+<span class="math display">\[
+\eta(s_{dp} \mid x) = g(s_{dp}, \sum_{i=1}^{n}t_i(x_i, s_{dp}))
+\]</span>
+for some known and tractable functions <span class="math inline">\(g, t_1, \ldots, t_n\)</span>. The sample mean is a
+example of a summary statistic satisfying record additivity where <span class="math inline">\(t_i(x_i, s_{dp}) = x_i\)</span>.</p>
 <p>The algorithm is in the following pseudo code:</p>
 <ol type="1">
 <li>Sample <span class="math inline">\(\theta^{t+1}\)</span> from <span class="math inline">\(p(\cdot \mid x^{(t)})\)</span>.</li>
@@ -3047,9 +3059,10 @@ process of constructing a <code>privacy</code> object will be discussed in the n
 <p>A common procedure when analyzing contingency tables is to estimate the
 odds ratio. Something something about safetab to connect back to DP (dont forget citation!).
 As a demonstration, we analyze the UC Berkeley admissions data, which is often
-used as an illustrative example of Simpson’s paradox. The question is whether
+used as an illustrative example of Simpson’s paradox. The question posed is whether
 the data suggest there is bias against females during the college admissions
-process. Below is a table of the aggregate admissions result from six departments based on sex.</p>
+process. Below is a table of the aggregate admissions result from six departments based on sex
+for a total of <span class="math inline">\(N = 4526\)</span> applicants.</p>
 <div class="layout-chunk" data-layout="l-body">
 
 </div>
@@ -3146,7 +3159,7 @@ Rejected
 </div>
 <p>Below we walk through the process of defining a privacy model.</p>
 <ol type="1">
-<li><code>lik_smpl</code>: Conditional on the table total, the table counts follow a multinomial
+<li><code>lik_f</code>: Conditional on the table total, the table counts follow a multinomial
 distribution. We can easily draw from this distribution using the
 <code>rmultinom</code> function in the <code>base</code> stats package. Note, in this example,
 the return value of one sample from <code>rmultinom</code> is a <span class="math inline">\(4 \times 1\)</span> matrix. In order to
@@ -3158,7 +3171,7 @@ conform with <code>dapper_sample</code> we must convert the matrix to a vector.
  <span><span class="op">}</span></span></code></pre>
 </div>
 </div></li>
-<li><code>post_smpl</code>: Given confidential data <span class="math inline">\(X\)</span> we can derive the posterior analytically
+<li><code>post_f</code>: Given confidential data <span class="math inline">\(X\)</span> we can derive the posterior analytically
 using a Dirichlet prior. In this example, we use a flat prior which
 corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
 can be generated using the gamma distribution via the following relation (INSERT)
@@ -3264,7 +3277,65 @@ normal for large sample sizes.
 <pre><code>[1] 2.293115 2.274220</code></pre>
 </div>
 <h3 data-number="5.2" id="linear-regression"><span class="header-section-number">5.2</span> Linear Regression</h3>
-<h3 data-number="5.3" id="logistic-regression"><span class="header-section-number">5.3</span> Logistic Regression</h3>
+<p><span class="citation" data-cites="Ju2022">(<a href="#ref-Ju2022" role="doc-biblioref">Ju et al. 2022</a>)</span> consider applying a Laplace privacy
+mechanism to a sufficient summary statistic for a linear regression model.
+In their paper, the distribution of the covariates come from a multivariate normal
+distribution which necessitates using a clamping function to guarantee
+<span class="math inline">\(\epsilon\)</span>-differential privacy. In this example, the covariates will come
+from a uniform distribution, which will automatically be bounded.</p>
+<p>Suppose data are generated by the process
+<span class="math display">\[
+y = \beta_0 + \beta_1x_2 + \beta_2x_2
+\]</span></p>
+<ol type="1">
+<li><code>lik_f</code>: Conditional on the table total, the table counts follow a multinomial
+distribution. We can easily draw from this distribution using the
+<code>rmultinom</code> function in the <code>base</code> stats package. Note, in this example,
+the return value of one sample from <code>rmultinom</code> is a <span class="math inline">\(4 \times 1\)</span> matrix. In order to
+conform with <code>dapper_sample</code> we must convert the matrix to a vector.
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class="va">lik_smpl</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">theta</span><span class="op">)</span> <span class="op">{</span></span>
+ <span>  <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Multinom.html">rmultinom</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">4526</span>, <span class="va">theta</span><span class="op">)</span><span class="op">)</span></span>
+ <span><span class="op">}</span></span></code></pre>
+</div>
+</div></li>
+<li><code>post_f</code>: Given confidential data <span class="math inline">\(X\)</span> we can derive the posterior analytically
+using a Dirichlet prior. In this example, we use a flat prior which
+corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
+can be generated using the gamma distribution via the following relation (INSERT)
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class="va">post_smpl</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">dmat</span>, <span class="va">theta</span><span class="op">)</span> <span class="op">{</span></span>
+ <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">dmat</span><span class="op">)</span></span>
+ <span>  <span class="va">t1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html">rgamma</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">theta</span><span class="op">)</span>, <span class="va">x</span> <span class="op">+</span> <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
+ <span>  <span class="va">t1</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">t1</span><span class="op">)</span></span>
+ <span><span class="op">}</span></span></code></pre>
+</div>
+</div></li>
+<li><code>st_calc</code>: The complete data can be represented in two ways. Micro vs cell totals.
+(what section to introduce?) This function must return a vector.
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class="va">st_calc</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">dmat</span><span class="op">)</span> <span class="op">{</span></span>
+ <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">dmat</span><span class="op">)</span></span>
+ <span><span class="op">}</span></span></code></pre>
+</div>
+</div></li>
+<li><code>ll_priv_mech</code>: Privacy Mechanism
+Guassian white noise is added to each cell total. Hence given
+confidential data <span class="math inline">\((n_{11}, n_{22}, n_{12}, n_{21})\)</span>
+<span class="math display">\[
+\eta(s_{dp} \mid x) = \prod \phi(s_{sd}; n_{ij}, 100^2)
+\]</span>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class="va">ll_priv_mech</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">sdp</span>, <span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+ <span>  <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">dnorm</a></span><span class="op">(</span><span class="va">sdp</span> <span class="op">-</span> <span class="va">x</span>, mean <span class="op">=</span> <span class="fl">0</span>, sd <span class="op">=</span> <span class="fl">100</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+ <span><span class="op">}</span></span></code></pre>
+</div>
+</div></li>
+</ol>
 <h2 data-number="6" id="summary"><span class="header-section-number">6</span> Summary</h2>
 <p>This package is cool. You should install it.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
