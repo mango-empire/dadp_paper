@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.1.24)  29 JAN 2024 01:22
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.1.24)  31 JAN 2024 00:27
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -817,11 +817,11 @@ Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-13-1.pdf  used
 No file RJwrapper.bbl.
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 595.
+(Font)              using `T1/zi4/m/n' instead on input line 619.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 595.
-) [8] (./RJwrapper.aux)
+(Font)              scaled to size 9.18004pt on input line 619.
+[8]) [9] (./RJwrapper.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
@@ -833,18 +833,18 @@ Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
 (rerunfilecheck)             Checksum: AB82954FEAEDE8B0B2C61A9F563130B6;2051.
  ) 
 Here is how much of TeX's memory you used:
- 26738 strings out of 476182
- 490300 string characters out of 5793842
+ 26739 strings out of 476182
+ 490306 string characters out of 5793842
  1941978 words of memory out of 5000000
  47955 multiletter control sequences out of 15000+600000
  605064 words of font info for 263 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  117i,11n,131p,1006b,855s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (8 pages, 341176 bytes).
+Output written on RJwrapper.pdf (9 pages, 343161 bytes).
 PDF statistics:
- 247 PDF objects out of 1000 (max. 8388607)
- 210 compressed objects within 3 object streams
- 59 named destinations out of 1000 (max. 500000)
+ 251 PDF objects out of 1000 (max. 8388607)
+ 213 compressed objects within 3 object streams
+ 60 named destinations out of 1000 (max. 500000)
  67207 words of extra memory for PDF output out of 74296 (max. 10000000)
 

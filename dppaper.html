@@ -3337,7 +3337,29 @@ confidential data <span class="math inline">\((n_{11}, n_{22}, n_{12}, n_{21})\)
 </div></li>
 </ol>
 <h2 data-number="6" id="summary"><span class="header-section-number">6</span> Summary</h2>
-<p>This package is cool. You should install it.</p>
+<p>Currently, there is a dearth of software tools privacy researchers can use
+to evaluate the impact of privacy mechanisms on statistical analyses.
+While there have been tremendous gains in the foundational aspects of privacy,
+the lack of software resources to deploy and work with new privacy techniques has
+hampered their adoption. This gap in capability has been noted by several
+large industry entities who have begun building software ecosystems for
+working with differential privacy. SmartNoise by Microsoft [insert citation], for example,
+is a tool for generating synthetic data that has differentially private guarantees.
+However, the majority of these software tools only address privacy and not the
+ensuing analysis, or if it does address the analysis, only for specific models.
+Privacy researchers currently lack good tools for evaluating the impact
+of privacy mechanisms on a statistical analysis.</p>
+<p>Thus DAPPER helps fill an urgent need by providing researchers a way to evaluate
+how a particular privacy mechanism might effect a statistical analysis. A notable
+feature is its flexibility which allows the users to specify a custom
+privacy mechanism. The benefit being that DAPPER can evaluate already
+established privacy mechanisms and those that have yet to be discovered.</p>
+<p>While DAPPER can be a nice addition to a privacy researcher’s tool kit, there
+is still considerably more work that can be done. From a methodological standpoint,
+DAPPER suffers from slow convergence when the privacy budget is small which is problematic
+because this is the scenario where a privacy mechanism can have the greatest impact
+on a statistical analysis. On the computational end, without a statistic that satisfies
+record additivity, computation time can be unpalatable.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <h3 class="appendix" data-number="6.1" id="cran-packages-used"><span class="header-section-number">6.1</span> CRAN packages used</h3>
 <p><a href="https://cran.r-project.org/package=rstan">rstan</a>, <a href="https://cran.r-project.org/package=fmcmc">fmcmc</a>, <a href="https://cran.r-project.org/package=adaptMCMC">adaptMCMC</a>, <a href="https://cran.r-project.org/package=mcmc">mcmc</a>, <a href="https://cran.r-project.org/package=furrr">furrr</a>, <a href="https://cran.r-project.org/package=progressr">progressr</a></p>

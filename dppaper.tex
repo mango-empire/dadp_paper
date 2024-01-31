@@ -542,7 +542,31 @@ ll_priv_mech <- function(sdp, x) {
 \hypertarget{summary}{%
 \section{Summary}\label{summary}}
 
-This package is cool. You should install it.
+Currently, there is a dearth of software tools privacy researchers can use
+to evaluate the impact of privacy mechanisms on statistical analyses.
+While there have been tremendous gains in the foundational aspects of privacy,
+the lack of software resources to deploy and work with new privacy techniques has
+hampered their adoption. This gap in capability has been noted by several
+large industry entities who have begun building software ecosystems for
+working with differential privacy. SmartNoise by Microsoft {[}insert citation{]}, for example,
+is a tool for generating synthetic data that has differentially private guarantees.
+However, the majority of these software tools only address privacy and not the
+ensuing analysis, or if it does address the analysis, only for specific models.
+Privacy researchers currently lack good tools for evaluating the impact
+of privacy mechanisms on a statistical analysis.
+
+Thus DAPPER helps fill an urgent need by providing researchers a way to evaluate
+how a particular privacy mechanism might effect a statistical analysis. A notable
+feature is its flexibility which allows the users to specify a custom
+privacy mechanism. The benefit being that DAPPER can evaluate already
+established privacy mechanisms and those that have yet to be discovered.
+
+While DAPPER can be a nice addition to a privacy researcher's tool kit, there
+is still considerably more work that can be done. From a methodological standpoint,
+DAPPER suffers from slow convergence when the privacy budget is small which is problematic
+because this is the scenario where a privacy mechanism can have the greatest impact
+on a statistical analysis. On the computational end, without a statistic that satisfies
+record additivity, computation time can be unpalatable.
 
 \hypertarget{references}{%
 \section*{References}\label{references}}
