@@ -1,5 +1,5 @@
 ---
-title: "DAPPER: Data Augmentation for Private
+title: "dapper: Data Augmentation for Private
 Posterior Estimation in R"
 date: "2023-11-01"
 abstract: >
@@ -381,7 +381,7 @@ distribution. We can easily draw from this distribution using the
 the return value of one sample from `rmultinom` is a $4 \times 1$ matrix. In order to 
 conform with `dapper_sample` we must convert the matrix to a vector.
     ```{r, echo = TRUE}
-    lik_smpl <- function(theta) {
+    latent_f <- function(theta) {
       t(rmultinom(1, 4526, theta))
     }
     ```
@@ -390,7 +390,7 @@ using a Dirichlet prior. In this example, we use a flat prior which
 corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
 can be generated using the gamma distribution via the following relation (INSERT)
     ```{r, echo = TRUE}
-    post_smpl <- function(dmat, theta) {
+    post_f <- function(dmat, theta) {
       x <- c(dmat)
       t1 <- rgamma(length(theta), x + 1, 1)
       t1/sum(t1)
@@ -399,7 +399,7 @@ can be generated using the gamma distribution via the following relation (INSERT
 3. `st_calc`: The complete data can be represented in two ways. Micro vs cell totals.
 (what section to introduce?) This function must return a vector.
     ```{r, echo = TRUE}
-    st_calc <- function(dmat) {
+    st_f <- function(dmat) {
       c(dmat)
     }
     ```
@@ -410,7 +410,7 @@ confidential data $(n_{11}, n_{22}, n_{12}, n_{21})$
 \eta(s_{dp} \mid x) = \prod \phi(s_{sd}; n_{ij}, 100^2)
 \]
     ```{r, echo = TRUE}
-    ll_priv_mech <- function(sdp, x) {
+    priv_f <- function(sdp, x) {
       dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
     }
     ```
@@ -421,13 +421,13 @@ confidential data $(n_{11}, n_{22}, n_{12}, n_{21})$
 Once privacy model has been defined we can run `gdp_sample`
 
 ```{r, echo = TRUE}
-library(DPloglin)
-dmod <- new_privacy(post_smpl = post_smpl,
-                    lik_smpl = lik_smpl,
-                    ll_priv_mech = ll_priv_mech,
-                    st_calc = st_calc,
-                    add = FALSE,
-                    npar = 4,
+library(dapper)
+dmod <- new_privacy(post_f   = post_f,
+                    latent_f = latent_f,
+                    priv_f   = priv_f,
+                    st_f     = st_f,
+                    add      = FALSE,
+                    npar     = 4,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
                   
 dp_out <- dapper_sample(dmod,
@@ -547,7 +547,7 @@ confidential data $(n_{11}, n_{22}, n_{12}, n_{21})$
 
 Currently, there is a dearth of software tools privacy researchers can use
 to evaluate the impact of privacy mechanisms on statistical analyses.
-While there have been tremendous gains in the foundational aspects of privacy,
+While there have been tremendous gains in the theoretical aspects of privacy,
 the lack of software resources to deploy and work with new privacy techniques has
 hampered their adoption. This gap in capability has been noted by several
 large industry entities who have begun building software ecosystems for

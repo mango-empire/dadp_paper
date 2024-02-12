@@ -38,13 +38,13 @@ sdp <- c(adm_prv)
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-lik_smpl <- function(theta) {
+latent_f <- function(theta) {
   t(rmultinom(1, 4526, theta))
 }
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-post_smpl <- function(dmat, theta) {
+post_f <- function(dmat, theta) {
   x <- c(dmat)
   t1 <- rgamma(length(theta), x + 1, 1)
   t1/sum(t1)
@@ -52,25 +52,25 @@ post_smpl <- function(dmat, theta) {
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-st_calc <- function(dmat) {
+st_f <- function(dmat) {
   c(dmat)
 }
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-ll_priv_mech <- function(sdp, x) {
+priv_f <- function(sdp, x) {
   dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
 }
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-library(DPloglin)
-dmod <- new_privacy(post_smpl = post_smpl,
-                    lik_smpl = lik_smpl,
-                    ll_priv_mech = ll_priv_mech,
-                    st_calc = st_calc,
-                    add = FALSE,
-                    npar = 4,
+library(dapper)
+dmod <- new_privacy(post_f   = post_f,
+                    latent_f = latent_f,
+                    priv_f   = priv_f,
+                    st_f     = st_f,
+                    add      = FALSE,
+                    npar     = 4,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
                   
 dp_out <- dapper_sample(dmod,
