@@ -3062,7 +3062,11 @@ As a demonstration, we analyze the UC Berkeley admissions data, which is often
 used as an illustrative example of Simpson’s paradox. The question posed is whether
 the data suggest there is bias against females during the college admissions
 process. Below is a table of the aggregate admissions result from six departments based on sex
-for a total of <span class="math inline">\(N = 4526\)</span> applicants.</p>
+for a total of <span class="math inline">\(N = 4526\)</span> applicants. The table on the left represents
+the true admissions data and the table on the right is the result of adding
+independent, <span class="math inline">\(N(0,100^2)\)</span> error to each cell. Throughout the example
+we assume we only have access to the original total count, <span class="math inline">\(N\)</span>, and
+the noise infused table.</p>
 <div class="layout-chunk" data-layout="l-body">
 
 </div>
@@ -3159,7 +3163,7 @@ Rejected
 </div>
 <p>Below we walk through the process of defining a privacy model.</p>
 <ol type="1">
-<li><code>lik_f</code>: Conditional on the table total, the table counts follow a multinomial
+<li><code>latent_f</code>: Since we can condition on the table total <span class="math inline">\(N\)</span>, we can model the original, unobserved table counts as a multinomial
 distribution. We can easily draw from this distribution using the
 <code>rmultinom</code> function in the <code>base</code> stats package. Note, in this example,
 the return value of one sample from <code>rmultinom</code> is a <span class="math inline">\(4 \times 1\)</span> matrix. In order to
@@ -3171,10 +3175,10 @@ conform with <code>dapper_sample</code> we must convert the matrix to a vector.
  <span><span class="op">}</span></span></code></pre>
 </div>
 </div></li>
-<li><code>post_f</code>: Given confidential data <span class="math inline">\(X\)</span> we can derive the posterior analytically
+<li><code>post_f</code>: Given confidential data, we can derive the posterior analytically
 using a Dirichlet prior. In this example, we use a flat prior which
 corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
-can be generated using the gamma distribution via the following relation (INSERT)
+can be generated using random draws from the gamma distribution.
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class="va">post_f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">dmat</span>, <span class="va">theta</span><span class="op">)</span> <span class="op">{</span></span>
@@ -3184,8 +3188,8 @@ can be generated using the gamma distribution via the following relation (INSERT
  <span><span class="op">}</span></span></code></pre>
 </div>
 </div></li>
-<li><code>st_calc</code>: The complete data can be represented in two ways. Micro vs cell totals.
-(what section to introduce?) This function must return a vector.
+<li><code>st_f</code>: Since the latent model only returns one observation from a multinomial
+distribution, we can use the default value.
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class="va">st_f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">dmat</span><span class="op">)</span> <span class="op">{</span></span>
@@ -3193,12 +3197,13 @@ can be generated using the gamma distribution via the following relation (INSERT
  <span><span class="op">}</span></span></code></pre>
 </div>
 </div></li>
-<li><code>ll_priv_mech</code>: Privacy Mechanism
-Guassian white noise is added to each cell total. Hence given
-confidential data <span class="math inline">\((n_{11}, n_{22}, n_{12}, n_{21})\)</span>
+<li><code>priv_f</code>: The privacy mechanism is Guassian white noise drawn from independent <span class="math inline">\(N(0,100^2)\)</span> distributions. Hence given
+confidential table cells <span class="math inline">\((n_{11}, n_{22}, n_{12}, n_{21})\)</span>
 <span class="math display">\[
-\eta(s_{dp} \mid x) = \prod \phi(s_{sd}; n_{ij}, 100^2)
+\eta(s_{dp} \mid x) = \prod \phi(s_{sd}; n_{ij}, 100^2).
 \]</span>
+Here <span class="math inline">\(\phi(\cdot;\mu,\sigma^2)\)</span> is the density of the normal distribution
+with mean and variance <span class="math inline">\(\mu,\sigma^2\)</span>.
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class="va">priv_f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">sdp</span>, <span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
@@ -3208,7 +3213,10 @@ confidential data <span class="math inline">\((n_{11}, n_{22}, n_{12}, n_{21})\)
 </div></li>
 </ol>
 <!-- end of list -->
-<p>Once privacy model has been defined we can run <code>gdp_sample</code></p>
+<p>Once we have defined all components of the model we can
+create a new privacy model object using the <code>new_privacy</code> function and
+feed this into the <code>dapper_sample</code> function. Below we simulate 10,000 posterior
+draws with a burn-in of 1000.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/mango-empire/dapper">dapper</a></span><span class="op">)</span></span>
@@ -3228,7 +3236,9 @@ confidential data <span class="math inline">\((n_{11}, n_{22}, n_{12}, n_{21})\)
 <span>                  init_par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">.25</span>,<span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></code></pre>
 </div>
 </div>
-<p>results can be quickly summarized using the <code>summary</code> function</p>
+<p>results can be quickly summarized using the <code>summary</code> function which is
+displayed below. The <code>rhat</code> values in the table are close to 1, which indicates
+the chain has run long enough to achieve adequate mixing.</p>
 <div class="layout-chunk" data-layout="l-body">
 <pre><code># A tibble: 4 × 10
   variable  mean median     sd    mad     q5   q95  rhat ess_bulk
@@ -3339,7 +3349,7 @@ confidential data <span class="math inline">\((n_{11}, n_{22}, n_{12}, n_{21})\)
 <h2 data-number="6" id="summary"><span class="header-section-number">6</span> Summary</h2>
 <p>Currently, there is a dearth of software tools privacy researchers can use
 to evaluate the impact of privacy mechanisms on statistical analyses.
-While there have been tremendous gains in the foundational aspects of privacy,
+While there have been tremendous gains in the theoretical aspects of privacy,
 the lack of software resources to deploy and work with new privacy techniques has
 hampered their adoption. This gap in capability has been noted by several
 large industry entities who have begun building software ecosystems for

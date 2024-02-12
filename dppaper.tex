@@ -316,7 +316,11 @@ As a demonstration, we analyze the UC Berkeley admissions data, which is often
 used as an illustrative example of Simpson's paradox. The question posed is whether
 the data suggest there is bias against females during the college admissions
 process. Below is a table of the aggregate admissions result from six departments based on sex
-for a total of \(N = 4526\) applicants.
+for a total of \(N = 4526\) applicants. The table on the left represents
+the true admissions data and the table on the right is the result of adding
+independent, \(N(0,100^2)\) error to each cell. Throughout the example
+we assume we only have access to the original total count, \(N\), and
+the noise infused table.
 
 \begin{table}[!h]
 
@@ -345,7 +349,7 @@ Below we walk through the process of defining a privacy model.
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \item
-  \texttt{lik\_f}: Conditional on the table total, the table counts follow a multinomial
+  \texttt{latent\_f}: Since we can condition on the table total \(N\), we can model the original, unobserved table counts as a multinomial
   distribution. We can easily draw from this distribution using the
   \texttt{rmultinom} function in the \texttt{base} stats package. Note, in this example,
   the return value of one sample from \texttt{rmultinom} is a \(4 \times 1\) matrix. In order to
@@ -357,10 +361,10 @@ latent_f <- function(theta) {
 }
 \end{verbatim}
 \item
-  \texttt{post\_f}: Given confidential data \(X\) we can derive the posterior analytically
+  \texttt{post\_f}: Given confidential data, we can derive the posterior analytically
   using a Dirichlet prior. In this example, we use a flat prior which
   corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
-  can be generated using the gamma distribution via the following relation (INSERT)
+  can be generated using random draws from the gamma distribution.
 
 \begin{verbatim}
 post_f <- function(dmat, theta) {
@@ -370,8 +374,8 @@ post_f <- function(dmat, theta) {
 }
 \end{verbatim}
 \item
-  \texttt{st\_calc}: The complete data can be represented in two ways. Micro vs cell totals.
-  (what section to introduce?) This function must return a vector.
+  \texttt{st\_f}: Since the latent model only returns one observation from a multinomial
+  distribution, we can use the default value.
 
 \begin{verbatim}
 st_f <- function(dmat) {
@@ -379,12 +383,13 @@ st_f <- function(dmat) {
 }
 \end{verbatim}
 \item
-  \texttt{ll\_priv\_mech}: Privacy Mechanism
-  Guassian white noise is added to each cell total. Hence given
-  confidential data \((n_{11}, n_{22}, n_{12}, n_{21})\)
+  \texttt{priv\_f}: The privacy mechanism is Guassian white noise drawn from independent \(N(0,100^2)\) distributions. Hence given
+  confidential table cells \((n_{11}, n_{22}, n_{12}, n_{21})\)
   \[
-  \eta(s_{dp} \mid x) = \prod \phi(s_{sd}; n_{ij}, 100^2)
+  \eta(s_{dp} \mid x) = \prod \phi(s_{sd}; n_{ij}, 100^2).
   \]
+  Here \(\phi(\cdot;\mu,\sigma^2)\) is the density of the normal distribution
+  with mean and variance \(\mu,\sigma^2\).
 
 \begin{verbatim}
 priv_f <- function(sdp, x) {
@@ -393,7 +398,10 @@ priv_f <- function(sdp, x) {
 \end{verbatim}
 \end{enumerate}
 
-Once privacy model has been defined we can run \texttt{gdp\_sample}
+Once we have defined all components of the model we can
+create a new privacy model object using the \texttt{new\_privacy} function and
+feed this into the \texttt{dapper\_sample} function. Below we simulate 10,000 posterior
+draws with a burn-in of 1000.
 
 \begin{verbatim}
 library(dapper)
@@ -413,7 +421,9 @@ dp_out <- dapper_sample(dmod,
                   init_par = rep(.25,4))
 \end{verbatim}
 
-results can be quickly summarized using the \texttt{summary} function
+results can be quickly summarized using the \texttt{summary} function which is
+displayed below. The \texttt{rhat} values in the table are close to 1, which indicates
+the chain has run long enough to achieve adequate mixing.
 
 \begin{verbatim}
 #> # A tibble: 4 x 10
@@ -544,7 +554,7 @@ ll_priv_mech <- function(sdp, x) {
 
 Currently, there is a dearth of software tools privacy researchers can use
 to evaluate the impact of privacy mechanisms on statistical analyses.
-While there have been tremendous gains in the foundational aspects of privacy,
+While there have been tremendous gains in the theoretical aspects of privacy,
 the lack of software resources to deploy and work with new privacy techniques has
 hampered their adoption. This gap in capability has been noted by several
 large industry entities who have begun building software ecosystems for
