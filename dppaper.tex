@@ -448,40 +448,35 @@ log odds distribution
 
 \begin{center}\includegraphics{dppaper_files/figure-latex/unnamed-chunk-13-1} \end{center}
 
-(Insert gdp Analysis Here)
-
-For clean data, a estimate for the odds ratio and a confidence interval
-can be constructed using Woolf's method (i.e.~A wald confidence interval).
-It uses the fact that the log of the odds ratio is approximately
-normal for large sample sizes.
+For comparison, we run a standard statistical analysis
+on the noise infused table ignoring the privacy mechanism. The results from dapper
+will allow us to evaluate the impact of privacy on the analysis. A popular estimator for the log odds ratio
+in a \(2 \times 2\) table is
+\[
+\hat{\theta} := \log\left(\dfrac{n_{11} \cdot n_{22}}{n_{12} \cdot n_{21}}\right) 
+\]
+which corresponds to the maximum likelihood estimator under the assumption
+the rows or columns (but not both) are drawn from two independent binomial distributions.
+This is a reasonable assumption for the admissions data since sex can be viewed
+as two independent populations. The asymptotic variance of this estimator is
+\[
+Var(\log(\hat{\theta})) \approx \sqrt{\dfrac{1}{n_{11}} + \dfrac{1}{n_{22}} + \dfrac{1}{n_{12}} + \dfrac{1}{n_{21}}}
+\]
+and the associated Wald based \((1-\alpha)\)-level confidence interval is
 \[
 \log\left(\dfrac{n_{11} \cdot n_{22}}{n_{12} \cdot n_{21}}\right) 
-  \pm z_{\alpha/2}\sqrt{\dfrac{1}{n_{11}} + \dfrac{1}{n_{22}} + \dfrac{1}{n_{12}} + \dfrac{1}{n_{21}}}
+  \pm z_{\alpha/2}\sqrt{\dfrac{1}{n_{11}} + \dfrac{1}{n_{22}} + \dfrac{1}{n_{12}} + \dfrac{1}{n_{21}}}.
 \]
-
-\begin{verbatim}
-or_confint <- function(x, alpha) {
-  or <- log(x[1] * x[4]/ (x[2] * x[3]))
-  se <- sqrt(sum(1/x))
-  c(or - qnorm(alpha/2) * se, or + qnorm(alpha/2) * se)
-}
-
-#clean data
-exp(or_confint(x, .95))
-\end{verbatim}
 
 \begin{verbatim}
 #> [1] 1.848471 1.833718
 \end{verbatim}
 
 \begin{verbatim}
-#privitized data
-exp(or_confint(sdp, .95))
-\end{verbatim}
-
-\begin{verbatim}
 #> [1] 2.293115 2.274220
 \end{verbatim}
+
+Plugging in the numbers, 1.8484712, 1.8337185
 
 \hypertarget{linear-regression}{%
 \subsection{Linear Regression}\label{linear-regression}}
