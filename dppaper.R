@@ -9,41 +9,41 @@ library(tidyverse)
 library(knitr)
 
 
-## ---- echo=TRUE, eval=FALSE---------------------------------------------------
-#> new_privacy(post_smpl = NULL, lik_smpl = NULL, ll_priv_mech = NULL,
-#>             st_calc = NULL, add = FALSE, npar = NULL)
+## ----echo=TRUE, eval=FALSE----------------------------------------------------
+#> new_privacy(post_f = NULL, latent_f = NULL, priv_f = NULL,
+#>             st_f = NULL, add = FALSE, npar = NULL)
 
 
-## ---- echo = TRUE, eval = FALSE-----------------------------------------------
+## ----echo = TRUE, eval = FALSE------------------------------------------------
 #> dapper_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter / 2),
 #>            chains = 1, varnames = NULL)
 
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 set.seed(1)
 tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
 adm_cnf <- Reduce('+', tmp)
 adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100))
 
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
 
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 #generate 2x2 table data
 x <- c(adm_cnf)
 sdp <- c(adm_prv)
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 latent_f <- function(theta) {
   t(rmultinom(1, 4526, theta))
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 post_f <- function(dmat, theta) {
   x <- c(dmat)
   t1 <- rgamma(length(theta), x + 1, 1)
@@ -51,19 +51,19 @@ post_f <- function(dmat, theta) {
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 st_f <- function(dmat) {
   c(dmat)
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 priv_f <- function(sdp, x) {
   dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 library(dapper)
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
@@ -85,11 +85,11 @@ dp_out <- dapper_sample(dmod,
 summary(dp_out)
 
 
-## ---- fig.height=3, fig.width=5, fig.align='center'---------------------------
+## ----fig.height=3, fig.width=5, fig.align='center'----------------------------
 plot(dp_out)
 
 
-## ---- fig.height=3, fig.width=5, fig.align='center'---------------------------
+## ----fig.height=3, fig.width=5, fig.align='center'----------------------------
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 quantile(or, c(.025, .50, .975))
@@ -97,7 +97,7 @@ quantile(or, c(.025, .50, .975))
 ggplot(tibble(x=or), aes(x)) + geom_histogram() + xlim(-1,10)
 
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 or_confint <- function(x, alpha) {
   or <- log(x[1] * x[4]/ (x[2] * x[3]))
   se <- sqrt(sum(1/x))
@@ -111,28 +111,94 @@ exp(or_confint(x, .95))
 exp(or_confint(sdp, .95))
 
 
-## ---- echo = TRUE-------------------------------------------------------------
-lik_smpl <- function(theta) {
-  t(rmultinom(1, 4526, theta))
+## ----echo = TRUE--------------------------------------------------------------
+or_confint <- function(x, alpha) {
+  or <- log(x[1] * x[4]/ (x[2] * x[3]))
+  se <- sqrt(sum(1/x))
+  list(est = or, ci = qnorm(alpha/2) * se)
+}
+tibble(estimate = or_confint(x,.05))
+
+
+
+## ----echo = TRUE--------------------------------------------------------------
+latent_f <- function(theta) {
+  xmat <- MASS::mvrnorm(100 , mu = c(.9,-1.17), Sigma = diag(2))
+  y <- cbind(1,xmat) %*% theta + rnorm(1, sd = sqrt(2))
+  cbind(y,xmat)
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
-post_smpl <- function(dmat, theta) {
-  x <- c(dmat)
-  t1 <- rgamma(length(theta), x + 1, 1)
-  t1/sum(t1)
+## ----echo = TRUE--------------------------------------------------------------
+post_f <- function(dmat, theta) {
+  x <- cbind(1,dmat[,-1])
+  y <- dmat[,1]
+
+  ps_s2 <- solve((1/2) * t(x) %*% x + (1/4) * diag(3))
+  ps_m <- ps_s2 %*% (t(x) %*% y) * (1/2)
+
+  MASS::mvrnorm(1, mu = ps_m, Sigma = ps_s2)
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
-st_calc <- function(dmat) {
-  c(dmat)
+## ----echo = TRUE--------------------------------------------------------------
+clamp_data <- function(dmat) {
+  pmin(pmax(dmat,-10),10) / 10
+}
+
+st_f <- function(dmat) {
+  sdp_mat <- clamp_data(dmat)
+  ydp <- sdp_mat[,1, drop = FALSE]
+  xdp <- cbind(1,sdp_mat[,-1, drop = FALSE])
+
+  s1 <- t(xdp) %*% ydp
+  s2 <- t(ydp) %*% ydp
+  s3 <- t(xdp) %*% xdp
+
+  ur_s1 <- c(s1)
+  ur_s2 <- c(s2)
+  ur_s3 <- s3[upper.tri(s3,diag = TRUE)][-1]
+  c(ur_s1,ur_s2,ur_s3)
 }
 
 
-## ---- echo = TRUE-------------------------------------------------------------
-ll_priv_mech <- function(sdp, x) {
-  dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
+## ----echo = TRUE--------------------------------------------------------------
+#deltaa <- 13
+#epsilon <- 10
+priv_f <- function(sdp, zt) {
+  sum(VGAM::dlaplace(sdp - zt, 0, 13/10, log = TRUE))
 }
+
+
+## ----echo = TRUE--------------------------------------------------------------
+deltaa <- 13
+epsilon <- 10
+n <- 100
+xmat <- MASS::mvrnorm(n, mu = c(.9,-1.17), Sigma = diag(2))
+beta <- c(-1.79, -2.89, -0.66)
+y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
+z <- st_f(cbind(y,xmat))
+z <- z + VGAM::rlaplace(length(z), location = 0, scale = deltaa/epsilon)
+
+dmod <- new_privacy(post_f   = post_f,
+                    latent_f = latent_f,
+                    priv_f   = priv_f,
+                    st_f     = st_f,
+                    npar     = 3,
+                    varnames = c("beta0", "beta1", "beta2"))
+
+dp_out <- dapper_sample(dmod,
+                        sdp = z,
+                        niter = 3000,
+                        warmup = 1000,
+                        chains = 1,
+                        init_par = rep(0,3))
+
+
+## -----------------------------------------------------------------------------
+summary(dp_out)
+
+
+## -----------------------------------------------------------------------------
+plot(dp_out)
 

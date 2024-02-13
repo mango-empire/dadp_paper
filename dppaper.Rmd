@@ -514,7 +514,7 @@ or_confint <- function(x, alpha) {
 tibble(estimate = or_confint(x,.05))
 
 ```
-Plugging in the numbers,  `r exp(or_confint(x, .95))`
+Plugging in the numbers,  
 
 ## Linear Regression
 [@Ju2022] consider applying a Laplace privacy 
@@ -554,8 +554,8 @@ conform with `dapper_sample` we must convert the matrix to a vector.
     ```{r, echo = TRUE}
     latent_f <- function(theta) {
       xmat <- MASS::mvrnorm(100 , mu = c(.9,-1.17), Sigma = diag(2))
-      y <- c(1,xmat) %*% theta + rnorm(1, sd = sqrt(2))
-      c(y,xmat)
+      y <- cbind(1,xmat) %*% theta + rnorm(1, sd = sqrt(2))
+      cbind(y,xmat)
     }
     ```
 2. `post_f`: Given confidential data $X$ we can derive the posterior analytically
@@ -611,7 +611,7 @@ confidential data $(n_{11}, n_{22}, n_{12}, n_{21})$
 
 RUN 
 
-```{r}
+```{r, echo = TRUE}
 deltaa <- 13
 epsilon <- 10
 n <- 100
@@ -630,12 +630,20 @@ dmod <- new_privacy(post_f   = post_f,
 
 dp_out <- dapper_sample(dmod,
                         sdp = z,
-                        niter = 5000,
+                        niter = 3000,
                         warmup = 1000,
                         chains = 1,
                         init_par = rep(0,3))
 ```
 
+
+```{r}
+summary(dp_out)
+```
+
+```{r}
+plot(dp_out)
+```
 # Summary
 
 Currently, there is a dearth of software tools privacy researchers can use
