@@ -101,7 +101,7 @@ ggplot(tibble(x=or), aes(x)) + geom_histogram() + xlim(-1,10)
 or_confint <- function(x, alpha) {
   or <- log(x[1] * x[4]/ (x[2] * x[3]))
   se <- sqrt(sum(1/x))
-  c(or - qnorm(alpha/2) * se, or + qnorm(alpha/2) * se)
+  c(or - qnorm(1 - alpha/2) * se, or + qnorm( 1- alpha/2) * se)
 }
 
 #clean data
@@ -111,14 +111,25 @@ exp(or_confint(x, .95))
 exp(or_confint(sdp, .95))
 
 
-## ----echo = TRUE--------------------------------------------------------------
-or_confint <- function(x, alpha) {
-  or <- log(x[1] * x[4]/ (x[2] * x[3]))
-  se <- sqrt(sum(1/x))
-  list(est = or, ci = qnorm(alpha/2) * se)
-}
-tibble(estimate = or_confint(x,.05))
-
+## ----eval = FALSE, echo = FALSE-----------------------------------------------
+#> or_confint <- function(x, alpha) {
+#>   or <- log(x[1] * x[4]/ (x[2] * x[3]))
+#>   se <- sqrt(sum(1/x))
+#>   list(est = or, ci = qnorm(1-alpha/2) * se)
+#> }
+#> 
+#> 
+#> estimate <- c(or_confint(x,.05)$est,
+#>               or_confint(sdp,.05)$est,
+#>               median(log(or)))
+#> 
+#> 
+#> tmp_df <- tibble(estimate = or_confint(x,.05)$est,
+#>                  ci = or_confint(x,.05)$ci,
+#>                  type = c("Confidential"))
+#> 
+#> tmp_df %>% ggplot(aes(x = estimate, y = type)) + geom_pointrange(aes(xmin = -1, xmax = 1))
+#> 
 
 
 ## ----echo = TRUE--------------------------------------------------------------
@@ -170,29 +181,29 @@ priv_f <- function(sdp, zt) {
 }
 
 
-## ----echo = TRUE--------------------------------------------------------------
-deltaa <- 13
-epsilon <- 10
-n <- 100
-xmat <- MASS::mvrnorm(n, mu = c(.9,-1.17), Sigma = diag(2))
-beta <- c(-1.79, -2.89, -0.66)
-y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
-z <- st_f(cbind(y,xmat))
-z <- z + VGAM::rlaplace(length(z), location = 0, scale = deltaa/epsilon)
-
-dmod <- new_privacy(post_f   = post_f,
-                    latent_f = latent_f,
-                    priv_f   = priv_f,
-                    st_f     = st_f,
-                    npar     = 3,
-                    varnames = c("beta0", "beta1", "beta2"))
-
-dp_out <- dapper_sample(dmod,
-                        sdp = z,
-                        niter = 3000,
-                        warmup = 1000,
-                        chains = 1,
-                        init_par = rep(0,3))
+## ----echo = TRUE, eval = FALSE------------------------------------------------
+#> deltaa <- 13
+#> epsilon <- 10
+#> n <- 100
+#> xmat <- MASS::mvrnorm(n, mu = c(.9,-1.17), Sigma = diag(2))
+#> beta <- c(-1.79, -2.89, -0.66)
+#> y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
+#> z <- st_f(cbind(y,xmat))
+#> z <- z + VGAM::rlaplace(length(z), location = 0, scale = deltaa/epsilon)
+#> 
+#> dmod <- new_privacy(post_f   = post_f,
+#>                     latent_f = latent_f,
+#>                     priv_f   = priv_f,
+#>                     st_f     = st_f,
+#>                     npar     = 3,
+#>                     varnames = c("beta0", "beta1", "beta2"))
+#> 
+#> dp_out <- dapper_sample(dmod,
+#>                         sdp = z,
+#>                         niter = 3000,
+#>                         warmup = 1000,
+#>                         chains = 1,
+#>                         init_par = rep(0,3))
 
 
 ## -----------------------------------------------------------------------------
