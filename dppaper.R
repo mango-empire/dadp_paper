@@ -46,7 +46,7 @@ latent_f <- function(theta) {
 ## ----echo = TRUE--------------------------------------------------------------
 post_f <- function(dmat, theta) {
   x <- c(dmat)
-  t1 <- rgamma(length(theta), x + 1, 1)
+  t1 <- rgamma(4, x + 1, 1)
   t1/sum(t1)
 }
 
@@ -92,44 +92,36 @@ plot(dp_out)
 ## ----fig.height=3, fig.width=5, fig.align='center'----------------------------
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
-quantile(or, c(.025, .50, .975))
-
-ggplot(tibble(x=or), aes(x)) + geom_histogram() + xlim(-1,10)
+ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,4) + xlab("Odds Ratio")
 
 
-## ----echo = FALSE-------------------------------------------------------------
-or_confint <- function(x, alpha) {
-  or <- log(x[1] * x[4]/ (x[2] * x[3]))
-  se <- sqrt(sum(1/x))
-  c(or - qnorm(1 - alpha/2) * se, or + qnorm( 1- alpha/2) * se)
-}
+## ----echo = FALSE, fig.height=3, fig.width=6, fig.align='center'--------------
+set.seed(1)
+confidential_data <- c(1198, 1493, 557, 1278)
+cps <- t(sapply(1:9000, function(s) post_f(confidential_data, NULL)))
+odds_male   <- cps[,1] / cps[,2]
+odds_female <- cps[,3] / cps[,4]
+odds_ratio_conf  <- odds_male/odds_female
 
-#clean data
-exp(or_confint(x, .95))
+set.seed(1)
+noisy_data <- c(1135, 1511, 473, 1438)
+cps <- t(sapply(1:9000, function(s) post_f(noisy_data, NULL)))
+odds_male   <- cps[,1] / cps[,2]
+odds_female <- cps[,3] / cps[,4]
+odds_ratio_noisy  <- odds_male/odds_female
 
-#privitized data
-exp(or_confint(sdp, .95))
+p1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
+  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
+  ggplot(aes(odds_ratio, group = group, fill = group)) + geom_density(alpha = .5) + xlim(1,4)
 
 
-## ----eval = FALSE, echo = FALSE-----------------------------------------------
-#> or_confint <- function(x, alpha) {
-#>   or <- log(x[1] * x[4]/ (x[2] * x[3]))
-#>   se <- sqrt(sum(1/x))
-#>   list(est = or, ci = qnorm(1-alpha/2) * se)
-#> }
-#> 
-#> 
-#> estimate <- c(or_confint(x,.05)$est,
-#>               or_confint(sdp,.05)$est,
-#>               median(log(or)))
-#> 
-#> 
-#> tmp_df <- tibble(estimate = or_confint(x,.05)$est,
-#>                  ci = or_confint(x,.05)$ci,
-#>                  type = c("Confidential"))
-#> 
-#> tmp_df %>% ggplot(aes(x = estimate, y = type)) + geom_pointrange(aes(xmin = -1, xmax = 1))
-#> 
+p2 <- tibble(confidential = odds_ratio_conf, dapper = or) %>%
+  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
+  ggplot(aes(odds_ratio, group = group, fill = group)) + geom_density(alpha = .5) + xlim(1,4)
+
+
+gridExtra::grid.arrange(p1,p2, nrow = 1)
+
 
 
 ## ----echo = TRUE--------------------------------------------------------------
