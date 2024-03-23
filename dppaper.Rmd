@@ -196,15 +196,6 @@ Here $\Delta (s)$ is the global sensitivity of $s$. Example 2, will cover an
 application of the Laplace mechanism to linear regression.
 
 
-## Data Augmentation
-The idea behind data augmentation is to run a Gibbs sampler on a coupling of two random variables where one 
-of the marginals is the target distribution. Suppose we wish to sample from a density $f_{A}$ which is difficult. 
-The data augmentation method instead considers sampling from a joint distribution $f(a,b)$. Since
-we are ultimately interested in samples from $f_A$, the joint
-distribution should be chosen so that (i) the marginal distribution
-with respects to $a$ is $f_{A}$ and (ii) $f(a \mid b)$ and $f(b \mid a)$
-are easy to sample from. The choice $f$ is not unique and can require
-some foresight.
 
 # Methodology
 Given data $s_{dp}$, the goal of Bayesian inference is to sample from the 
@@ -552,11 +543,20 @@ They assume the true data generating process follows the model
 \[
 \begin{aligned}
 y &= -1.79 -2.89x_2 -0.66x_2 + \epsilon\\
-\epsilon &\sim N(0,2^2)
+\epsilon &\sim N(0,2^2)\\
+\begin{split}
+X &\sim N_{2}(\mu, I_2)\\
+\mu &= \binom{0.9}{-1.17}
+\end{split}
 \end{aligned}
 \]
 
-and consider the scenario where one desires to publicly release the
+Note, in most settings involving linear regression, the covariates are assumed to be
+fixed, known constants. Thus the formulation above is a departure from the norm since
+we are assuming a random design matrix. More details on why this framing is necessary 
+will be provided later when constructing the `dapper` likelihood component.
+
+The paper considers the scenario where one desires to publicly release the
 sufficient summary statistics
 
 \[
@@ -588,11 +588,10 @@ X &\sim N_{2}(\mu, I_2)\\
 
 
 
-1. `lik_f`: Conditional on the table total, the table counts follow a multinomial
-distribution. We can easily draw from this distribution using the
-`rmultinom` function in the `base` stats package. Note, in this example,
-the return value of one sample from `rmultinom` is a $4 \times 1$ matrix. In order to 
-conform with `dapper_sample` we must convert the matrix to a vector.
+1. `lik_f`: Since the privacy mechanism involves injecting noise into the design
+matrix, it is not possible to use the standard approach where one assumes the design
+matrix is a fixed, known constant. Hence to draw a sample from the data generating 
+process we use the relation $f(x,y) = f(x)f(y \mid x)$.
     ```{r, echo = TRUE}
     latent_f <- function(theta) {
       xmat <- MASS::mvrnorm(100 , mu = c(.9,-1.17), Sigma = diag(2))
@@ -601,9 +600,7 @@ conform with `dapper_sample` we must convert the matrix to a vector.
     }
     ```
 2. `post_f`: Given confidential data $X$ we can derive the posterior analytically
-using a Dirichlet prior. In this example, we use a flat prior which
-corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
-can be generated using the gamma distribution via the following relation (INSERT)
+using a normal prior.
     ```{r, echo = TRUE}
     post_f <- function(dmat, theta) {
       x <- cbind(1,dmat[,-1])
@@ -615,8 +612,8 @@ can be generated using the gamma distribution via the following relation (INSERT
       MASS::mvrnorm(1, mu = ps_m, Sigma = ps_s2)
     }
     ```
-3. `st_f`: The complete data can be represented in two ways. Micro vs cell totals.
-(what section to introduce?) This function must return a vector.
+3. `st_f`: Although the summary statistic contains $x^Tx$, we do not
+need to include all entries since the matrix is symmetric.
     ```{r, echo = TRUE}
     clamp_data <- function(dmat) {
       pmin(pmax(dmat,-10),10) / 10
