@@ -7,18 +7,18 @@
 \maketitle
 
 \abstract{%
-This paper serves as a reference and introduction on using the dapper R package. The goal of this package is to provide some tools for exploring the impact of different privacy regimes on a Bayesian analysis. A strength of this framework is the ability to target the exact posterior in settings where the likelihood is too complex to analytically express.
+This paper serves as a reference and introduction on using the dapper R package. It is an MCMC sampling framework which targets the exact posterior distribution given privitized data. The goal of this package is to provide researchers a tool for exploring the impact of different privacy regimes on a Bayesian analysis. A strength of this framework is the ability to target the exact posterior in settings where the likelihood is too complex to analytically express.
 }
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
 Differential privacy provides a rigorous framework for protecting
-confidential information. In this framework, privacy is obtained
+confidential information (Dwork et al. 2006). In this framework, privacy is obtained
 through the injection of random noise in the data analysis workflow.
 It has served as the theoretical foundation for recent advances in privacy technology. Several high profile
-examples include Apple (), Google (), Microsoft (), and the
-U.S. Census Bureau ().
+examples include Apple (Tang et al. 2017), Google (Erlingsson, Pihur, and Korolova 2014), Microsoft (Ding, Kulkarni, and Yekhanin 2017), and the
+U.S. Census Bureau (Abowd 2018).
 
 There are several approaches for constructing or modifying a data analysis workflow
 to provide privacy guarantees, which loosely fall into three categories: direct, query, and dissemination.
@@ -40,11 +40,14 @@ As an example, one instance of implementing the dissemination approach for tabul
 adding independent, random error to each cell. For regression models,
 this corresponds to having data with measurement errors
 in the covariates. This, unfortunately, violates the assumptions of most statistical models.
-In the presence of such errors, standard estimators can exhibit significant bias (Gong 2022).
-Therefore, fitting models without accounting for the added privacy noise can lead to incorrect inference.
+In the presence of such errors, standard estimators can exhibit significant bias and incorrect uncertainty quantification
+(Gong 2022) (Karwa, Kifer, and Slavković 2015a) (Wang et al. 2018).
+These issues are a serious concern for researchers (Santos-Lozada, Howard, and Verdery 2020) (Kenny et al. 2021) (Winkler et al. 2021).
+Therefore, developing privacy aware statistical workflows is necessary in order
+for science and privacy to coexists.
 
 Unfortunately, making the necessary adjustments poses formidable mathematical
-challenges, even for seemingly simple models like linear regression.
+challenges (Williams and Mcsherry 2010), even for seemingly simple models like linear regression.
 The difficulty can be seen from considering the marginal likelihood that results from correctly accounting for the injected
 privacy noise. This function is often analytically intractable and as a result,
 it is difficult or impossible to apply common maximum likelihood methods
@@ -57,24 +60,18 @@ Few tools are available to researchers to address these issues,
 and their absence is a serious barrier to the wider adoption
 of dissemination methods.
 
-The DAPPER package provides a tool for conducting
+The \texttt{dapper} package provides a tool for conducting
 valid statistical inference in the presence of privacy noise.
 It implements the Bayesian framework proposed in (Ju et al. 2022). This framework describes how to modify
-an existing Bayesian model to account for privacy noise. DAPPER
+an existing Bayesian model to account for privacy noise. \texttt{dapper}
 serves as user-friendly interface for implementing the framework in R. It allows the
 user to specify a sampler from an existing Bayesian model and
 automatically constructing a valid posterior sampler that accounts for the
-added privacy noise.
-
-In the previously mentioned case where privacy noise is
-directly added to each cell of a data table, there exist
-readily available methods from measurement error literature for making adjustments.
-For textbook length treatments on the topic see (Yi 2017; Carroll et al. 2006).
-Work in this area mostly focuses on methods which do not require fully specifying the
-measurement error model, since this is often assumed unknown.
-However, in differential privacy, the measurement error model is exactly known.
-This difference, makes feasible some ideas which the measurement
-error community has not previously considered (Smith 2011; Karwa, Kifer, and Slavković 2015).
+added privacy noise. Compared to other Bayesian approaches, the \texttt{dapper} framework requires
+no specialized knowledge for tuning samplers since there is no tuning parameter,
+and when the record additivity is satisfied (see section 6), the algorithmic run time
+complexity is similar to the non-private analysis. The goal of \texttt{dapper} is to provide
+a fast, flexible, and user-friendly way to analyze the impact of privacy mechanisms.
 
 The rest of this article is organized as follows. Section 2 covers the necessary background to understand the mathematical notation
 and ideas used throughout the paper. Section 3 goes over the main algorithm without
@@ -140,18 +137,6 @@ vector of iid Laplace noise. Using the ratio bound, if we draw
 each \(u_i \sim Lap(\Delta (s) / \epsilon)\), we can show \(s_dp\) is \(\epsilon\)-differentially private.
 Here \(\Delta (s)\) is the global sensitivity of \(s\). Example 2, will cover an
 application of the Laplace mechanism to linear regression.
-
-\hypertarget{data-augmentation}{%
-\subsection{Data Augmentation}\label{data-augmentation}}
-
-The idea behind data augmentation is to run a Gibbs sampler on a coupling of two random variables where one
-of the marginals is the target distribution. Suppose we wish to sample from a density \(f_{A}\) which is difficult.
-The data augmentation method instead considers sampling from a joint distribution \(f(a,b)\). Since
-we are ultimately interested in samples from \(f_A\), the joint
-distribution should be chosen so that (i) the marginal distribution
-with respects to \(a\) is \(f_{A}\) and (ii) \(f(a \mid b)\) and \(f(b \mid a)\)
-are easy to sample from. The choice \(f\) is not unique and can require
-some foresight.
 
 \hypertarget{methodology}{%
 \section{Methodology}\label{methodology}}
@@ -457,17 +442,24 @@ for a more detailed explanation.
 To see if there is evidence of gender bias we can look at the odds ratio.
 Specifically, we look at the odds of a male being admitted to
 that of female. A higher odds ratio would indicate a bias
-favoring males. Figure {[}Z{]} shows the posterior draws
+favoring males. Figure \ref{fig:post-or-density} shows the posterior draws
 from the dapper model. The large odds ratio values would seem
 to indicate there is bias favoring the males. See {[}XXX{]} for
 an explanation of the ``paradox'' of this result.
 
-\begin{center}\includegraphics{dppaper_files/figure-latex/unnamed-chunk-13-1} \end{center}
+\begin{figure}
+
+{\centering \includegraphics{dppaper_files/figure-latex/post-or-density-1} 
+
+}
+
+\caption{posterior density estimate for the odds ratio using 9000 MCMC draws.}\label{fig:post-or-density}
+\end{figure}
 
 For comparison, we run a standard Bayesian analysis on the
 noise infused table ignoring the privacy mechanism. This will
 correspond exactly to the model defined in the \texttt{post\_f} component.
-Figure {[}X{]} shows a density estimate for the odds ratio
+Figure \ref{fig:post-or-compare} shows a density estimate for the odds ratio
 under the confidential and noisy data. The posterior
 distribution for the odds ratio under the noisy data
 is shifted significantly, indicating a large degree of bias.
@@ -479,7 +471,14 @@ illustrates the dangers of ignoring the privacy mechanism. The naive
 analysis not only has bias, but also severely underestimate the
 uncertainty associated with the odds ratio estimate.
 
-\begin{center}\includegraphics{dppaper_files/figure-latex/unnamed-chunk-14-1} \end{center}
+\begin{figure}
+
+{\centering \includegraphics{dppaper_files/figure-latex/post-or-compare-1} 
+
+}
+
+\caption{comparison.}\label{fig:post-or-compare}
+\end{figure}
 
 \hypertarget{linear-regression}{%
 \subsection{Linear Regression}\label{linear-regression}}
@@ -493,11 +492,20 @@ They assume the true data generating process follows the model
 \[
 \begin{aligned}
 y &= -1.79 -2.89x_2 -0.66x_2 + \epsilon\\
-\epsilon &\sim N(0,2^2)
+\epsilon &\sim N(0,2^2)\\
+\begin{split}
+X &\sim N_{2}(\mu, I_2)\\
+\mu &= \binom{0.9}{-1.17}
+\end{split}
 \end{aligned}
 \]
 
-and consider the scenario where one desires to publicly release the
+Note, in most settings involving linear regression, the covariates are assumed to be
+fixed, known constants. Thus the formulation above is a departure from the norm since
+we are assuming a random design matrix. More details on why this framing is necessary
+will be provided later when constructing the \texttt{dapper} likelihood component.
+
+The paper considers the scenario where one desires to publicly release the
 sufficient summary statistics
 
 \[
@@ -528,11 +536,10 @@ X &\sim N_{2}(\mu, I_2)\\
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \item
-  \texttt{lik\_f}: Conditional on the table total, the table counts follow a multinomial
-  distribution. We can easily draw from this distribution using the
-  \texttt{rmultinom} function in the \texttt{base} stats package. Note, in this example,
-  the return value of one sample from \texttt{rmultinom} is a \(4 \times 1\) matrix. In order to
-  conform with \texttt{dapper\_sample} we must convert the matrix to a vector.
+  \texttt{latent\_f}: Since the privacy mechanism involves injecting noise into the design
+  matrix, it is not possible to use the standard approach where one assumes the design
+  matrix is a fixed, known constant. Hence to draw a sample from the data generating
+  process we use the relation \(f(x,y) = f(x)f(y \mid x)\).
 
 \begin{verbatim}
 latent_f <- function(theta) {
@@ -543,9 +550,7 @@ latent_f <- function(theta) {
 \end{verbatim}
 \item
   \texttt{post\_f}: Given confidential data \(X\) we can derive the posterior analytically
-  using a Dirichlet prior. In this example, we use a flat prior which
-  corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
-  can be generated using the gamma distribution via the following relation (INSERT)
+  using a normal prior.
 
 \begin{verbatim}
 post_f <- function(dmat, theta) {
@@ -559,8 +564,8 @@ post_f <- function(dmat, theta) {
 }
 \end{verbatim}
 \item
-  \texttt{st\_f}: The complete data can be represented in two ways. Micro vs cell totals.
-  (what section to introduce?) This function must return a vector.
+  \texttt{st\_f}: Although the summary statistic contains \(x^Tx\), we do not
+  need to include all entries since the matrix is symmetric.
 
 \begin{verbatim}
 clamp_data <- function(dmat) {
@@ -636,8 +641,96 @@ dp_out <- dapper_sample(dmod,
 #> 4 pi_22    0.315  0.315 0.0256 0.0261 0.275  0.358  1.00    164.      460.
 \end{verbatim}
 
-\includegraphics{dppaper_files/figure-latex/unnamed-chunk-21-1.pdf}
-\# Summary
+\includegraphics{dppaper_files/figure-latex/unnamed-chunk-19-1.pdf}
+
+\hypertarget{discussion}{%
+\section{Discussion}\label{discussion}}
+
+\hypertarget{poor-mixing}{%
+\subsection{Poor Mixing}\label{poor-mixing}}
+
+Mixing can be poor when the posterior under a given privacy mechanism is
+much wider than the posterior that would arise using the confidential data. In
+other words, when the privacy budget is small, poor mixing can be expected. The
+rest of this section explores a toy example that will provide insight into this
+phenomenon.
+
+Suppose the confidential data consist of a single observation \(x \in \mathbb{R}\),
+and consider the scenario where a user makes a request to view \(x\) and
+in return receives \(s := x + \eta\), which is a noise infused version of \(x\).
+For simplicity, we do not worry about constructing an \(\epsilon\)-DP privacy mechanism,
+and take \(\eta \sim N(0, \epsilon^{-2})\) for some \(\epsilon > 0\). However, it
+will still be useful to think of \(\epsilon\) as the privacy budget since smaller values
+of \(\epsilon\) correspond to a larger amounts of noise. Using
+a flat prior and a normally distributed likelihood results in
+a normally distributed posterior described below.
+
+\[
+\begin{aligned}
+f(\theta) &\propto 1\\
+s \mid x &\sim N(x, \epsilon^{-2})\\
+x \mid \theta &\sim N(\theta, \sigma^2)\\
+\end{aligned}
+\]
+
+With the above model, the data augmentation process consist of the
+two steps
+
+\begin{itemize}
+\item
+  Step 1: Sample from \(x \mid \theta, s \sim N(\mu, \tau^2)\).
+  \[
+  \begin{aligned}
+  \mu &= \dfrac{\dfrac{1}{\epsilon^{-2}}s + \dfrac{1}{\sigma^2}\theta}{\dfrac{1}{\epsilon^{-2}} + \dfrac{1}{\sigma^2}}\\
+  \tau^2 &= \dfrac{1}{\dfrac{1}{\epsilon^{-2}} + \dfrac{1}{\sigma^2}}
+  \end{aligned}
+  \]
+\item
+  Step 2: Sample from \(\theta \mid x, s \sim N(x, \sigma^2)\).
+\end{itemize}
+
+It turns out the lag-1 auto-correlation is closely related
+to the convergence rate of the chain in this example. {[}Jun{]} showed
+the lag-1 autocorrelation is related to the Bayesian fraction of missing information
+and the latter, in fact, gives the exact convergence rate. The Bayesian fraction of missing information, \(\gamma\) is
+defined as
+\begin{align*}
+\gamma &:= 1 - \dfrac{E[Var(\theta \mid s, x) \mid s]}{Var(\theta \mid s)} = 1 - \dfrac{E[Var(\theta \mid x)]}{Var(\theta \mid s)}.
+\end{align*}
+
+plugging in the appropriate quantities gives us
+
+\begin{align*}
+\gamma &= 1 - \dfrac{\sigma^2}{\sigma^2 + \epsilon^{-2}} = 1 - \dfrac{1}{1 + \dfrac{\epsilon^{-2}}{\sigma^2}}.
+\end{align*}
+
+The chain converges faster as \(\gamma \to 0\) an slower as \(\gamma \to 1\).
+From the right hand term in the above panel, we can see \(\gamma\)
+depends only on \(\epsilon^{-2}/\sigma^2\) and as the privacy budget decreases (i.e.~more noise is being added to \(x\)),
+\(\gamma \to 1\).
+
+Thus when poor mixing is observed, we recommend seeing if increasing the privacy
+budget helps. Unfortunately, if one is not at liberty to alter the privacy budget,
+there is no quick fix. In the case where a small privacy budget results
+in a posterior much more diffuse than under the confidential data set, one
+can draw samples using the pseudo-likelihood scheme as proposed in {[}{]}. This
+scheme fits in the same data augmentation framework as \texttt{dapper} but is not implemented.
+
+\hypertarget{related-work}{%
+\subsection{Related Work}\label{related-work}}
+
+Adjusting statistical workflows to account for added noise in covariates
+is extensively studied in the context of measurement error (e.g.~noisy sensor readings)
+and there exists readily available tools for making the proper adjustments.
+For textbook length treatments on the topic see (Yi 2017; Carroll et al. 2006).
+Work in this area mostly focuses on methods which do not require fully specifying the
+measurement error model, since this is often assumed unknown.
+However, in differential privacy, the measurement error model is exactly known.
+This difference, makes feasible some ideas which the measurement
+error community has not previously considered (Smith 2011; Karwa, Kifer, and Slavković 2015b).
+
+\hypertarget{summary}{%
+\section{Summary}\label{summary}}
 
 Currently, there is a dearth of software tools privacy researchers can use
 to evaluate the impact of privacy mechanisms on statistical analyses.
@@ -671,14 +764,26 @@ record additivity, computation time can be unpalatable.
 
 \hypertarget{refs}{}
 \begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-Abowd2018}{}}%
+Abowd, John M. 2018. {``The u.s. Census Bureau Adopts Differential Privacy.''} In \emph{Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery \&Amp; Data Mining}. KDD '18. ACM. \url{https://doi.org/10.1145/3219819.3226070}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-TopDown}{}}%
 Bureau, U. S. Census. 2023. {``Disclosure Avoidance and the 2020 Census: How the TopDown Algorithm Works.''} 2023. \url{https://www.census.gov/library/publications/2023/decennial/c2020br-04.html}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Carroll2006}{}}%
 Carroll, Raymond J., David Ruppert, Leonard A. Stefanski, and Ciprian M. Crainiceanu. 2006. \emph{Measurement Error in Nonlinear Models}. Chapman; Hall/CRC. \url{https://doi.org/10.1201/9781420010138}.
 
+\leavevmode\vadjust pre{\hypertarget{ref-ding2017collecting}{}}%
+Ding, Bolin, Janardhan Kulkarni, and Sergey Yekhanin. 2017. {``Collecting Telemetry Data Privately.''} \url{https://arxiv.org/abs/1712.01524}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Dwork2006}{}}%
+Dwork, Cynthia, Frank McSherry, Kobbi Nissim, and Adam Smith. 2006. {``Calibrating Noise to Sensitivity in Private Data Analysis.''} In \emph{Lecture Notes in Computer Science}, 265--84. Springer Berlin Heidelberg. \url{https://doi.org/10.1007/11681878_14}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-Dwork2013}{}}%
 Dwork, Cynthia, and Aaron Roth. 2013. {``The Algorithmic Foundations of Differential Privacy.''} \emph{Foundations and Trends{\textregistered} in Theoretical Computer Science} 9 (3-4): 211--407. \url{https://doi.org/10.1561/0400000042}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Erlingsson_2014}{}}%
+Erlingsson, Úlfar, Vasyl Pihur, and Aleksandra Korolova. 2014. {``RAPPOR: Randomized Aggregatable Privacy-Preserving Ordinal Response.''} In \emph{Proceedings of the 2014 ACM SIGSAC Conference on Computer and Communications Security}. CCS'14. ACM. \url{https://doi.org/10.1145/2660267.2660348}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Gong2022}{}}%
 Gong, Ruobin. 2022. {``Transparent Privacy Is Principled Privacy.''} \emph{Harvard Data Science Review}, no. Special Issue 2 (June). \url{https://doi.org/10.1162/99608f92.b5d3faaa}.
@@ -690,13 +795,34 @@ Ji, Zhanglong, Zachary C. Lipton, and Charles Elkan. 2014. {``Differential Priva
 Ju, Nianqiao, Jordan Awan, Ruobin Gong, and Vinayak Rao. 2022. {``Data Augmentation {MCMC} for Bayesian Inference from Privatized Data.''} In \emph{Advances in Neural Information Processing Systems}, edited by Alice H. Oh, Alekh Agarwal, Danielle Belgrave, and Kyunghyun Cho. \url{https://openreview.net/forum?id=tTWCQrgjuM}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Karwa2015}{}}%
-Karwa, Vishesh, Dan Kifer, and Aleksandra B. Slavković. 2015. {``Private Posterior Distributions from Variational Approximations.''} \url{https://arxiv.org/abs/1511.07896}.
+Karwa, Vishesh, Dan Kifer, and Aleksandra B. Slavković. 2015b. {``Private Posterior Distributions from Variational Approximations.''} \url{https://arxiv.org/abs/1511.07896}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-karwa2015private}{}}%
+---------. 2015a. {``Private Posterior Distributions from Variational Approximations.''} \url{https://arxiv.org/abs/1511.07896}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Kenny2021}{}}%
+Kenny, Christopher T., Shiro Kuriwaki, Cory McCartan, Evan T. R. Rosenman, Tyler Simko, and Kosuke Imai. 2021. {``The Use of Differential Privacy for Census Data and Its Impact on Redistricting: The Case of the 2020 u.s. Census.''} \emph{Science Advances} 7 (41). \url{https://doi.org/10.1126/sciadv.abk3283}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Robert2004}{}}%
 Robert, Christian P., and George Casella. 2004. \emph{Monte Carlo Statistical Methods}. \emph{Springer Texts in Statistics}. Springer New York. \url{https://doi.org/10.1007/978-1-4757-4145-2}.
 
+\leavevmode\vadjust pre{\hypertarget{ref-SantosLozada2020}{}}%
+Santos-Lozada, Alexis R., Jeffrey T. Howard, and Ashton M. Verdery. 2020. {``How Differential Privacy Will Affect Our Understanding of Health Disparities in the United States.''} \emph{Proceedings of the National Academy of Sciences} 117 (24): 13405--12. \url{https://doi.org/10.1073/pnas.2003714117}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-Smith2011}{}}%
 Smith, Adam. 2011. {``Privacy-Preserving Statistical Estimation with Optimal Convergence Rates.''} In \emph{Proceedings of the Forty-Third Annual ACM Symposium on Theory of Computing}. STOC'11. ACM. \url{https://doi.org/10.1145/1993636.1993743}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-tang2017privacy}{}}%
+Tang, Jun, Aleksandra Korolova, Xiaolong Bai, Xueqiang Wang, and Xiaofeng Wang. 2017. {``Privacy Loss in Apple's Implementation of Differential Privacy on MacOS 10.12.''} \url{https://arxiv.org/abs/1709.02753}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Wang2018}{}}%
+Wang, Yue, Daniel Kifer, Jaewoo Lee, and Vishesh Karwa. 2018. {``Statistical Approximating Distributions Under Differential Privacy.''} \emph{Journal of Privacy and Confidentiality} 8 (1). \url{https://doi.org/10.29012/jpc.666}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-NIPS2010_sherry}{}}%
+Williams, Oliver, and Frank Mcsherry. 2010. {``Probabilistic Inference and Differential Privacy.''} In \emph{Advances in Neural Information Processing Systems}, edited by J. Lafferty, C. Williams, J. Shawe-Taylor, R. Zemel, and A. Culotta. Vol. 23. Curran Associates, Inc. \url{https://proceedings.neurips.cc/paper_files/paper/2010/file/fb60d411a5c5b72b2e7d3527cfc84fd0-Paper.pdf}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Winkler2021}{}}%
+Winkler, Richelle L., Jaclyn L. Butler, Katherine J. Curtis, and David Egan-Robertson. 2021. {``Differential Privacy and the Accuracy of County-Level Net Migration Estimates.''} \emph{Population Research and Policy Review} 41 (2): 417--35. \url{https://doi.org/10.1007/s11113-021-09664-5}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Yi2017}{}}%
 Yi, Grace Y. 2017. \emph{Statistical Analysis with Measurement Error or Misclassification}. \emph{Springer Series in Statistics}. Springer New York. \url{https://doi.org/10.1007/978-1-4939-6640-0}.

@@ -4,7 +4,9 @@ Posterior Estimation in R"
 date: "2023-11-01"
 abstract: >
     This paper serves as a reference and introduction on using the dapper R
-    package. The goal of this package is to provide some tools for exploring the
+    package. It is an MCMC sampling framework which targets the
+    exact posterior distribution given privitized data. 
+    The goal of this package is to provide researchers a tool for exploring the
     impact of different privacy regimes on a Bayesian analysis. A strength of
     this framework is the ability to target the exact posterior in settings
     where the likelihood is too complex to analytically express.
@@ -69,11 +71,11 @@ library(knitr)
 
 
 Differential privacy provides a rigorous framework for protecting 
-confidential information. In this framework, privacy is obtained
+confidential information [@Dwork2006]. In this framework, privacy is obtained
 through the injection of random noise in the data analysis workflow.
 It has served as the theoretical foundation for recent advances in privacy technology. Several high profile
-examples include Apple (), Google (), Microsoft (), and the 
-U.S. Census Bureau ().
+examples include Apple [@tang2017privacy], Google [@Erlingsson_2014], Microsoft [@ding2017collecting], and the 
+U.S. Census Bureau [@Abowd2018].
 
 
 There are several approaches for constructing or modifying a data analysis workflow
@@ -96,11 +98,17 @@ As an example, one instance of implementing the dissemination approach for tabul
 adding independent, random error to each cell. For regression models,
 this corresponds to having data with measurement errors
 in the covariates. This, unfortunately, violates the assumptions of most statistical models. 
-In the presence of such errors, standard estimators can exhibit significant bias [@Gong2022].
-Therefore, fitting models without accounting for the added privacy noise can lead to incorrect inference.
+In the presence of such errors, standard estimators can exhibit significant bias and incorrect uncertainty quantification 
+[@Gong2022] [@karwa2015private] [@Wang2018].
+These issues are a serious concern for researchers [@SantosLozada2020] [@Kenny2021] [@Winkler2021].
+Therefore, developing privacy aware statistical workflows is necessary in order
+for science and privacy to coexists.
+
+
+
 
 Unfortunately, making the necessary adjustments poses formidable mathematical
-challenges, even for seemingly simple models like linear regression. 
+challenges [@NIPS2010_sherry], even for seemingly simple models like linear regression. 
 The difficulty can be seen from considering the marginal likelihood that results from correctly accounting for the injected
 privacy noise. This function is often analytically intractable and as a result,
 it is difficult or impossible to apply common maximum likelihood methods
@@ -113,24 +121,19 @@ Few tools are available to researchers to address these issues,
 and their absence is a serious barrier to the wider adoption
 of dissemination methods.
 
-The DAPPER package provides a tool for conducting
+The `dapper` package provides a tool for conducting
 valid statistical inference in the presence of privacy noise.
 It implements the Bayesian framework proposed in [@Ju2022]. This framework describes how to modify
-an existing Bayesian model to account for privacy noise. DAPPER
+an existing Bayesian model to account for privacy noise. `dapper`
 serves as user-friendly interface for implementing the framework in R. It allows the
 user to specify a sampler from an existing Bayesian model and
 automatically constructing a valid posterior sampler that accounts for the 
-added privacy noise.
+added privacy noise. Compared to other Bayesian approaches, the `dapper` framework requires
+no specialized knowledge for tuning samplers since there is no tuning parameter,
+and when the record additivity is satisfied (see section 6), the algorithmic run time 
+complexity is similar to the non-private analysis. The goal of  `dapper` is to provide
+a fast, flexible, and user-friendly way to analyze the impact of privacy mechanisms.
 
-In the previously mentioned case where privacy noise is
-directly added to each cell of a data table, there exist
-readily available methods from measurement error literature for making adjustments.
-For textbook length treatments on the topic see [@Yi2017; @Carroll2006].
-Work in this area mostly focuses on methods which do not require fully specifying the 
-measurement error model, since this is often assumed unknown.
-However, in differential privacy, the measurement error model is exactly known.
-This difference, makes feasible some ideas which the measurement
-error community has not previously considered [@Smith2011; @Karwa2015].
 
 The rest of this article is organized as follows. Section 2 covers the necessary background to understand the mathematical notation
 and ideas used throughout the paper. Section 3 goes over the main algorithm without
@@ -471,12 +474,12 @@ plot(dp_out)
 To see if there is evidence of gender bias we can look at the odds ratio.
 Specifically, we look at the odds of a male being admitted to
 that of female. A higher odds ratio would indicate a bias
-favoring males. Figure [Z] shows the posterior draws
+favoring males. Figure \@ref(fig:post-or-density) shows the posterior draws
 from the dapper model. The large odds ratio values would seem
 to indicate there is bias favoring the males. See [XXX] for
 an explanation of the "paradox" of this result.
 
-```{r, fig.height=3, fig.width=5, fig.align='center'}
+```{r post-or-density, fig.cap="posterior density estimate for the odds ratio using 9000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,4) + xlab("Odds Ratio")
@@ -487,7 +490,7 @@ ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,4) + xlab("Odds Ratio")
 For comparison, we run a standard Bayesian analysis on the 
 noise infused table ignoring the privacy mechanism. This will
 correspond exactly to the model defined in the `post_f` component.
-Figure [X] shows a density estimate for the odds ratio
+Figure \@ref(fig:post-or-compare) shows a density estimate for the odds ratio
 under the confidential and noisy data. The posterior
 distribution for the odds ratio under the noisy data
 is shifted significantly, indicating a large degree of bias.
@@ -501,7 +504,7 @@ uncertainty associated with the odds ratio estimate.
 
 
 
-```{r, echo = FALSE, fig.height=3, fig.width=6, fig.align='center'}
+```{r post-or-compare, fig.cap="comparison.",  echo = FALSE, fig.height=1.5, fig.width=5, fig.align='center'}
 set.seed(1)
 confidential_data <- c(1198, 1493, 557, 1278)
 cps <- t(sapply(1:9000, function(s) post_f(confidential_data, NULL)))
@@ -588,7 +591,7 @@ X &\sim N_{2}(\mu, I_2)\\
 
 
 
-1. `lik_f`: Since the privacy mechanism involves injecting noise into the design
+1. `latent_f`: Since the privacy mechanism involves injecting noise into the design
 matrix, it is not possible to use the standard approach where one assumes the design
 matrix is a fixed, known constant. Hence to draw a sample from the data generating 
 process we use the relation $f(x,y) = f(x)f(y \mid x)$.
@@ -685,6 +688,83 @@ plot(dp_out)
 ```
 
 # Discussion
+## Poor Mixing
+Mixing can be poor when the posterior under a given privacy mechanism is 
+much wider than the posterior that would arise using the confidential data. In
+other words, when the privacy budget is small, poor mixing can be expected. The
+rest of this section explores a toy example that will provide insight into this
+phenomenon.
+
+Suppose the confidential data consist of a single observation $x \in \mathbb{R}$,
+and consider the scenario where a user makes a request to view $x$ and
+in return receives $s := x + \eta$, which is a noise infused version of $x$.
+For simplicity, we do not worry about constructing an $\epsilon$-DP privacy mechanism, 
+and take $\eta \sim N(0, \epsilon^{-2})$ for some $\epsilon > 0$. However, it
+will still be useful to think of $\epsilon$ as the privacy budget since smaller values
+of $\epsilon$ correspond to a larger amounts of noise. Using
+a flat prior and a normally distributed likelihood results in
+a normally distributed posterior described below.
+
+\[
+\begin{aligned}
+f(\theta) &\propto 1\\
+s \mid x &\sim N(x, \epsilon^{-2})\\
+x \mid \theta &\sim N(\theta, \sigma^2)\\
+\end{aligned}
+\]
+
+With the above model, the data augmentation process consist of the 
+two steps
+
++  Step 1: Sample from $x \mid \theta, s \sim N(\mu, \tau^2)$.
+\[
+\begin{aligned}
+\mu &= \dfrac{\dfrac{1}{\epsilon^{-2}}s + \dfrac{1}{\sigma^2}\theta}{\dfrac{1}{\epsilon^{-2}} + \dfrac{1}{\sigma^2}}\\
+\tau^2 &= \dfrac{1}{\dfrac{1}{\epsilon^{-2}} + \dfrac{1}{\sigma^2}}
+\end{aligned}
+\]
+
++ Step 2: Sample from $\theta \mid x, s  \sim N(x, \sigma^2)$.
+
+It turns out the lag-1 auto-correlation is closely related
+to the convergence rate of the chain in this example. [Jun] showed
+the lag-1 autocorrelation is related to the Bayesian fraction of missing information
+and the latter, in fact, gives the exact convergence rate. The Bayesian fraction of missing information, $\gamma$ is
+defined as
+\begin{align*}
+\gamma &:= 1 - \dfrac{E[Var(\theta \mid s, x) \mid s]}{Var(\theta \mid s)} = 1 - \dfrac{E[Var(\theta \mid x)]}{Var(\theta \mid s)}.
+\end{align*}
+
+plugging in the appropriate quantities gives us 
+
+\begin{align*}
+\gamma &= 1 - \dfrac{\sigma^2}{\sigma^2 + \epsilon^{-2}} = 1 - \dfrac{1}{1 + \dfrac{\epsilon^{-2}}{\sigma^2}}.
+\end{align*}
+
+The chain converges faster as $\gamma \to 0$ an slower as $\gamma \to 1$.
+From the right hand term in the above panel, we can see $\gamma$
+depends only on $\epsilon^{-2}/\sigma^2$ and as the privacy budget decreases (i.e. more noise is being added to $x$),
+$\gamma \to 1$.
+
+Thus when poor mixing is observed, we recommend seeing if increasing the privacy
+budget helps. Unfortunately, if one is not at liberty to alter the privacy budget, 
+there is no quick fix. In the case where a small privacy budget results
+in a posterior much more diffuse than under the confidential data set, one
+can draw samples using the pseudo-likelihood scheme as proposed in []. This
+scheme fits in the same data augmentation framework as `dapper` but is not implemented.
+
+## Related Work
+Adjusting statistical workflows to account for added noise in covariates
+is extensively studied in the context of measurement error (e.g. noisy sensor readings)
+and there exists readily available tools for making the proper adjustments.
+For textbook length treatments on the topic see [@Yi2017; @Carroll2006].
+Work in this area mostly focuses on methods which do not require fully specifying the 
+measurement error model, since this is often assumed unknown.
+However, in differential privacy, the measurement error model is exactly known.
+This difference, makes feasible some ideas which the measurement
+error community has not previously considered [@Smith2011; @Karwa2015].
+
+
 
 # Summary
 

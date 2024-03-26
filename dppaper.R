@@ -89,13 +89,13 @@ summary(dp_out)
 plot(dp_out)
 
 
-## ----fig.height=3, fig.width=5, fig.align='center'----------------------------
+## ----post-or-density, fig.cap="posterior density estimate for the odds ratio using 9000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,4) + xlab("Odds Ratio")
 
 
-## ----echo = FALSE, fig.height=3, fig.width=6, fig.align='center'--------------
+## ----post-or-compare, fig.cap="comparison.",  echo = FALSE, fig.height=1.5, fig.width=5, fig.align='center'----
 set.seed(1)
 confidential_data <- c(1198, 1493, 557, 1278)
 cps <- t(sapply(1:9000, function(s) post_f(confidential_data, NULL)))
