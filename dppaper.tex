@@ -570,27 +570,39 @@ y &= -1.79 -2.89x_2 -0.66x_2 + \epsilon\\
 Note, in most settings involving linear regression, the covariates are assumed to be
 fixed, known constants. Thus the formulation above is a departure from the norm since
 we are assuming a random design matrix. More details on why this framing is necessary
-will be provided later when constructing the \texttt{dapper} likelihood component.
+will be provided later when describing the latent model.
 
 The paper considers the scenario where one desires to publicly release the
 sufficient summary statistics
 
 \[
-t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}^{i})^T \tilde{x}_i)
+s(x,y) = (x^Ty, y^Ty, x^Tx).
 \]
 
-with \(\epsilon\)-DP privacy guarantees. This was accomplished
-by clamping the data and adding Laplace random error. More precisely, we define
-the clamp function \([z] := \min\{\max\{z,-10\}, 10\}\) which truncates a value
-\(z\) so that it falls into the interval \([-10,10]\). Furthermore, we let \(\tilde{z} := [z]/10\)
-denote the normalized clamped value of \(z\). Thus the clamped statistic is
+since \(s(x,y) = \sum_{i=1}^{n} t(x_i, y_i)\) where
 
 \[
-t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}^{i})^T \tilde{x}_i)
+t(x_i,y_i) = ((x^{i})^T y_i, y_i^2, (x^{i})^T x_i)
 \]
 
-and the \(\epsilon\)-DP private statistic is obtained by adding Laplace error
-to the unique elements of \ldots{}
+with \(\epsilon\)-DP privacy guarantees. To achieve this guarantee is is
+necessary to bound the value of the statistic, so as to ensure
+a data point cannot be too ``unique.'' Intuitively, an outlier is
+easy to identify, so in essence we want to make sure no data point
+is an extreme outlier. In the language of differential
+privacy, this equates to bounding the global sensitivity. This was accomplished
+by clamping the data. More precisely, we define
+the clamp function \([z] := \min\{\max\{z,-10\}, 10\}\) which truncates a value
+\(z\) so that it falls into the interval \([-10,10]\). Furthermore, we let \(\tilde{z} := [z]/10\)
+denote the normalized clamped value of \(z\). The clamped statistic is
+
+\[
+t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}^{i})^T \tilde{x}_i).
+\]
+
+Ignoring duplicate entries, the global sensitivity is \(\Delta = p^2 + 3p + 3\) (wrong calculation, FIX!).
+Using the Laplace mechanism, \(\epsilon\)-DP privacy can be thus be achieved by adding i.i.d. Laplace\((0, \Delta/\epsilon)\)
+error to each unique entry.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -633,8 +645,11 @@ post_f <- function(dmat, theta) {
 }
 \end{verbatim}
 \item
-  \texttt{st\_f}: Although the summary statistic contains \(x^Tx\), we do not
-  need to include all entries since the matrix is symmetric.
+  \texttt{st\_f}: The summary statistic contains duplicate
+  entries. We can considerable reduce the dimension of the
+  statistic by only considering unique entries. The \texttt{clamp\_data}
+  function is used to bound the statistic to give a finite
+  global sensitivity.
 
 \begin{verbatim}
 clamp_data <- function(dmat) {
@@ -658,11 +673,8 @@ st_f <- function(dmat) {
 \end{verbatim}
 \item
   \texttt{priv\_f}: Privacy Mechanism
-  Guassian white noise is added to each cell total. Hence given
-  confidential data \((n_{11}, n_{22}, n_{12}, n_{21})\)
-  \[
-  \eta(s_{dp} \mid x) = \prod \phi(s_{sd}; n_{ij}, 100^2)
-  \]
+  adds Laplace\((0, \Delta/\epsilon)\) error to each unique entry
+  of the statistic. In this example, \(\Delta = 13\) and \(\epsilon = 10\).
 
 \begin{verbatim}
 #deltaa <- 13
@@ -673,18 +685,29 @@ priv_f <- function(sdp, zt) {
 \end{verbatim}
 \end{enumerate}
 
-RUN
+First we simulate fake data using the aforementioned privacy mechanism.
+In the example, we use \(n = 100\) observations.
 
 \begin{verbatim}
 deltaa <- 13
 epsilon <- 10
 n <- 100
+
 xmat <- MASS::mvrnorm(n, mu = c(.9,-1.17), Sigma = diag(2))
 beta <- c(-1.79, -2.89, -0.66)
 y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
-z <- st_f(cbind(y,xmat))
-z <- z + VGAM::rlaplace(length(z), location = 0, scale = deltaa/epsilon)
 
+#clamp the confidential data in xmat
+sdp <- st_f(cbind(y,xmat))
+
+#add Laplace noise 
+sdp <- sdp + VGAM::rlaplace(length(sdp), location = 0, scale = deltaa/epsilon)
+\end{verbatim}
+
+We construct a privacy model using the \texttt{new\_privacy} function and
+make 10,000 MCMC draws with a burn in of 1000 draws.
+
+\begin{verbatim}
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
                     priv_f   = priv_f,
@@ -693,24 +716,41 @@ dmod <- new_privacy(post_f   = post_f,
                     varnames = c("beta0", "beta1", "beta2"))
 
 dp_out <- dapper_sample(dmod,
-                        sdp = z,
-                        niter = 3000,
-                        warmup = 1000,
+                        sdp = sdp,
+                        niter = 300,
+                        warmup = 100,
                         chains = 1,
                         init_par = rep(0,3))
 \end{verbatim}
 
-\begin{verbatim}
-#> # A tibble: 4 x 10
-#>   variable  mean median     sd    mad     q5   q95  rhat ess_bulk ess_tail
-#>   <chr>    <num>  <num>  <num>  <num>  <num> <num> <num>    <num>    <num>
-#> 1 pi_11    0.247  0.247 0.0248 0.0247 0.207  0.287  1.00    173.     434. 
-#> 2 pi_21    0.332  0.333 0.0248 0.0255 0.291  0.371  1.00    187.     448. 
-#> 3 pi_12    0.107  0.107 0.0253 0.0272 0.0659 0.147  1.01     62.8     98.7
-#> 4 pi_22    0.314  0.313 0.0248 0.0252 0.274  0.355  1.00    213.     508.
-\end{verbatim}
+For comparison, we consider a Bayesian analysis where the design matrix
+is a fixed known constant and \(\sigma^2\) is known. Using the
+diffuse prior \(f(\beta) \propto 1\) leads to normal posterior.
+\[
+\begin{aligned}
+f(\beta \mid x,y, \sigma^2) &\sim N(\hat{\beta}, \hat{\Sigma})\\
+\hat{\mu} &= (x^Tx)^{-1}xy\\
+\hat{\Sigma} &= \sigma^{-2}(x^Tx)^{-1}
+\end{aligned}
+\]
+
+Figure {[}X{]} shows the posterior density estimates for the \(\beta\) coefficients.
 
 \includegraphics{dppaper_files/figure-latex/unnamed-chunk-20-1.pdf}
+
+summary output:
+
+\begin{verbatim}
+#> # A tibble: 3 x 10
+#>   variable  mean median    sd   mad     q5   q95  rhat ess_bulk ess_tail
+#>   <chr>    <num>  <num> <num> <num>  <num> <num> <num>    <num>    <num>
+#> 1 beta0     2.32   2.55 4.09  5.06  -3.73   8.80  1.42     2.17     31.7
+#> 2 beta1     1.62   1.63 0.883 0.774 -0.224  2.92  1.50     6.41     11.6
+#> 3 beta2     3.42   3.34 0.601 0.584  2.59   4.54  1.50     2.01     18.9
+\end{verbatim}
+
+trace plots:
+\includegraphics{dppaper_files/figure-latex/unnamed-chunk-22-1.pdf}
 
 \hypertarget{discussion}{%
 \section{Discussion}\label{discussion}}
