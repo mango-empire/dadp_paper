@@ -181,7 +181,7 @@ statistic, we write $s_{dp} \sim \eta(\cdot \mid x)$. Here,
 $\eta$ is a known noise infusion process designed to meet a certain property: The privacy mechanism
 $\eta$ is said to be $\epsilon$-differentially private [@Dwork2013] if for all values of
 $s_{dp}$, and all "neighboring" databases $(x,x') \in \mathcal{X}^n \times \mathcal{X}^n$ differing
-by one record (denoted by $d(x,x')$), the probability ratio is bounded:
+by one record (denoted by $d(x,x') \leq 1$), the probability ratio is bounded:
 \[
 \dfrac{\eta(s_{dp} \mid x)}{\eta(s_{dp} \mid x')} \leq \exp(\epsilon), \quad \epsilon > 0.
 \]
@@ -190,20 +190,24 @@ strong the privacy guarantee is. Larger values of $\epsilon$ correspond to weake
 privacy guarantees which in turn means less noise being added.
 
 The differential privacy framework is used to create and verify privacy 
-mechanisms. One such mechanism is the Laplace mechanism. It works by 
-taking a deterministic query $s: X \mapsto \mathbb{R}^m$ and constructing
-the privatized query $s_{dp} := s(x) + u$ where $u$ is an $m$-dimensional
-vector of iid Laplace noise. Using the ratio bound, if we draw
+mechanisms. One such mechanism is the *Laplace mechanism*. It works by 
+taking a deterministic statistic $s: X \mapsto \mathbb{R}^m$ and constructing
+the privatized statistic $s_{dp} := s(x) + u$ where $u$ is a $m$-dimensional
+vector of i.i.d. Laplace noise. Using the ratio bound, if we draw
 each $u_i \sim Lap(\Delta (s) / \epsilon)$, we can show $s_dp$ is $\epsilon$-differentially private.
-Here $\Delta (s)$ is the global sensitivity of $s$. Example 2, will cover an
+Here $\Delta (s) := \max_{(x,x') \in \mathcal{X}^n \times \mathcal{X}^n; d(x,x') \leq 1} \|s(x) - s(x')\|$ 
+is the $\ell_1$ (global) sensitivity of $s$. Roughly speaking
+global sensitivity can be thought of as quantifying how easy it is to identify
+a particular record. The idea being the easier it is to identify a record (high global sensitivity),
+the more noise that needs to be added to achieve a given privacy guarantee [@Ju2022]. Example 2, will cover an
 application of the Laplace mechanism to linear regression.
 
 
 
 # Methodology
-Given data $s_{dp}$, the goal of Bayesian inference is to sample from the 
+Given data privatized data, $s_{dp}$, the goal of Bayesian inference is to sample from the 
 posterior distribution $p(\theta \mid s_{dp})$. Since the observed likelihood,
-$p(s_{dp} \mid \theta)$, often has no simple closed form expression, most standard
+$p(s_{dp} \mid \theta)$, often has no simple closed form expression [@NIPS2010_sherry], most standard
 sampling schemes do not apply. To conduct privacy-aware Bayesian inference, the dapper package implements
 the data augmentation algorithm which allows us to sample from $p(\theta \mid s_{dp})$
 without needing to specify $p(s_{dp} \mid \theta)$.
@@ -226,7 +230,7 @@ using a Metropolis-Hasting algorithm. This method is sometimes called the Metrop
 In some cases, sampling from $p(x \mid \theta, s_{dp})$ can be made more efficient
 when the privacy mechanism can be written as a function of $s_{dp}$ and
 a sum consisting of contribution from each individual record. More precisely, we say the privacy mechanism satisfies
-the record additivity property if 
+the *record additivity* property if 
 \[
 \eta(s_{dp} \mid x) = g(s_{dp}, \sum_{i=1}^{n}t_i(x_i, s_{dp}))
 \]
@@ -263,16 +267,16 @@ to sampling parameters such as the number of iterations.
 Since the input to these functions are R functions, there is a great deal of freedom
 in implementation. The next two sections describe in detail the inputs into
 these functions and highlight some considerations that should be taken
-into account in order avoid slow or unexpected behavior.
+into account in order to avoid slow or unexpected behavior.
 
 Before delving into  the specifics of each component, it is necessary to clearly
 define how the confidential data is represented. Internally, the 
 confidential database is encoded as a 2D matrix. There can be multiple ways
-of doing this and is often the case when dealing with likelihood functions
+of doing this and is often the case when dealing with a likelihood function
 that has a sufficient statistic. For example, if our data consist 
 of 100 responses from a two question, yes/no, survey. Then we can either encode
-the data as a $2 \times 2$ matrix, or a $100 \times 2$ matrix. Both are mathematically
-equivalent, but the $2 \times 2$ matrix will be much more memory efficient.
+the data as a $1 \times 4$ matrix of total counts, or a $100 \times 2$ matrix of binary responses. Both are mathematically
+equivalent, but the $1 \times 4$ matrix will be much more memory efficient.
 In general, the representation that uses the least amount of memory should be
 used. Correctly specifying the privacy model will require a consistent 
 representation among all of its components.
@@ -288,15 +292,19 @@ new_privacy(post_f = NULL, latent_f = NULL, priv_f = NULL,
             st_f = NULL, add = FALSE, npar = NULL)
 ```
 
-The internal implementation of the DA algorithm in `dapper_sample` requires
+The internal implementation of the data augmentation algorithm in `dapper_sample` requires
 some care in how each component is constructed. 
 
-* `latent_f` is an R function that samples from the latent process. Its
-syntax should be `lik_smpl(theta)` where `theta` is a vector
-representing the likelihood model parameters being estimated. This function
+* `latent_f` is an R function that samples from the latent process.
+The latent process being the probability model which dictates how
+to generate a new confidential record $x$, given $\theta$.
+Its syntax should be `latent_f(theta)` where `theta` is a vector
+representing the model parameters being estimated. This function
 must work with the supplied initial parameter provide in the `init_par`
 argument of `dapper_sample` function. The output should be a $n \times k$ matrix
-where $k$ is the dimension of the vector of likelihood parameters.
+where $k$ is the dimension of $\theta$ and $n$ is the number of observations. It is 
+critical to remember the correct value for $n$ is dependent on the choice of how the latent data is
+represented as discussed in the beginning of section 4.
 
 
 * `post_f` is a function which makes draws from the posterior sampler. It should
@@ -320,14 +328,14 @@ satisfying record additivity or not.
 
 ## Sampling
 
-The main function in \pkg{DAPPER} is the `dapper_sample` function. The syntax of the function is:
+The main function in \pkg{dapper} is the `dapper_sample` function. The syntax of the function is:
 
 ```{r, echo = TRUE, eval = FALSE}
 dapper_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter / 2),
            chains = 1, varnames = NULL)
 ```
 
-The three required inputs into `dapper_sample` function are the privacy model (`data_model`), the value
+The three required inputs into `dapper_sample` function are the privacy model (`data_model`) whose construction is described in 4.1, the value
 of the  observed privatized statistic (`sdp`), and the total number of observations 
 in the complete data (`nobs`). The dapper
 package is best suited for problems where the complete data can be represented in
@@ -337,15 +345,20 @@ The optional arguments are the number of mcmc draws (`niter`), the
 burn in period (`warmup`), number of chains (`chains`) and character
 vector that names the parameters. Running multiple chains can be done in parallel
 using the \CRANpkg{furrr} package. Additionally, progress can be monitored
-using the \CRANpkg{progressr} package.
+using the \CRANpkg{progressr} package. Adhering to the design philosophy
+of the two packages, we leave the setup to the user so that they may 
+choose the most appropriate configuration for their system. The 
+contingency table demonstration given in section 5 walks
+through a typical setup of \CRANpkg{furrr} and \CRANpkg{progressr}.
 
-
-The `data_model` input is a `privacy`
-object that can be constructed using the `new_privacy` constructor. The
-process of constructing a `privacy` object will be discussed in the next section.
-
-
-
+The `dapper_sample` function returns a `draw_matrix` object as described
+in the \CRANpkg{posterior} package. One of the advantages with working
+with a `draw_matrix` object is that is compatible with many of the packages in
+the \CRANpkg{rstan} ecosystem. For example, any `draw_matrix` object can be
+plugged directly into the popular \CRANpkg{bayesplot} package. Additionaly,
+`dapper`'s basic summary function provides the same posterior summary statistics
+as those found when using \CRANpkg{rstan}. Overall, this should make working with `dapper` easier 
+for anyone already familiar with the \CRANpkg{rstan} ecosystem.
 
 # Examples
 
@@ -366,7 +379,7 @@ the noise infused table.
 set.seed(1)
 tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
 adm_cnf <- Reduce('+', tmp)
-adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100))
+adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
 ```
 
 
@@ -383,14 +396,18 @@ x <- c(adm_cnf)
 sdp <- c(adm_prv)
 ```
 
+
+As mentioned in section 4, it is critical to choose a consistent
+matrix representation for the confidential data. In this example
+we represent the confidential admissions data as a $1 \times 4$ matrix.
 Below we walk through the process of defining a privacy model.
 
 
 1. `latent_f`: Since we can condition on the table total $N$, we can model the original, unobserved table counts as a multinomial
 distribution. We can easily draw from this distribution using the
 `rmultinom` function in the `base` stats package. Note, in this example,
-the return value of one sample from `rmultinom` is a $4 \times 1$ matrix. In order to 
-conform with `dapper_sample` we must convert the matrix to a vector.
+the return value of one sample from `rmultinom` is a $4 \times 1$ matrix, so
+in order to conform with our confidential data representation we take the transpose.
     ```{r, echo = TRUE}
     latent_f <- function(theta) {
       t(rmultinom(1, 4526, theta))
@@ -453,6 +470,41 @@ dp_out <- dapper_sample(dmod,
                   init_par = rep(.25,4))
 ```
 
+To run the `dapper_sample` function with parallel chains
+we can import the `furrr` package and use the `plan` function
+to determine the number of works used. The example code chunk below
+would produce four chains using two CPU's.
+
+```{r, eval = FALSE, echo = TRUE}
+library(furrr)
+plan(multisession, workers = 2)
+
+dp_out <- dapper_sample(dmod,
+                  sdp = c(adm_prv),
+                  niter = 10000,
+                  warmup = 1000,
+                  chains = 4,
+                  init_par = rep(.25,4))
+```
+
+If the run time of `dapper_sample` is exceptionally long, one can
+use the `progressr` package to monitor progress. The `progressor` framework
+allows for a unified handling of progress bars in both the sequential and
+parallel computing case.
+
+```{r, eval = FALSE, echo = TRUE}
+library(progressr)
+
+with_progress({
+  dp_out <- dapper_sample(dmod,
+                  sdp = c(adm_prv),
+                  niter = 10000,
+                  warmup = 1000,
+                  chains = 4,
+                  init_par = rep(.25,4))
+})
+```
+
 results can be quickly summarized using the `summary` function which is 
 displayed below. The `rhat` values in the table are close to 1, which indicates
 the chain has run long enough to achieve adequate mixing.
@@ -462,12 +514,12 @@ summary(dp_out)
 ```
 
 Diagnostic checks using trace plots can be done using the \pkg{Bayesplot} package
-as shown in figure [x]. It is especially important to check for good mixing
+as shown in figure \@ref(fig:trace-plot). It is especially important to check for good mixing
 with `dapper` since sticky chains are likely to be produced
 when the amount of injected noise is high. See the discussion section
 for a more detailed explanation. 
 
-```{r, fig.height=3, fig.width=5, fig.align='center'}
+```{r trace-plot,  fig.cap="trace plots.", fig.height=3, fig.width=5, fig.align='center'}
 plot(dp_out)
 ```
 
@@ -494,7 +546,7 @@ Figure \@ref(fig:post-or-compare) shows a density estimate for the odds ratio
 under the confidential and noisy data. The posterior
 distribution for the odds ratio under the noisy data
 is shifted significantly, indicating a large degree of bias.
-Looking at figure [Y] shows the MAP estimate from DAPPER
+Looking at left hand plot in \@ref(fig:post-or-compare) shows the MAP estimate from `dapper`
 is similar to that in the case of the confidential data.
 The width of the posterior is also much larger since
 it properly accounts for the uncertainty due to the privacy mechanism. This
@@ -593,7 +645,7 @@ X &\sim N_{2}(\mu, I_2)\\
 
 1. `latent_f`: Since the privacy mechanism involves injecting noise into the design
 matrix, it is not possible to use the standard approach where one assumes the design
-matrix is a fixed, known constant. Hence to draw a sample from the data generating 
+matrix is a fixed, known constant. Hence to draw a sample from the latent data generating 
 process we use the relation $f(x,y) = f(x)f(y \mid x)$.
     ```{r, echo = TRUE}
     latent_f <- function(theta) {
@@ -603,7 +655,16 @@ process we use the relation $f(x,y) = f(x)f(y \mid x)$.
     }
     ```
 2. `post_f`: Given confidential data $X$ we can derive the posterior analytically
-using a normal prior.
+using a normal prior on $\beta$.
+\[
+\begin{aligned}
+\beta &\sim N_{p+1}(0, \tau^2 I_{p+1})\\
+\beta \mid x,y &\sim N(\mu_n, \Sigma_n)\\
+\Sigma_n &= (x^Tx/\sigma^2 + I_{p+1}/\tau^2)^{-1}\\
+\mu_n &= \Sigma_n(x^Ty)/\sigma^2
+\end{aligned}
+\]
+In the example, we use $\sigma^2 = 2$ and $\tau^2 = 4$.
     ```{r, echo = TRUE}
     post_f <- function(dmat, theta) {
       x <- cbind(1,dmat[,-1])

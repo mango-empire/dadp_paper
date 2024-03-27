@@ -23,7 +23,7 @@ library(knitr)
 set.seed(1)
 tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
 adm_cnf <- Reduce('+', tmp)
-adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100))
+adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
 
 
 ## ----echo = FALSE-------------------------------------------------------------
@@ -81,11 +81,36 @@ dp_out <- dapper_sample(dmod,
                   init_par = rep(.25,4))
 
 
+## ----eval = FALSE, echo = TRUE------------------------------------------------
+#> library(furrr)
+#> plan(multisession, workers = 2)
+#> 
+#> dp_out <- dapper_sample(dmod,
+#>                   sdp = c(adm_prv),
+#>                   niter = 10000,
+#>                   warmup = 1000,
+#>                   chains = 4,
+#>                   init_par = rep(.25,4))
+
+
+## ----eval = FALSE, echo = TRUE------------------------------------------------
+#> library(progressr)
+#> 
+#> with_progress({
+#>   dp_out <- dapper_sample(dmod,
+#>                   sdp = c(adm_prv),
+#>                   niter = 10000,
+#>                   warmup = 1000,
+#>                   chains = 4,
+#>                   init_par = rep(.25,4))
+#> })
+
+
 ## ----echo = FALSE-------------------------------------------------------------
 summary(dp_out)
 
 
-## ----fig.height=3, fig.width=5, fig.align='center'----------------------------
+## ----trace-plot,  fig.cap="trace plots.", fig.height=3, fig.width=5, fig.align='center'----
 plot(dp_out)
 
 

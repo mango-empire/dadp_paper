@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.3.5)  25 MAR 2024 23:52
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.3.5)  27 MAR 2024 01:28
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -783,70 +783,64 @@ LaTeX Font Info:    Font shape `U/msb/m/n' will be
 LaTeX Font Info:    Trying to load font information for U+fplmbb on input line 134.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/psnfss/ufplmbb.fd
 File: ufplmbb.fd 2003/10/30 Fontinst v1.914 font definitions for U/fplmbb.
-)
-LaTeX Font Info:    Trying to load font information for TS1+ppl on input line 157.
+) [2]
+LaTeX Font Info:    Trying to load font information for TS1+ppl on input line 161.
 (c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/psnfss/ts1ppl.fd
 File: ts1ppl.fd 2001/06/04 font definitions for TS1/ppl.
-) [2]
-Overfull \hbox (15.07129pt too wide) in paragraph at lines 253--260
-[]\T1/zi4/m/n/9 latent_f \T1/ppl/m/n/9 (-20) is an R func-tion that sam-ples from the la-tent pro-cess. Its syn-tax should be \T1/zi4/m/n/9 lik_smpl(theta)
- []
-
-[3]
+) [3]
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 324.
+(Font)              scaled to size 10.42007pt on input line 341.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 324.
+(Font)              scaled to size 7.91925pt on input line 341.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 324.
+(Font)              scaled to size 6.25204pt on input line 341.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 324.
+(Font)              scaled to size 10.42007pt on input line 341.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 324.
+(Font)              scaled to size 7.91925pt on input line 341.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 324.
-[4]
-<dppaper_files/figure-latex/unnamed-chunk-12-1.pdf, id=120, 361.35pt x 216.81pt>
-File: dppaper_files/figure-latex/unnamed-chunk-12-1.pdf Graphic file (type pdf)
-<use dppaper_files/figure-latex/unnamed-chunk-12-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-12-1.pdf  used on input line 440.
+(Font)              scaled to size 6.25204pt on input line 341.
+[4] [5]
+<dppaper_files/figure-latex/trace-plot-1.pdf, id=135, 361.35pt x 216.81pt>
+File: dppaper_files/figure-latex/trace-plot-1.pdf Graphic file (type pdf)
+<use dppaper_files/figure-latex/trace-plot-1.pdf>
+Package pdftex.def Info: dppaper_files/figure-latex/trace-plot-1.pdf  used on input line 497.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
-[5]
-<dppaper_files/figure-latex/post-or-density-1.pdf, id=129, 361.35pt x 216.81pt>
+<dppaper_files/figure-latex/post-or-density-1.pdf, id=137, 361.35pt x 216.81pt>
 File: dppaper_files/figure-latex/post-or-density-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/post-or-density-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/post-or-density-1.pdf  used on input line 452.
+Package pdftex.def Info: dppaper_files/figure-latex/post-or-density-1.pdf  used on input line 514.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
-<dppaper_files/figure-latex/post-or-compare-1.pdf, id=131, 361.35pt x 108.405pt>
+<dppaper_files/figure-latex/post-or-compare-1.pdf, id=140, 361.35pt x 108.405pt>
 File: dppaper_files/figure-latex/post-or-compare-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/post-or-compare-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/post-or-compare-1.pdf  used on input line 476.
+Package pdftex.def Info: dppaper_files/figure-latex/post-or-compare-1.pdf  used on input line 538.
 (pdftex.def)             Requested size: 361.34912pt x 108.40472pt.
-[6 <./dppaper_files/figure-latex/post-or-density-1.pdf> <./dppaper_files/figure-latex/unnamed-chunk-12-1.pdf>]
+[6] [7 <./dppaper_files/figure-latex/trace-plot-1.pdf> <./dppaper_files/figure-latex/post-or-density-1.pdf> <./dppaper_files/figure-latex/post-or-compare-1.pdf>]
 
 Package amsmath Warning: Cannot use `split' here;
-(amsmath)                trying to recover with `aligned' on input line 499.
+(amsmath)                trying to recover with `aligned' on input line 561.
 
-[7 <./dppaper_files/figure-latex/post-or-compare-1.pdf>] [8]
-<dppaper_files/figure-latex/unnamed-chunk-19-1.pdf, id=171, 469.755pt x 325.215pt>
-File: dppaper_files/figure-latex/unnamed-chunk-19-1.pdf Graphic file (type pdf)
-<use dppaper_files/figure-latex/unnamed-chunk-19-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-19-1.pdf  used on input line 644.
+[8] [9]
+<dppaper_files/figure-latex/unnamed-chunk-20-1.pdf, id=185, 469.755pt x 325.215pt>
+File: dppaper_files/figure-latex/unnamed-chunk-20-1.pdf Graphic file (type pdf)
+<use dppaper_files/figure-latex/unnamed-chunk-20-1.pdf>
+Package pdftex.def Info: dppaper_files/figure-latex/unnamed-chunk-20-1.pdf  used on input line 715.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 
-Overfull \hbox (86.41528pt too wide) in paragraph at lines 644--645
+Overfull \hbox (86.41528pt too wide) in paragraph at lines 715--716
 [][] 
  []
 
-[9 <./dppaper_files/figure-latex/unnamed-chunk-19-1.pdf>] [10] [11]
+[10 <./dppaper_files/figure-latex/unnamed-chunk-20-1.pdf>] [11] [12]
 No file RJwrapper.bbl.
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 842.
+(Font)              using `T1/zi4/m/n' instead on input line 913.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 842.
-) [12] (./RJwrapper.aux)
+(Font)              scaled to size 9.18004pt on input line 913.
+) [13] (./RJwrapper.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
@@ -858,18 +852,18 @@ Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
 (rerunfilecheck)             Checksum: 5A25954A74B2BB38548A3754E0D88B53;2252.
  ) 
 Here is how much of TeX's memory you used:
- 26860 strings out of 476076
- 492807 string characters out of 5791351
+ 26880 strings out of 476076
+ 492883 string characters out of 5791351
  1947190 words of memory out of 5000000
- 48116 multiletter control sequences out of 15000+600000
- 608010 words of font info for 297 fonts, out of 8000000 for 9000
+ 48115 multiletter control sequences out of 15000+600000
+ 610978 words of font info for 312 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 117i,16n,131p,1006b,1014s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 117i,16n,131p,1006b,1010s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmbb.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (12 pages, 561351 bytes).
+Output written on RJwrapper.pdf (13 pages, 565523 bytes).
 PDF statistics:
- 328 PDF objects out of 1000 (max. 8388607)
- 281 compressed objects within 3 object streams
- 80 named destinations out of 1000 (max. 500000)
+ 343 PDF objects out of 1000 (max. 8388607)
+ 295 compressed objects within 3 object streams
+ 82 named destinations out of 1000 (max. 500000)
  67233 words of extra memory for PDF output out of 74296 (max. 10000000)
 
