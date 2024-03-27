@@ -150,13 +150,20 @@ Let $x = (x_1, \ldots, x_n) \in \mathcal{X}^n$ represent a confidential
 database containing $n$ records. Usually, the goal of collecting data 
 is to learn some characteristic about the underlying population. 
 To accomplish this task, a common approach is to assume the population
-is represented by some statistical model $f( \cdot \mid \theta)$. It is often the case that
+is represented by some statistical model $f( \cdot \mid \theta)$. It is often the case
 some function of $\theta$ has relevant meaning to the scientific question at hand. In this setting,
 learning characteristics of a population reduces to learning about $\theta$. 
 
 In the Bayesian statistical framework, learning about $\theta$ is accomplished by drawing samples from the 
-posterior $p(\theta \mid x) \propto f(x \mid \theta) p(\theta)$. For 
-large data sets, it is common to work with a summary statistic $s = s(x)$
+posterior $p(\theta \mid x) \propto f(x \mid \theta) p(\theta)$. 
+Here, $p(\theta)$ is called the prior distribution, and represents
+the researcher's belief about $\theta$ before seeing any data. 
+One major advantage of the Bayesian method is that, through the prior, 
+it provides a mechanism for incorporating information not explicitly contained
+in the data at hand. This is especially useful in settings where there 
+is considerable domain knowledge on the value of $\theta$.
+
+For large data sets, it is common to work with a summary statistic $s = s(x)$
 that has much smaller dimension than the original data. Doing so can
 greatly simplify calculations. In general, there can be information
 loss with using summary statistics, but for models with a sufficient 
@@ -179,7 +186,7 @@ noise to add.
 We now describe the $\epsilon$-DP privacy framework in more detail. For the noisy summary 
 statistic, we write $s_{dp} \sim \eta(\cdot \mid x)$. Here,
 $\eta$ is a known noise infusion process designed to meet a certain property: The privacy mechanism
-$\eta$ is said to be $\epsilon$-differentially private [@Dwork2013] if for all values of
+$\eta$ is said to be $\epsilon$-differentially private [@Dwork2006] if for all values of
 $s_{dp}$, and all "neighboring" databases $(x,x') \in \mathcal{X}^n \times \mathcal{X}^n$ differing
 by one record (denoted by $d(x,x')$), the probability ratio is bounded:
 \[
