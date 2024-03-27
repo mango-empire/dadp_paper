@@ -578,22 +578,21 @@ odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_noisy  <- odds_male/odds_female
 
-p1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
+df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
   pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
-  ggplot(aes(odds_ratio, group = group, fill = group)) + geom_density(alpha = .5) + xlim(1,4)
+  mutate(method = "naive")
 
-
-p2 <- tibble(confidential = odds_ratio_conf, dapper = or) %>%
+df2 <- tibble(confidential = odds_ratio_conf, noisy = or) %>%
   pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
-  ggplot(aes(odds_ratio, group = group, fill = group)) + geom_density(alpha = .5) + xlim(1,4)
+  mutate(method = "dapper")
 
+df <- rbind(df1,df2)
 
-df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy)
-df2 <- tibble(confidential = odds_ratio_conf, dapper = or) 
-
-
-gridExtra::grid.arrange(p1,p2, nrow = 1)
-
+df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) + 
+  geom_density(alpha = .5) + 
+  facet_wrap(~method) + 
+  xlim(1,4) +
+  xlab("Odds Ratio")
 ```
 
 
