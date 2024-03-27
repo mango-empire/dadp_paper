@@ -89,13 +89,20 @@ Let \(x = (x_1, \ldots, x_n) \in \mathcal{X}^n\) represent a confidential
 database containing \(n\) records. Usually, the goal of collecting data
 is to learn some characteristic about the underlying population.
 To accomplish this task, a common approach is to assume the population
-is represented by some statistical model \(f( \cdot \mid \theta)\). It is often the case that
+is represented by some statistical model \(f( \cdot \mid \theta)\). It is often the case
 some function of \(\theta\) has relevant meaning to the scientific question at hand. In this setting,
 learning characteristics of a population reduces to learning about \(\theta\).
 
 In the Bayesian statistical framework, learning about \(\theta\) is accomplished by drawing samples from the
-posterior \(p(\theta \mid x) \propto f(x \mid \theta) p(\theta)\). For
-large data sets, it is common to work with a summary statistic \(s = s(x)\)
+posterior \(p(\theta \mid x) \propto f(x \mid \theta) p(\theta)\).
+Here, \(p(\theta)\) is called the prior distribution, and represents
+the researcher's belief about \(\theta\) before seeing any data.
+One major advantage of the Bayesian method is that, through the prior,
+it provides a mechanism for incorporating information not explicitly contained
+in the data at hand. This is especially useful in settings where there
+is considerable domain knowledge on the value of \(\theta\).
+
+For large data sets, it is common to work with a summary statistic \(s = s(x)\)
 that has much smaller dimension than the original data. Doing so can
 greatly simplify calculations. In general, there can be information
 loss with using summary statistics, but for models with a sufficient
@@ -119,7 +126,7 @@ noise to add.
 We now describe the \(\epsilon\)-DP privacy framework in more detail. For the noisy summary
 statistic, we write \(s_{dp} \sim \eta(\cdot \mid x)\). Here,
 \(\eta\) is a known noise infusion process designed to meet a certain property: The privacy mechanism
-\(\eta\) is said to be \(\epsilon\)-differentially private (Dwork and Roth 2013) if for all values of
+\(\eta\) is said to be \(\epsilon\)-differentially private (Dwork et al. 2006) if for all values of
 \(s_{dp}\), and all ``neighboring'' databases \((x,x') \in \mathcal{X}^n \times \mathcal{X}^n\) differing
 by one record (denoted by \(d(x,x') \leq 1\)), the probability ratio is bounded:
 \[
@@ -555,10 +562,8 @@ They assume the true data generating process follows the model
 \begin{aligned}
 y &= -1.79 -2.89x_2 -0.66x_2 + \epsilon\\
 \epsilon &\sim N(0,2^2)\\
-\begin{split}
-X &\sim N_{2}(\mu, I_2)\\
-\mu &= \binom{0.9}{-1.17}
-\end{split}
+\binom{x_1}{x_2} &\sim N_{2}(\mu, I_2)\\
+\mu &= \binom{0.9}{-1.17}.
 \end{aligned}
 \]
 
@@ -587,21 +592,14 @@ t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}^{i})^T \t
 and the \(\epsilon\)-DP private statistic is obtained by adding Laplace error
 to the unique elements of \ldots{}
 
-data generating process:
-\[
-\begin{split}
-X &\sim N_{2}(\mu, I_2)\\
-\mu &= \binom{0.9}{-1.17}
-\end{split}
-\]
-
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \item
   \texttt{latent\_f}: Since the privacy mechanism involves injecting noise into the design
   matrix, it is not possible to use the standard approach where one assumes the design
   matrix is a fixed, known constant. Hence to draw a sample from the latent data generating
-  process we use the relation \(f(x,y) = f(x)f(y \mid x)\).
+  process we use the relation \(f(x,y) = f(x)f(y \mid x)\). In this formulation,
+  it is necessary to specify a distribution on the covariates \(x\).
 
 \begin{verbatim}
 latent_f <- function(theta) {
@@ -849,9 +847,6 @@ Ding, Bolin, Janardhan Kulkarni, and Sergey Yekhanin. 2017. {``Collecting Teleme
 
 \leavevmode\vadjust pre{\hypertarget{ref-Dwork2006}{}}%
 Dwork, Cynthia, Frank McSherry, Kobbi Nissim, and Adam Smith. 2006. {``Calibrating Noise to Sensitivity in Private Data Analysis.''} In \emph{Lecture Notes in Computer Science}, 265--84. Springer Berlin Heidelberg. \url{https://doi.org/10.1007/11681878_14}.
-
-\leavevmode\vadjust pre{\hypertarget{ref-Dwork2013}{}}%
-Dwork, Cynthia, and Aaron Roth. 2013. {``The Algorithmic Foundations of Differential Privacy.''} \emph{Foundations and Trends{\textregistered} in Theoretical Computer Science} 9 (3-4): 211--407. \url{https://doi.org/10.1561/0400000042}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Erlingsson_2014}{}}%
 Erlingsson, Úlfar, Vasyl Pihur, and Aleksandra Korolova. 2014. {``RAPPOR: Randomized Aggregatable Privacy-Preserving Ordinal Response.''} In \emph{Proceedings of the 2014 ACM SIGSAC Conference on Computer and Communications Security}. CCS'14. ACM. \url{https://doi.org/10.1145/2660267.2660348}.

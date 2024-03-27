@@ -155,7 +155,6 @@ margin-left: 2em;
   <meta name="citation_author_institution" content="Purdue University" />
   <!--/radix_placeholder_meta_tags-->
   
-  <meta name="citation_reference" content="citation_title=The algorithmic foundations of differential privacy;citation_publisher=Now Publishers;citation_volume=9;citation_doi=10.1561/0400000042;citation_author=Cynthia Dwork;citation_author=Aaron Roth" />
   <meta name="citation_reference" content="citation_title=Monte carlo statistical methods;citation_publisher=Springer New York;citation_doi=10.1007/978-1-4757-4145-2;citation_issn=1431-875X;citation_author=Christian P. Robert;citation_author=George Casella" />
   <meta name="citation_reference" content="citation_title=Data augmentation MCMC for bayesian inference from privatized data;citation_author=Nianqiao Ju;citation_author=Jordan Awan;citation_author=Ruobin Gong;citation_author=Vinayak Rao" />
   <meta name="citation_reference" content="citation_title=Transparent privacy is principled privacy;citation_publisher=MIT Press - Journals;citation_doi=10.1162/99608f92.b5d3faaa;citation_author=Ruobin Gong" />
@@ -2900,12 +2899,18 @@ covers a linear regression model.</p>
 database containing <span class="math inline">\(n\)</span> records. Usually, the goal of collecting data
 is to learn some characteristic about the underlying population.
 To accomplish this task, a common approach is to assume the population
-is represented by some statistical model <span class="math inline">\(f( \cdot \mid \theta)\)</span>. It is often the case that
+is represented by some statistical model <span class="math inline">\(f( \cdot \mid \theta)\)</span>. It is often the case
 some function of <span class="math inline">\(\theta\)</span> has relevant meaning to the scientific question at hand. In this setting,
 learning characteristics of a population reduces to learning about <span class="math inline">\(\theta\)</span>.</p>
 <p>In the Bayesian statistical framework, learning about <span class="math inline">\(\theta\)</span> is accomplished by drawing samples from the
-posterior <span class="math inline">\(p(\theta \mid x) \propto f(x \mid \theta) p(\theta)\)</span>. For
-large data sets, it is common to work with a summary statistic <span class="math inline">\(s = s(x)\)</span>
+posterior <span class="math inline">\(p(\theta \mid x) \propto f(x \mid \theta) p(\theta)\)</span>.
+Here, <span class="math inline">\(p(\theta)\)</span> is called the prior distribution, and represents
+the researcher’s belief about <span class="math inline">\(\theta\)</span> before seeing any data.
+One major advantage of the Bayesian method is that, through the prior,
+it provides a mechanism for incorporating information not explicitly contained
+in the data at hand. This is especially useful in settings where there
+is considerable domain knowledge on the value of <span class="math inline">\(\theta\)</span>.</p>
+<p>For large data sets, it is common to work with a summary statistic <span class="math inline">\(s = s(x)\)</span>
 that has much smaller dimension than the original data. Doing so can
 greatly simplify calculations. In general, there can be information
 loss with using summary statistics, but for models with a sufficient
@@ -2925,7 +2930,7 @@ noise to add.</p>
 <p>We now describe the <span class="math inline">\(\epsilon\)</span>-DP privacy framework in more detail. For the noisy summary
 statistic, we write <span class="math inline">\(s_{dp} \sim \eta(\cdot \mid x)\)</span>. Here,
 <span class="math inline">\(\eta\)</span> is a known noise infusion process designed to meet a certain property: The privacy mechanism
-<span class="math inline">\(\eta\)</span> is said to be <span class="math inline">\(\epsilon\)</span>-differentially private <span class="citation" data-cites="Dwork2013">(<a href="#ref-Dwork2013" role="doc-biblioref">Dwork and Roth 2013</a>)</span> if for all values of
+<span class="math inline">\(\eta\)</span> is said to be <span class="math inline">\(\epsilon\)</span>-differentially private <span class="citation" data-cites="Dwork2006">(<a href="#ref-Dwork2006" role="doc-biblioref">Dwork et al. 2006</a>)</span> if for all values of
 <span class="math inline">\(s_{dp}\)</span>, and all “neighboring” databases <span class="math inline">\((x,x&#39;) \in \mathcal{X}^n \times \mathcal{X}^n\)</span> differing
 by one record (denoted by <span class="math inline">\(d(x,x&#39;) \leq 1\)</span>), the probability ratio is bounded:
 <span class="math display">\[
@@ -3374,10 +3379,8 @@ They assume the true data generating process follows the model</p>
 \begin{aligned}
 y &amp;= -1.79 -2.89x_2 -0.66x_2 + \epsilon\\
 \epsilon &amp;\sim N(0,2^2)\\
-\begin{split}
-X &amp;\sim N_{2}(\mu, I_2)\\
-\mu &amp;= \binom{0.9}{-1.17}
-\end{split}
+\binom{x_1}{x_2} &amp;\sim N_{2}(\mu, I_2)\\
+\mu &amp;= \binom{0.9}{-1.17}.
 \end{aligned}
 \]</span></p>
 <p>Note, in most settings involving linear regression, the covariates are assumed to be
@@ -3399,18 +3402,12 @@ t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}^{i})^T \t
 \]</span></p>
 <p>and the <span class="math inline">\(\epsilon\)</span>-DP private statistic is obtained by adding Laplace error
 to the unique elements of …</p>
-<p>data generating process:
-<span class="math display">\[
-\begin{split}
-X &amp;\sim N_{2}(\mu, I_2)\\
-\mu &amp;= \binom{0.9}{-1.17}
-\end{split}
-\]</span></p>
 <ol type="1">
 <li><code>latent_f</code>: Since the privacy mechanism involves injecting noise into the design
 matrix, it is not possible to use the standard approach where one assumes the design
 matrix is a fixed, known constant. Hence to draw a sample from the latent data generating
-process we use the relation <span class="math inline">\(f(x,y) = f(x)f(y \mid x)\)</span>.
+process we use the relation <span class="math inline">\(f(x,y) = f(x)f(y \mid x)\)</span>. In this formulation,
+it is necessary to specify a distribution on the covariates <span class="math inline">\(x\)</span>.
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class="va">latent_f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">theta</span><span class="op">)</span> <span class="op">{</span></span>
@@ -3635,9 +3632,6 @@ B. Ding, J. Kulkarni and S. Yekhanin. Collecting telemetry data privately. 2017.
 </div>
 <div id="ref-Dwork2006" class="csl-entry" role="listitem">
 C. Dwork, F. McSherry, K. Nissim and A. Smith. Calibrating noise to sensitivity in private data analysis. In <em>Lecture notes in computer science</em>, pages. 265–284 2006. Springer Berlin Heidelberg. ISBN 9783540327325. URL <a href="http://dx.doi.org/10.1007/11681878_14">http://dx.doi.org/10.1007/11681878_14</a>.
-</div>
-<div id="ref-Dwork2013" class="csl-entry" role="listitem">
-C. Dwork and A. Roth. The algorithmic foundations of differential privacy. <em>Foundations and Trends<span></span> in Theoretical Computer Science</em>, 9(3-4): 211–407, 2013. URL <a href="https://doi.org/10.1561/0400000042">https://doi.org/10.1561/0400000042</a>.
 </div>
 <div id="ref-Erlingsson_2014" class="csl-entry" role="listitem">
 Ú. Erlingsson, V. Pihur and A. Korolova. RAPPOR: Randomized aggregatable privacy-preserving ordinal response. In <em>Proceedings of the 2014 ACM SIGSAC conference on computer and communications security</em>, 2014. ACM. URL <a href="http://dx.doi.org/10.1145/2660267.2660348">http://dx.doi.org/10.1145/2660267.2660348</a>.
