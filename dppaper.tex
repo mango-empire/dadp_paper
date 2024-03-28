@@ -14,25 +14,29 @@ This paper serves as a reference and introduction on using the dapper R package.
 \section{Introduction}\label{introduction}}
 
 Differential privacy provides a rigorous framework for protecting
-confidential information (Dwork et al. 2006). In this framework, privacy is obtained
-through the injection of random noise in the data analysis workflow.
-It has served as the theoretical foundation for recent advances in privacy technology. Several high profile
+confidential information (Dwork et al. 2006). It has served as the theoretical foundation for recent advances in privacy technology. Several high profile
 examples include Apple (Tang et al. 2017), Google (Erlingsson, Pihur, and Korolova 2014), Microsoft (Ding, Kulkarni, and Yekhanin 2017), and the
 U.S. Census Bureau (Abowd 2018).
 
-There are several approaches for constructing or modifying a data analysis workflow
-to provide privacy guarantees, which loosely fall into three categories: direct, query, and dissemination.
-The approaches mainly differ in where in the workflow privacy noise is injected.
-In the dissemination setting, data needs to be released to the public, and privacy is maintained by first
-perturbing the data with random noise before being released. There is strong interest
-in further developing this approach because data curators are often interested
+Differential privacy works by injecting a suitable amount of
+noise into a data analysis workflow and there are several approaches for modifying an existing workflow
+to provide differentially private guarantees. These approaches mainly differ in where in the workflow privacy noise is injected.
+Broadly speaking, noise can either be injected directly into a statistical estimating
+procedure or into the data itself. (Ji, Lipton, and Elkan 2014)
+provide a nice survey of how to modify several common machine learning algorithms
+to be differentially private. The main drawback of this approach
+is that it is model specific, so one needs to know before hand
+what type of analysis is to be run.
+
+In the case where noise is directly injected into the data, one can
+consider the \emph{query} or \emph{dissemination} scenario (Hotz et al. 2022). In the query setting,
+the user is only allowed to make specific request for summary statistics.
+In the dissemination setting, full individual level micro data is released.
+In both cases, privacy is maintained by adding noise directly to the released data product.
+There is strong interest in further developing the query and dissemination approaches because data curators are often interested
 in releasing data to the public without knowledge of how their data will
-be used or analyzed. In this scenario, it can be impossible to apply the direct or
-query method because they require knowing before hand how the data will be analyzed.
-For a recent example of a high profile application of the dissemination approach
-see the the U.S. Census Bureau's \texttt{TopDown} algorithm (Bureau 2023). (Ji, Lipton, and Elkan 2014)
-provide a nice survey of the direct and query based methods applied to
-common machine learning algorithms.
+be used or analyzed. For a recent example of a high profile application of the dissemination approach
+see the the U.S. Census Bureau's \texttt{TopDown} algorithm (Bureau 2023).
 
 Correctly carrying out statistical inference in the dissemination setting
 requires adjusting statistical workflows to account for privacy noise.
@@ -730,13 +734,22 @@ diffuse prior \(f(\beta) \propto 1\) leads to normal posterior.
 \begin{aligned}
 f(\beta \mid x,y, \sigma^2) &\sim N(\hat{\beta}, \hat{\Sigma})\\
 \hat{\mu} &= (x^Tx)^{-1}xy\\
-\hat{\Sigma} &= \sigma^{-2}(x^Tx)^{-1}
+\hat{\Sigma} &= \sigma^{2}(x^Tx)^{-1}
+\end{aligned}
+\]
+
+Plugging in the numbers gives us
+
+\[
+\begin{aligned}
+\hat{\beta} &= (-0.04, -6.81, -3.00)\\
+\hat{\hat{\Sigma}} &= insert
 \end{aligned}
 \]
 
 Figure {[}X{]} shows the posterior density estimates for the \(\beta\) coefficients.
 
-\includegraphics{dppaper_files/figure-latex/unnamed-chunk-20-1.pdf}
+\includegraphics{dppaper_files/figure-latex/unnamed-chunk-21-1.pdf}
 
 summary output:
 
@@ -750,7 +763,7 @@ summary output:
 \end{verbatim}
 
 trace plots:
-\includegraphics{dppaper_files/figure-latex/unnamed-chunk-22-1.pdf}
+\includegraphics{dppaper_files/figure-latex/unnamed-chunk-23-1.pdf}
 
 \hypertarget{discussion}{%
 \section{Discussion}\label{discussion}}
@@ -893,6 +906,9 @@ Erlingsson, Úlfar, Vasyl Pihur, and Aleksandra Korolova. 2014. {``RAPPOR: Rando
 
 \leavevmode\vadjust pre{\hypertarget{ref-Gong2022}{}}%
 Gong, Ruobin. 2022. {``Transparent Privacy Is Principled Privacy.''} \emph{Harvard Data Science Review}, no. Special Issue 2 (June). \url{https://doi.org/10.1162/99608f92.b5d3faaa}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Hotz2022}{}}%
+Hotz, V. Joseph, Christopher R. Bollinger, Tatiana Komarova, Charles F. Manski, Robert A. Moffitt, Denis Nekipelov, Aaron Sojourner, and Bruce D. Spencer. 2022. {``Balancing Data Privacy and Usability in the Federal Statistical System.''} \emph{Proceedings of the National Academy of Sciences} 119 (31). \url{https://doi.org/10.1073/pnas.2104906119}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Ji2014}{}}%
 Ji, Zhanglong, Zachary C. Lipton, and Charles Elkan. 2014. {``Differential Privacy and Machine Learning: A Survey and Review.''} \url{https://arxiv.org/abs/1412.7584}.
