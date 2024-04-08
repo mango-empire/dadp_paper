@@ -343,7 +343,7 @@ satisfying record additivity or not.
 The main function in \pkg{dapper} is the `dapper_sample` function. The syntax of the function is:
 
 ```{r, echo = TRUE, eval = FALSE}
-dapper_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter / 2),
+dapper_sample(data_model, sdp, init_par, niter = 2000, warmup = floor(niter / 2),
            chains = 1, varnames = NULL)
 ```
 
@@ -790,24 +790,30 @@ s2 <- sdp[4]
 s3 <- matrix(0, nrow = 3, ncol = 3)
 s3[upper.tri(s3, diag = TRUE)] <- c(100, sdp[5:9])
 s3[lower.tri(s3)] <- s3[upper.tri(s3)]
-
-bhat <- solve(s3) %*% s1
-sigma_hat <- 2 * solve(s3)
 ```
 
-\[
-\begin{aligned}
-\hat{\beta} &= (-0.04, -6.81, -3.00)\\
-\hat{\hat{\Sigma}} &= insert
-\end{aligned}
-\]
+Because of the injected privacy noise, the reconstructed
+$(x^Tx)^{-1}$ matrix is not positive definite. As
+a naive solution we use the algorithm proposed  
+in [@Higham1988] to find the closest positive semi-definite matrix
+as determined by the Forbenius norm. The `pracma`
+package contains an implementation via the `nearest_psd`
+function.
+
+```{r}
+s3 <- pracma::nearest_spd(solve(s3))
+
+bhat <- s3 %*% s1
+sigma_hat <- 2 * s3
+```
 
 Figure [X] shows the posterior density estimates for the $\beta$ coefficients.
 
 ```{r, echo = FALSE}
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
-  pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate")
+  pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%
+  mutate(method = "")
 
 coef_med <- coef_df %>% 
   group_by(coefficient) %>%
@@ -816,7 +822,11 @@ coef_med <- coef_df %>%
 coef_true <- tibble(coefficient = c("beta0", "beta1", "beta2"),
                     value  = c(-1.79, -2.89, -0.66))
 
-#naive_sample <- MASS::mvrnorm(9000, mu = bhat, Sigma = sigma_hat)
+naive_sample <- MASS::mvrnorm(9000, mu = bhat, Sigma = sigma_hat)
+
+coef_post <- tibble(beta0 = naive_sample[,1],
+                    beta1 = naive_sample[,2],
+                    beta2 = naive_sample[,3])
 
 dp_out$chain %>% 
   as_tibble() %>%
