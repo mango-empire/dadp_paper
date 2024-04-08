@@ -15,7 +15,7 @@ library(knitr)
 
 
 ## ----echo = TRUE, eval = FALSE------------------------------------------------
-#> dapper_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter / 2),
+#> dapper_sample(data_model, sdp, init_par, niter = 2000, warmup = floor(niter / 2),
 #>            chains = 1, varnames = NULL)
 
 
@@ -29,12 +29,6 @@ adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
 ## ----echo = FALSE-------------------------------------------------------------
 kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
-
-
-## ----echo = FALSE-------------------------------------------------------------
-#generate 2x2 table data
-x <- c(adm_cnf)
-sdp <- c(adm_prv)
 
 
 ## ----echo = TRUE--------------------------------------------------------------
@@ -64,6 +58,16 @@ priv_f <- function(sdp, x) {
 
 
 ## ----echo = TRUE--------------------------------------------------------------
+set.seed(1)
+tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
+adm_cnf <- Reduce('+', tmp)
+adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
+
+x <- c(adm_cnf)
+sdp <- c(adm_prv)
+
+
+## ----echo = TRUE--------------------------------------------------------------
 library(dapper)
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
@@ -74,7 +78,7 @@ dmod <- new_privacy(post_f   = post_f,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
                   
 dp_out <- dapper_sample(dmod,
-                  sdp = c(adm_prv),
+                  sdp = sdp,
                   niter = 10000,
                   warmup = 1000,
                   chains = 1,
@@ -120,16 +124,16 @@ or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,4) + xlab("Odds Ratio")
 
 
-## ----post-or-compare, fig.cap="comparison.",  echo = FALSE, fig.height=1.5, fig.width=5, fig.align='center'----
+## ----post-or-compare, fig.cap="comparison.",  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
 set.seed(1)
-confidential_data <- c(1198, 1493, 557, 1278)
+confidential_data <- x
 cps <- t(sapply(1:9000, function(s) post_f(confidential_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_conf  <- odds_male/odds_female
 
 set.seed(1)
-noisy_data <- c(1135, 1511, 473, 1438)
+noisy_data <- sdp
 cps <- t(sapply(1:9000, function(s) post_f(noisy_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
@@ -149,12 +153,13 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
   geom_density(alpha = .5) + 
   facet_wrap(~method) + 
   xlim(1,4) +
-  xlab("Odds Ratio")
+  xlab("Odds Ratio") +
+  guides(fill= guide_legend(title= "Data"))
 
 
 ## ----echo = TRUE--------------------------------------------------------------
 latent_f <- function(theta) {
-  xmat <- MASS::mvrnorm(100 , mu = c(.9,-1.17), Sigma = diag(2))
+  xmat <- MASS::mvrnorm(50 , mu = c(.9,-1.17), Sigma = diag(2))
   y <- cbind(1,xmat) %*% theta + rnorm(1, sd = sqrt(2))
   cbind(y,xmat)
 }
@@ -204,7 +209,7 @@ priv_f <- function(sdp, zt) {
 ## ----echo = TRUE--------------------------------------------------------------
 deltaa <- 13
 epsilon <- 10
-n <- 100
+n <- 50
 
 xmat <- MASS::mvrnorm(n, mu = c(.9,-1.17), Sigma = diag(2))
 beta <- c(-1.79, -2.89, -0.66)
@@ -217,7 +222,8 @@ sdp <- st_f(cbind(y,xmat))
 sdp <- sdp + VGAM::rlaplace(length(sdp), location = 0, scale = deltaa/epsilon)
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ----echo = TRUE, cache = TRUE------------------------------------------------
+library(progressr)
 
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
@@ -226,15 +232,18 @@ dmod <- new_privacy(post_f   = post_f,
                     npar     = 3,
                     varnames = c("beta0", "beta1", "beta2"))
 
+
+with_progress({
 dp_out <- dapper_sample(dmod,
                         sdp = sdp,
-                        niter = 300,
-                        warmup = 100,
+                        niter = 25000,
+                        warmup = 1000,
                         chains = 1,
                         init_par = rep(0,3))
+})
 
 
-## ----echo = FALSE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 #x^Ty
 s1 <- sdp[1:3]
 
@@ -246,14 +255,18 @@ s3 <- matrix(0, nrow = 3, ncol = 3)
 s3[upper.tri(s3, diag = TRUE)] <- c(100, sdp[5:9])
 s3[lower.tri(s3)] <- s3[upper.tri(s3)]
 
-bhat <- solve(s3) %*% s1
-sigma_hat <- 2 * solve(s3)
+
+## ----echo = TRUE--------------------------------------------------------------
+s3 <- pracma::nearest_spd(solve(s3))
+bhat <- s3 %*% s1
+sigma_hat <- 2 * s3
 
 
-## ----echo = FALSE-------------------------------------------------------------
+## ----regression-compare, fig.cap="Comparison between dapper and a naive approach that ignores the privacy mechanism", echo = FALSE, fig.height=1.5, fig.width=5, fig.align='center'----
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
-  pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate")
+  pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%
+  mutate(method = "dapper")
 
 coef_med <- coef_df %>% 
   group_by(coefficient) %>%
@@ -262,21 +275,18 @@ coef_med <- coef_df %>%
 coef_true <- tibble(coefficient = c("beta0", "beta1", "beta2"),
                     value  = c(-1.79, -2.89, -0.66))
 
-#naive_sample <- MASS::mvrnorm(9000, mu = bhat, Sigma = sigma_hat)
+naive_sample <- MASS::mvrnorm(9000, mu = bhat, Sigma = sigma_hat)
 
-dp_out$chain %>% 
-  as_tibble() %>%
+coef_post <- tibble(beta0 = naive_sample[,1],
+                    beta1 = naive_sample[,2],
+                    beta2 = naive_sample[,3])
+
+coef_post <- coef_post %>% 
   pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%
-  ggplot(aes(estimate)) + geom_density() + 
-  geom_vline(aes(xintercept = median), data = coef_med) +
+  mutate(method = "naive")
+
+rbind(coef_df, coef_post) %>%
+  ggplot(aes(x = estimate, group = method, fill = method)) + geom_density(alpha = .5) + 
   geom_vline(aes(xintercept = value), data = coef_true, linetype = "dashed") +
-  facet_wrap(~coefficient)
-
-
-## -----------------------------------------------------------------------------
-summary(dp_out)
-
-
-## -----------------------------------------------------------------------------
-plot(dp_out)
+  facet_wrap(~coefficient, scale = 'free')
 

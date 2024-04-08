@@ -216,7 +216,8 @@ The algorithm is in the following pseudo code:
   \end{itemize}
 
   \[
-     \alpha(x_i^* \mid x_i, x_{-i}, \theta) = \min \left\{ 1, \dfrac{\eta(s_{dp} \mid x_i^*, x_{-i})}{\eta(s_{dp} \mid x_i, x_{-i})} \right\}.
+     \alpha(x_i^* \mid x_i, x_{-i}, \theta) = \min \left\{ 1, \dfrac{\eta(s_{dp} \mid x_i^*, x_{-i})}{\eta(s_{dp} \mid x_i, x_{-i})} \right\}  
+     = \min \left\{ 1, \dfrac{g(s_{dp}, t(x^*, s_{dp}))}{g(s_{dp}, t(x,s_{dp}))} \right\}.
    \]
 \end{enumerate}
 
@@ -271,8 +272,8 @@ some care in how each component is constructed.
   Its syntax should be \texttt{latent\_f(theta)} where \texttt{theta} is a vector
   representing the model parameters being estimated. This function
   must work with the supplied initial parameter provide in the \texttt{init\_par}
-  argument of \texttt{dapper\_sample} function. The output should be a \(n \times k\) matrix
-  where \(k\) is the dimension of \(\theta\) and \(n\) is the number of observations. It is
+  argument of \texttt{dapper\_sample} function. The output is a \(n \times p\) matrix
+  where \(n\) is the number of observations and \(p\) is the dimension of a record \(x\). It is
   critical to remember the correct value for \(n\) is dependent on the choice of how the latent data is
   represented as discussed in the beginning of section 4.
 \item
@@ -301,7 +302,7 @@ some care in how each component is constructed.
 The main function in \pkg{dapper} is the \texttt{dapper\_sample} function. The syntax of the function is:
 
 \begin{verbatim}
-dapper_sample(data_model, sdp, nobs, init_par, niter = 2000, warmup = floor(niter / 2),
+dapper_sample(data_model, sdp, init_par, niter = 2000, warmup = floor(niter / 2),
            chains = 1, varnames = NULL)
 \end{verbatim}
 
@@ -321,8 +322,9 @@ choose the most appropriate configuration for their system. The
 contingency table demonstration given in section 5 walks
 through a typical setup of \CRANpkg{furrr} and \CRANpkg{progressr}.
 
-The \texttt{dapper\_sample} function returns a \texttt{draw\_matrix} object as described
-in the \CRANpkg{posterior} package. One of the advantages with working
+The \texttt{dapper\_sample} function returns a list containing
+a \texttt{draw\_matrix} and a vector of acceptance probabilities of size \texttt{niter}. The \texttt{draw\_matrix} object is described
+in more detail in the \CRANpkg{posterior} package. One of the advantages with working
 with a \texttt{draw\_matrix} object is that is compatible with many of the packages in
 the \CRANpkg{rstan} ecosystem. For example, any \texttt{draw\_matrix} object can be
 plugged directly into the popular \CRANpkg{bayesplot} package. Additionaly,
@@ -425,6 +427,19 @@ priv_f <- function(sdp, x) {
 \end{verbatim}
 \end{enumerate}
 
+The \texttt{UBCAdmissions} data set is part of the \texttt{datasets} base package.
+Below we load the data and create the noisy admissions table.
+
+\begin{verbatim}
+set.seed(1)
+tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
+adm_cnf <- Reduce('+', tmp)
+adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
+
+x <- c(adm_cnf)
+sdp <- c(adm_prv)
+\end{verbatim}
+
 Once we have defined all components of the model we can
 create a new privacy model object using the \texttt{new\_privacy} function and
 feed this into the \texttt{dapper\_sample} function. Below we simulate 10,000 posterior
@@ -441,7 +456,7 @@ dmod <- new_privacy(post_f   = post_f,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
                   
 dp_out <- dapper_sample(dmod,
-                  sdp = c(adm_prv),
+                  sdp = sdp,
                   niter = 10000,
                   warmup = 1000,
                   chains = 1,
@@ -517,7 +532,7 @@ Specifically, we look at the odds of a male being admitted to
 that of female. A higher odds ratio would indicate a bias
 favoring males. Figure \ref{fig:post-or-density} shows the posterior draws
 from the dapper model. The large odds ratio values would seem
-to indicate there is bias favoring the males. See {[}XXX{]} for
+to indicate there is bias favoring the males. See (Bickel, Hammel, and O'Connell 1975) for
 an explanation of the ``paradox'' of this result.
 
 \begin{figure}
@@ -536,7 +551,7 @@ Figure \ref{fig:post-or-compare} shows a density estimate for the odds ratio
 under the confidential and noisy data. The posterior
 distribution for the odds ratio under the noisy data
 is shifted significantly, indicating a large degree of bias.
-Looking at left hand plot in \ref{fig:post-or-compare} shows the MAP estimate from \texttt{dapper}
+Looking at left hand plot in figure \ref{fig:post-or-compare} shows the MAP estimate from \texttt{dapper}
 is similar to that in the case of the confidential data.
 The width of the posterior is also much larger since
 it properly accounts for the uncertainty due to the privacy mechanism. This
@@ -564,7 +579,7 @@ They assume the true data generating process follows the model
 
 \[
 \begin{aligned}
-y &= -1.79 -2.89x_2 -0.66x_2 + \epsilon\\
+y &= -1.79 -2.89x_1 -0.66x_2 + \epsilon\\
 \epsilon &\sim N(0,2^2)\\
 \binom{x_1}{x_2} &\sim N_{2}(\mu, I_2)\\
 \mu &= \binom{0.9}{-1.17}.
@@ -583,14 +598,15 @@ sufficient summary statistics
 s(x,y) = (x^Ty, y^Ty, x^Tx).
 \]
 
-since \(s(x,y) = \sum_{i=1}^{n} t(x_i, y_i)\) where
+This summary statistic satisfies the additive record property since \(s(x,y) = \sum_{i=1}^{n} t(x_i, y_i)\)
+where
 
 \[
-t(x_i,y_i) = ((x^{i})^T y_i, y_i^2, (x^{i})^T x_i)
+t(x_i,y_i) = ((x_{i})^T y_i, y_i^2, (x_{i})^T x_i),
 \]
 
-with \(\epsilon\)-DP privacy guarantees. To achieve this guarantee is is
-necessary to bound the value of the statistic, so as to ensure
+with \(\epsilon\)-DP privacy guarantees. To achieve this guarantee it is
+necessary to bound the value of the statistic. This will ensure
 a data point cannot be too ``unique.'' Intuitively, an outlier is
 easy to identify, so in essence we want to make sure no data point
 is an extreme outlier. In the language of differential
@@ -601,11 +617,11 @@ the clamp function \([z] := \min\{\max\{z,-10\}, 10\}\) which truncates a value
 denote the normalized clamped value of \(z\). The clamped statistic is
 
 \[
-t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}^{i})^T \tilde{x}_i).
+t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}_{i})^T \tilde{x}_i).
 \]
 
 Ignoring duplicate entries, the global sensitivity is \(\Delta = p^2 + 3p + 3\) (wrong calculation, FIX!).
-Using the Laplace mechanism, \(\epsilon\)-DP privacy can be thus be achieved by adding i.i.d. Laplace\((0, \Delta/\epsilon)\)
+Using the Laplace mechanism, \(\epsilon\)-DP privacy can thus be achieved by adding i.i.d. Laplace\((0, \Delta/\epsilon)\)
 error to each unique entry.
 
 \begin{enumerate}
@@ -619,7 +635,7 @@ error to each unique entry.
 
 \begin{verbatim}
 latent_f <- function(theta) {
-  xmat <- MASS::mvrnorm(100 , mu = c(.9,-1.17), Sigma = diag(2))
+  xmat <- MASS::mvrnorm(50 , mu = c(.9,-1.17), Sigma = diag(2))
   y <- cbind(1,xmat) %*% theta + rnorm(1, sd = sqrt(2))
   cbind(y,xmat)
 }
@@ -690,12 +706,12 @@ priv_f <- function(sdp, zt) {
 \end{enumerate}
 
 First we simulate fake data using the aforementioned privacy mechanism.
-In the example, we use \(n = 100\) observations.
+In the example, we use \(n = 50\) observations.
 
 \begin{verbatim}
 deltaa <- 13
 epsilon <- 10
-n <- 100
+n <- 50
 
 xmat <- MASS::mvrnorm(n, mu = c(.9,-1.17), Sigma = diag(2))
 beta <- c(-1.79, -2.89, -0.66)
@@ -709,9 +725,11 @@ sdp <- sdp + VGAM::rlaplace(length(sdp), location = 0, scale = deltaa/epsilon)
 \end{verbatim}
 
 We construct a privacy model using the \texttt{new\_privacy} function and
-make 10,000 MCMC draws with a burn in of 1000 draws.
+make 25,000 MCMC draws with a burn in of 1000 draws.
 
 \begin{verbatim}
+library(progressr)
+
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
                     priv_f   = priv_f,
@@ -719,12 +737,15 @@ dmod <- new_privacy(post_f   = post_f,
                     npar     = 3,
                     varnames = c("beta0", "beta1", "beta2"))
 
+
+with_progress({
 dp_out <- dapper_sample(dmod,
                         sdp = sdp,
-                        niter = 300,
-                        warmup = 100,
+                        niter = 25000,
+                        warmup = 1000,
                         chains = 1,
                         init_par = rep(0,3))
+})
 \end{verbatim}
 
 For comparison, we consider a Bayesian analysis where the design matrix
@@ -738,32 +759,48 @@ f(\beta \mid x,y, \sigma^2) &\sim N(\hat{\beta}, \hat{\Sigma})\\
 \end{aligned}
 \]
 
-Plugging in the numbers gives us
-
-\[
-\begin{aligned}
-\hat{\beta} &= (-0.04, -6.81, -3.00)\\
-\hat{\hat{\Sigma}} &= insert
-\end{aligned}
-\]
-
-Figure {[}X{]} shows the posterior density estimates for the \(\beta\) coefficients.
-
-\includegraphics{dppaper_files/figure-latex/unnamed-chunk-21-1.pdf}
-
-summary output:
+The posterior can be written as a function of \(s(x,y)\). Since
+we only have access to the noisy version \(s_{dp}\) we can
+attempt to reconstruct the posterior be extracting the
+relevant entries which is done below.
 
 \begin{verbatim}
-#> # A tibble: 3 x 10
-#>   variable  mean median    sd   mad     q5   q95  rhat ess_bulk ess_tail
-#>   <chr>    <num>  <num> <num> <num>  <num> <num> <num>    <num>    <num>
-#> 1 beta0     2.32   2.55 4.09  5.06  -3.73   8.80  1.42     2.17     31.7
-#> 2 beta1     1.62   1.63 0.883 0.774 -0.224  2.92  1.50     6.41     11.6
-#> 3 beta2     3.42   3.34 0.601 0.584  2.59   4.54  1.50     2.01     18.9
+#x^Ty
+s1 <- sdp[1:3]
+
+#y^Ty
+s2 <- sdp[4]
+
+#x^Tx
+s3 <- matrix(0, nrow = 3, ncol = 3)
+s3[upper.tri(s3, diag = TRUE)] <- c(100, sdp[5:9])
+s3[lower.tri(s3)] <- s3[upper.tri(s3)]
 \end{verbatim}
 
-trace plots:
-\includegraphics{dppaper_files/figure-latex/unnamed-chunk-23-1.pdf}
+Because of the injected privacy noise, the reconstructed
+\((x^Tx)^{-1}\) matrix is not positive definite. As
+a naive solution we use the algorithm proposed\\
+in (Higham 1988) to find the closest positive semi-definite matrix
+as determined by the Forbenius norm. The \texttt{pracma}
+package contains an implementation via the \texttt{nearest\_psd}
+function.
+
+\begin{verbatim}
+s3 <- pracma::nearest_spd(solve(s3))
+bhat <- s3 %*% s1
+sigma_hat <- 2 * s3
+\end{verbatim}
+
+Figure \ref{fig:regression-compare} shows the posterior density estimates for the \(\beta\) coefficients.
+
+\begin{figure}
+
+{\centering \includegraphics{dppaper_files/figure-latex/regression-compare-1} 
+
+}
+
+\caption{Comparison between dapper and a naive approach that ignores the privacy mechanism}\label{fig:regression-compare}
+\end{figure}
 
 \hypertarget{discussion}{%
 \section{Discussion}\label{discussion}}
@@ -812,7 +849,7 @@ two steps
 \end{itemize}
 
 It turns out the lag-1 auto-correlation is closely related
-to the convergence rate of the chain in this example. {[}Jun{]} showed
+to the convergence rate of the chain in this example. (Liu and Wu 1999) showed
 the lag-1 autocorrelation is related to the Bayesian fraction of missing information
 and the latter, in fact, gives the exact convergence rate. The Bayesian fraction of missing information, \(\gamma\) is
 defined as
@@ -835,7 +872,7 @@ Thus when poor mixing is observed, we recommend seeing if increasing the privacy
 budget helps. Unfortunately, if one is not at liberty to alter the privacy budget,
 there is no quick fix. In the case where a small privacy budget results
 in a posterior much more diffuse than under the confidential data set, one
-can draw samples using the pseudo-likelihood scheme as proposed in {[}{]}. This
+can draw samples using the pseudo-likelihood scheme as proposed in (Andrieu and Roberts 2009). This
 scheme fits in the same data augmentation framework as \texttt{dapper} but is not implemented.
 
 \hypertarget{related-work}{%
@@ -889,6 +926,12 @@ record additivity, computation time can be unpalatable.
 \leavevmode\vadjust pre{\hypertarget{ref-Abowd2018}{}}%
 Abowd, John M. 2018. {``The u.s. Census Bureau Adopts Differential Privacy.''} In \emph{Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery \&Amp; Data Mining}. KDD '18. ACM. \url{https://doi.org/10.1145/3219819.3226070}.
 
+\leavevmode\vadjust pre{\hypertarget{ref-Andrieu2009}{}}%
+Andrieu, Christophe, and Gareth O. Roberts. 2009. {``The Pseudo-Marginal Approach for Efficient Monte Carlo Computations.''} \emph{The Annals of Statistics} 37 (2). \url{https://doi.org/10.1214/07-aos574}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Bickel1975}{}}%
+Bickel, P. J., E. A. Hammel, and J. W. O'Connell. 1975. {``Sex Bias in Graduate Admissions: Data from Berkeley: Measuring Bias Is Harder Than Is Usually Assumed, and the Evidence Is Sometimes Contrary to Expectation.''} \emph{Science} 187 (4175): 398--404. \url{https://doi.org/10.1126/science.187.4175.398}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-TopDown}{}}%
 Bureau, U. S. Census. 2023. {``Disclosure Avoidance and the 2020 Census: How the TopDown Algorithm Works.''} 2023. \url{https://www.census.gov/library/publications/2023/decennial/c2020br-04.html}.
 
@@ -907,6 +950,9 @@ Erlingsson, Úlfar, Vasyl Pihur, and Aleksandra Korolova. 2014. {``RAPPOR: Rando
 \leavevmode\vadjust pre{\hypertarget{ref-Gong2022}{}}%
 Gong, Ruobin. 2022. {``Transparent Privacy Is Principled Privacy.''} \emph{Harvard Data Science Review}, no. Special Issue 2 (June). \url{https://doi.org/10.1162/99608f92.b5d3faaa}.
 
+\leavevmode\vadjust pre{\hypertarget{ref-Higham1988}{}}%
+Higham, Nicholas J. 1988. {``Computing a Nearest Symmetric Positive Semidefinite Matrix.''} \emph{Linear Algebra and Its Applications} 103 (May): 103--18. \url{https://doi.org/10.1016/0024-3795(88)90223-6}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-Hotz2022}{}}%
 Hotz, V. Joseph, Christopher R. Bollinger, Tatiana Komarova, Charles F. Manski, Robert A. Moffitt, Denis Nekipelov, Aaron Sojourner, and Bruce D. Spencer. 2022. {``Balancing Data Privacy and Usability in the Federal Statistical System.''} \emph{Proceedings of the National Academy of Sciences} 119 (31). \url{https://doi.org/10.1073/pnas.2104906119}.
 
@@ -924,6 +970,9 @@ Karwa, Vishesh, Dan Kifer, and Aleksandra B. Slavković. 2015b. {``Private Poste
 
 \leavevmode\vadjust pre{\hypertarget{ref-Kenny2021}{}}%
 Kenny, Christopher T., Shiro Kuriwaki, Cory McCartan, Evan T. R. Rosenman, Tyler Simko, and Kosuke Imai. 2021. {``The Use of Differential Privacy for Census Data and Its Impact on Redistricting: The Case of the 2020 u.s. Census.''} \emph{Science Advances} 7 (41). \url{https://doi.org/10.1126/sciadv.abk3283}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Liu1999}{}}%
+Liu, Jun S., and Ying Nian Wu. 1999. {``Parameter Expansion for Data Augmentation.''} \emph{Journal of the American Statistical Association} 94 (448): 1264--74. \url{https://doi.org/10.1080/01621459.1999.10473879}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Robert2004}{}}%
 Robert, Christian P., and George Casella. 2004. \emph{Monte Carlo Statistical Methods}. \emph{Springer Texts in Statistics}. Springer New York. \url{https://doi.org/10.1007/978-1-4757-4145-2}.
