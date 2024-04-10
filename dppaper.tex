@@ -290,6 +290,8 @@ some care in how each component is constructed.
   from say a Metropolis-Hastings sampler.
 \item
   \texttt{priv\_f} is an R function that represents the log of the privacy mechanism density, \(\eta(s_{sdp} \mid x)\).
+  This function has the form \texttt{priv\_f\ =\ f(arg1,\ arg2,\ ..)} where \texttt{arg1} is the
+  the value of \(s_{dp}\) and \texttt{arg2} is the.
 \item
   \texttt{st\_f} is an R function which calculates a summary statistic. The optional
   argument \texttt{add} is a flag which represents whether \(st_f\) should be interpreted as

@@ -3062,7 +3062,9 @@ the Metropolis-Hastings loop is implemented in C so there is a significant initi
 when calling from an R function. The purpose of the <code>theta</code> argument is
 to serve as the initialization point if samples from <code>post_f</code> are draws
 from say a Metropolis-Hastings sampler.</p></li>
-<li><p><code>priv_f</code> is an R function that represents the log of the privacy mechanism density, <span class="math inline">\(\eta(s_{sdp} \mid x)\)</span>.</p></li>
+<li><p><code>priv_f</code> is an R function that represents the log of the privacy mechanism density, <span class="math inline">\(\eta(s_{sdp} \mid x)\)</span>.
+This function has the form <code>priv_f = f(arg1, arg2, ..)</code> where <code>arg1</code> is the
+the value of <span class="math inline">\(s_{dp}\)</span> and <code>arg2</code> is the.</p></li>
 <li><p><code>st_f</code> is an R function which calculates a summary statistic. The optional
 argument <code>add</code> is a flag which represents whether <span class="math inline">\(st_f\)</span> should be interpreted as
 satisfying record additivity or not.</p></li>

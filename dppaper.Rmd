@@ -333,6 +333,10 @@ to serve as the initialization point if samples from `post_f` are draws
 from say a Metropolis-Hastings sampler.
 
 * `priv_f` is an R function that represents the log of the privacy mechanism density, $\eta(s_{sdp} \mid x)$. 
+This function has the form `priv_f = f(arg1, arg2, ..)` where `arg1` is the
+the value of $s_{dp}$ and `arg2` is the.
+
+
 
 * `st_f` is an R function which calculates a summary statistic. The optional
 argument `add` is a flag which represents whether $st_f$ should be interpreted as 
