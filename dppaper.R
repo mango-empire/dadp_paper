@@ -199,18 +199,17 @@ st_f <- function(dmat) {
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-#deltaa <- 13
-#epsilon <- 10
 priv_f <- function(sdp, zt) {
-  sum(VGAM::dlaplace(sdp - zt, 0, 13/10, log = TRUE))
+  sum(VGAM::dlaplace(sdp - zt, 0, 15/10, log = TRUE))
 }
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-deltaa <- 13
+deltaa <- 15
 epsilon <- 10
 n <- 50
 
+set.seed(1)
 xmat <- MASS::mvrnorm(n, mu = c(.9,-1.17), Sigma = diag(2))
 beta <- c(-1.79, -2.89, -0.66)
 y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
@@ -252,7 +251,7 @@ s2 <- sdp[4]
 
 #x^Tx
 s3 <- matrix(0, nrow = 3, ncol = 3)
-s3[upper.tri(s3, diag = TRUE)] <- c(100, sdp[5:9])
+s3[upper.tri(s3, diag = TRUE)] <- c(n, sdp[5:9])
 s3[lower.tri(s3)] <- s3[upper.tri(s3)]
 
 

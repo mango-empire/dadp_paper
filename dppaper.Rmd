@@ -333,6 +333,7 @@ to serve as the initialization point if samples from `post_f` are draws
 from say a Metropolis-Hastings sampler.
 
 * `priv_f` is an R function that represents the log of the privacy mechanism density, $\eta(s_{sdp} \mid x)$. 
+Typically
 This function has the form `priv_f = f(arg1, arg2, ..)` where `arg1` is the
 the value of $s_{dp}$ and `arg2` is the.
 
@@ -669,7 +670,7 @@ denote the normalized clamped value of $z$. The clamped statistic is
 t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}_{i})^T \tilde{x}_i).
 \]
 
-Ignoring duplicate entries, the global sensitivity is $\Delta = p^2 + 3p + 3$ (wrong calculation, FIX!).
+Ignoring duplicate entries, the global sensitivity is $\Delta = p^2 + 4p + 3$.
 Using the Laplace mechanism, $\epsilon$-DP privacy can thus be achieved by adding i.i.d. Laplace$(0, \Delta/\epsilon)$
 error to each unique entry. 
 
@@ -734,12 +735,10 @@ global sensitivity.
     ```
 4. `priv_f`: Privacy Mechanism
 adds Laplace$(0, \Delta/\epsilon)$ error to each unique entry
-of the statistic. In this example, $\Delta = 13$ and $\epsilon = 10$.
+of the statistic. In this example, $\Delta = 15$ and $\epsilon = 10$.
     ```{r, echo = TRUE}
-    #deltaa <- 13
-    #epsilon <- 10
     priv_f <- function(sdp, zt) {
-      sum(VGAM::dlaplace(sdp - zt, 0, 13/10, log = TRUE))
+      sum(VGAM::dlaplace(sdp - zt, 0, 15/10, log = TRUE))
     }
     ```
 
@@ -747,10 +746,11 @@ First we simulate fake data using the aforementioned privacy mechanism.
 In the example, we use $n = 50$ observations.
 
 ```{r, echo = TRUE}
-deltaa <- 13
+deltaa <- 15
 epsilon <- 10
 n <- 50
 
+set.seed(1)
 xmat <- MASS::mvrnorm(n, mu = c(.9,-1.17), Sigma = diag(2))
 beta <- c(-1.79, -2.89, -0.66)
 y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
@@ -812,7 +812,7 @@ s2 <- sdp[4]
 
 #x^Tx
 s3 <- matrix(0, nrow = 3, ncol = 3)
-s3[upper.tri(s3, diag = TRUE)] <- c(100, sdp[5:9])
+s3[upper.tri(s3, diag = TRUE)] <- c(n, sdp[5:9])
 s3[lower.tri(s3)] <- s3[upper.tri(s3)]
 ```
 
