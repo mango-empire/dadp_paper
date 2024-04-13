@@ -2,7 +2,7 @@
 # Please edit dppaper.Rmd to modify this file
 
 ## ----setup, include=FALSE-----------------------------------------------------
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, eval.after = "fig.cap")
 library(ggplot2)
 library(kableExtra)
 library(tidyverse)
@@ -242,7 +242,7 @@ dp_out <- dapper_sample(dmod,
 })
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 #x^Ty
 s1 <- sdp[1:3]
 
@@ -255,13 +255,15 @@ s3[upper.tri(s3, diag = TRUE)] <- c(n, sdp[5:9])
 s3[lower.tri(s3)] <- s3[upper.tri(s3)]
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 s3 <- pracma::nearest_spd(solve(s3))
 bhat <- s3 %*% s1
-sigma_hat <- 2 * s3
+sigma_hat <- 2^2 * s3
 
 
-## ----regression-compare, fig.cap="Comparison between dapper and a naive approach that ignores the privacy mechanism", echo = FALSE, fig.height=1.5, fig.width=5, fig.align='center'----
+## ----regression-compare, fig.cap = caption, echo = FALSE, fig.height=1.5, fig.width=5, fig.align='center'----
+caption <- "Comparison between dapper and a naive approach that ignores the privacy mechanism"
+
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
   pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%
@@ -287,5 +289,33 @@ coef_post <- coef_post %>%
 rbind(coef_df, coef_post) %>%
   ggplot(aes(x = estimate, group = method, fill = method)) + geom_density(alpha = .5) + 
   geom_vline(aes(xintercept = value), data = coef_true, linetype = "dashed") +
-  facet_wrap(~coefficient, scale = 'free')
+  facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7))
+
+
+## ----regression-data-compare, fig.cap="The pink density is the posterior fo", echo = FALSE, fig.height=1.5, fig.width=5, fig.align='center'----
+coef_df <- dp_out$chain %>% 
+  as_tibble() %>%
+  pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%
+  mutate(data = "noisy")
+
+xmt <- cbind(1,xmat)
+conf_bhat <- solve(t(xmt) %*% xmt) %*% (t(xmt) %*% y)
+conf_sigma_hat <- 2^2 * solve(t(xmt) %*% xmt)
+conf_sample <- MASS::mvrnorm(9000, mu = conf_bhat, Sigma = conf_sigma_hat)
+
+
+coef_post <- tibble(beta0 = conf_sample[,1],
+                    beta1 = conf_sample[,2],
+                    beta2 = conf_sample[,3])
+
+coef_post <- coef_post %>% 
+  pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%
+  mutate(data = "confidential")
+
+rbind(coef_df, coef_post) %>%
+  mutate(data = as_factor(data)) %>% 
+  ggplot(aes(x = estimate, group = data, fill = data)) + geom_density(alpha = .5) + 
+  geom_vline(aes(xintercept = value), data = coef_true, linetype = "dashed") +
+  facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7)) 
+
 

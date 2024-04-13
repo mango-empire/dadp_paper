@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.3.5)  11 APR 2024 21:25
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.3.5)  13 APR 2024 00:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -826,20 +826,25 @@ File: dppaper_files/figure-latex/post-or-compare-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/post-or-compare-1.pdf>
 Package pdftex.def Info: dppaper_files/figure-latex/post-or-compare-1.pdf  used on input line 567.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
-[7 <./dppaper_files/figure-latex/trace-plot-1.pdf> <./dppaper_files/figure-latex/post-or-density-1.pdf>] [8 <./dppaper_files/figure-latex/post-or-compare-1.pdf>] [9] [10]
-<dppaper_files/figure-latex/regression-compare-1.pdf, id=191, 361.35pt x 108.405pt>
+[7 <./dppaper_files/figure-latex/trace-plot-1.pdf> <./dppaper_files/figure-latex/post-or-density-1.pdf>] [8 <./dppaper_files/figure-latex/post-or-compare-1.pdf>] [9]
+<dppaper_files/figure-latex/regression-compare-1.pdf, id=187, 361.35pt x 108.405pt>
 File: dppaper_files/figure-latex/regression-compare-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/regression-compare-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/regression-compare-1.pdf  used on input line 800.
+Package pdftex.def Info: dppaper_files/figure-latex/regression-compare-1.pdf  used on input line 781.
 (pdftex.def)             Requested size: 361.34912pt x 108.40472pt.
-[11 <./dppaper_files/figure-latex/regression-compare-1.pdf>] [12]
+<dppaper_files/figure-latex/regression-data-compare-1.pdf, id=188, 361.35pt x 108.405pt>
+File: dppaper_files/figure-latex/regression-data-compare-1.pdf Graphic file (type pdf)
+<use dppaper_files/figure-latex/regression-data-compare-1.pdf>
+Package pdftex.def Info: dppaper_files/figure-latex/regression-data-compare-1.pdf  used on input line 792.
+(pdftex.def)             Requested size: 361.34912pt x 108.40472pt.
+[10] [11 <./dppaper_files/figure-latex/regression-compare-1.pdf> <./dppaper_files/figure-latex/regression-data-compare-1.pdf>] [12]
 No file RJwrapper.bbl.
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 1015.
+(Font)              using `T1/zi4/m/n' instead on input line 1007.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 1015.
+(Font)              scaled to size 9.18004pt on input line 1007.
 [13]) [14] (./RJwrapper.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
@@ -852,18 +857,18 @@ Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
 (rerunfilecheck)             Checksum: 5A25954A74B2BB38548A3754E0D88B53;2252.
  ) 
 Here is how much of TeX's memory you used:
- 26908 strings out of 476076
- 493464 string characters out of 5791351
+ 26919 strings out of 476076
+ 494089 string characters out of 5791351
  1948190 words of memory out of 5000000
- 48131 multiletter control sequences out of 15000+600000
+ 48141 multiletter control sequences out of 15000+600000
  611347 words of font info for 314 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 117i,12n,131p,1006b,898s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 117i,12n,131p,1006b,894s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmbb.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb><c:/Users/kevin/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (14 pages, 415164 bytes).
+Output written on RJwrapper.pdf (14 pages, 438246 bytes).
 PDF statistics:
- 367 PDF objects out of 1000 (max. 8388607)
- 316 compressed objects within 4 object streams
- 88 named destinations out of 1000 (max. 500000)
- 63649 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 377 PDF objects out of 1000 (max. 8388607)
+ 324 compressed objects within 4 object streams
+ 89 named destinations out of 1000 (max. 500000)
+ 63654 words of extra memory for PDF output out of 74296 (max. 10000000)
 
