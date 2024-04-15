@@ -830,11 +830,14 @@ bhat <- s3 %*% s1
 sigma_hat <- 2^2 * s3
 ```
 
-Figure \@ref(fig:regression-compare) shows the posterior density estimates for the $\beta$ coefficients.
+Figure \@ref(fig:regression-compare) shows the posterior density estimates for the $\beta$ coefficients based
+on $s_{dp}$. The density estimates show the naive method which ignores the privacy mechanism has bias and 
+underestimates the variance.
 
 
 ```{r regression-compare, fig.cap = caption, echo = FALSE, fig.height=1.5, fig.width=5, fig.align='center'}
-caption <- "Comparison between dapper and a naive approach that ignores the privacy mechanism"
+caption <- "Comparison between dapper and a naive approach that ignores the privacy mechanism. The dashed lines
+are the true coefficient values."
 
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%

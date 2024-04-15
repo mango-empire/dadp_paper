@@ -9,35 +9,35 @@ library(tidyverse)
 library(knitr)
 
 
-## ----echo=TRUE, eval=FALSE----------------------------------------------------
+## ---- echo=TRUE, eval=FALSE---------------------------------------------------
 #> new_privacy(post_f = NULL, latent_f = NULL, priv_f = NULL,
 #>             st_f = NULL, add = FALSE, npar = NULL)
 
 
-## ----echo = TRUE, eval = FALSE------------------------------------------------
+## ---- echo = TRUE, eval = FALSE-----------------------------------------------
 #> dapper_sample(data_model, sdp, init_par, niter = 2000, warmup = floor(niter / 2),
 #>            chains = 1, varnames = NULL)
 
 
-## ----echo = FALSE-------------------------------------------------------------
+## ---- echo = FALSE------------------------------------------------------------
 set.seed(1)
 tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
 adm_cnf <- Reduce('+', tmp)
 adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
 
 
-## ----echo = FALSE-------------------------------------------------------------
+## ---- echo = FALSE------------------------------------------------------------
 kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 latent_f <- function(theta) {
   t(rmultinom(1, 4526, theta))
 }
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 post_f <- function(dmat, theta) {
   x <- c(dmat)
   t1 <- rgamma(4, x + 1, 1)
@@ -45,19 +45,19 @@ post_f <- function(dmat, theta) {
 }
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 st_f <- function(dmat) {
   c(dmat)
 }
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 priv_f <- function(sdp, x) {
   dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
 }
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 set.seed(1)
 tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
 adm_cnf <- Reduce('+', tmp)
@@ -67,7 +67,7 @@ x <- c(adm_cnf)
 sdp <- c(adm_prv)
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 library(dapper)
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
@@ -85,7 +85,7 @@ dp_out <- dapper_sample(dmod,
                   init_par = rep(.25,4))
 
 
-## ----eval = FALSE, echo = TRUE------------------------------------------------
+## ---- eval = FALSE, echo = TRUE-----------------------------------------------
 #> library(furrr)
 #> plan(multisession, workers = 2)
 #> 
@@ -97,7 +97,7 @@ dp_out <- dapper_sample(dmod,
 #>                   init_par = rep(.25,4))
 
 
-## ----eval = FALSE, echo = TRUE------------------------------------------------
+## ---- eval = FALSE, echo = TRUE-----------------------------------------------
 #> library(progressr)
 #> 
 #> with_progress({
@@ -124,7 +124,10 @@ or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,4) + xlab("Odds Ratio")
 
 
-## ----post-or-compare, fig.cap="comparison.",  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
+## ----post-or-compare, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
+caption <- "Comparison between using dapper and a naive Bayesian anaylsis on the
+noise infused data and the original confidential data."
+
 set.seed(1)
 confidential_data <- x
 cps <- t(sapply(1:9000, function(s) post_f(confidential_data, NULL)))
@@ -157,7 +160,7 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
   guides(fill= guide_legend(title= "Data"))
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 latent_f <- function(theta) {
   xmat <- MASS::mvrnorm(50 , mu = c(.9,-1.17), Sigma = diag(2))
   y <- cbind(1,xmat) %*% theta + rnorm(1, sd = sqrt(2))
@@ -165,7 +168,7 @@ latent_f <- function(theta) {
 }
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 post_f <- function(dmat, theta) {
   x <- cbind(1,dmat[,-1])
   y <- dmat[,1]
@@ -177,7 +180,7 @@ post_f <- function(dmat, theta) {
 }
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 clamp_data <- function(dmat) {
   pmin(pmax(dmat,-10),10) / 10
 }
@@ -198,13 +201,13 @@ st_f <- function(dmat) {
 }
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 priv_f <- function(sdp, zt) {
   sum(VGAM::dlaplace(sdp - zt, 0, 15/10, log = TRUE))
 }
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ---- echo = TRUE-------------------------------------------------------------
 deltaa <- 15
 epsilon <- 10
 n <- 50
@@ -221,7 +224,7 @@ sdp <- st_f(cbind(y,xmat))
 sdp <- sdp + VGAM::rlaplace(length(sdp), location = 0, scale = deltaa/epsilon)
 
 
-## ----echo = TRUE, cache = TRUE------------------------------------------------
+## ---- echo = TRUE, cache = TRUE-----------------------------------------------
 library(progressr)
 
 dmod <- new_privacy(post_f   = post_f,
@@ -242,7 +245,7 @@ dp_out <- dapper_sample(dmod,
 })
 
 
-## ----echo = FALSE-------------------------------------------------------------
+## ---- echo = FALSE------------------------------------------------------------
 #x^Ty
 s1 <- sdp[1:3]
 
@@ -255,14 +258,15 @@ s3[upper.tri(s3, diag = TRUE)] <- c(n, sdp[5:9])
 s3[lower.tri(s3)] <- s3[upper.tri(s3)]
 
 
-## ----echo = FALSE-------------------------------------------------------------
+## ---- echo = FALSE------------------------------------------------------------
 s3 <- pracma::nearest_spd(solve(s3))
 bhat <- s3 %*% s1
 sigma_hat <- 2^2 * s3
 
 
-## ----regression-compare, fig.cap = caption, echo = FALSE, fig.height=1.5, fig.width=5, fig.align='center'----
-caption <- "Comparison between dapper and a naive approach that ignores the privacy mechanism"
+## ----regression-compare, fig.cap = caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
+caption <- "Comparison between dapper and a naive approach that ignores the privacy mechanism. The dashed lines
+are the true coefficient values."
 
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
@@ -292,7 +296,9 @@ rbind(coef_df, coef_post) %>%
   facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7))
 
 
-## ----regression-data-compare, fig.cap="The pink density is the posterior fo", echo = FALSE, fig.height=1.5, fig.width=5, fig.align='center'----
+## ----regression-data-compare, fig.cap=caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
+caption <- "Comparison between using dapper on the noisy data set and a standard
+Bayesian analysis on the confidential data set."
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
   pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%
