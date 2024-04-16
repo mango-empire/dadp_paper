@@ -55,11 +55,10 @@ Unfortunately, making the necessary adjustments poses formidable mathematical
 challenges (Williams and Mcsherry 2010), even for seemingly simple models like linear regression.
 The difficulty can be seen from considering the marginal likelihood that results from correctly accounting for the injected
 privacy noise. This function is often analytically intractable and as a result,
-it is difficult or impossible to apply common maximum likelihood methods
+it is difficult or impossible to apply traditional statistical methods
 to derive estimators. In particular, the marginal likelihood can involve a complex
 integral where it is not possible to even evaluate the likelihood
-at a point. This makes gradient based methods, like the Newton-Raphson method,
-impractical. And approximating the likelihood can be computationally
+at a point. And approximating the likelihood can be computationally
 unfeasible since the integral is also of high dimension.
 Few tools are available to researchers to address these issues,
 and their absence is a serious barrier to the wider adoption
@@ -67,22 +66,22 @@ of dissemination methods.
 
 The \texttt{dapper} package provides a tool for conducting
 valid statistical inference in the presence of privacy noise.
-It implements the Bayesian framework proposed in (Ju et al. 2022). This framework describes how to modify
+It implements the Bayesian framework proposed in Ju et al. (2022). This framework describes how to modify
 an existing Bayesian model to account for privacy noise. \texttt{dapper}
-serves as user-friendly interface for implementing the framework in R. It allows the
+serves as a user-friendly interface for implementing the framework in R. It allows the
 user to specify a sampler from an existing Bayesian model and
 automatically constructing a valid posterior sampler that accounts for the
 added privacy noise. Compared to other Bayesian approaches, the \texttt{dapper} framework requires
-no specialized knowledge for tuning samplers since there is no tuning parameter,
-and when the record additivity is satisfied (see section 6), the algorithmic run time
+no specialized knowledge for setting up samplers since there are no tuning parameters.
+And when the record additivity property is satisfied (see section 6), the algorithmic run time
 complexity is similar to the non-private analysis. The goal of \texttt{dapper} is to provide
 a fast, flexible, and user-friendly way to analyze the impact of privacy mechanisms.
 
-The rest of this article is organized as follows. Section 2 covers the necessary background to understand the mathematical notation
+The rest of this article is organized as follows: Section 2 covers the necessary background to understand the mathematical notation
 and ideas used throughout the paper. Section 3 goes over the main algorithm without
-going into mathematical detail, for specifics see (Ju et al. 2022). Section 4 provides
+going into mathematical detail; for specifics see (Ju et al. 2022). Section 4 provides
 an overview of the dapper package and discusses important implementation details.
-Section 5 contains two example of how one might use the package to analyze the
+Section 5 contains two examples of how one might use the package to analyze the
 impact of adding noise for privacy. The first example goes over a typical
 odds ratio analysis for a \(2 \times 2\) table and the second example
 covers a linear regression model.
@@ -167,19 +166,12 @@ Given data privatized data, \(s_{dp}\), the goal of Bayesian inference is to sam
 posterior distribution \(p(\theta \mid s_{dp})\). Since the observed likelihood,
 \(p(s_{dp} \mid \theta)\), often has no simple closed form expression (Williams and Mcsherry 2010), most standard
 sampling schemes do not apply. To conduct privacy-aware Bayesian inference, the dapper package implements
-the data augmentation algorithm of (Ju et al. 2022) which allows us to sample from \(p(\theta \mid s_{dp})\)
+the data augmentation algorithm of Ju et al. (2022) which allows us to sample from \(p(\theta \mid s_{dp})\)
 without needing to specify \(p(s_{dp} \mid \theta)\).
 
 The algorithm considers the joint distribution \(p(\theta, x \mid s_{dp})\) and
-alternates sampling from the two distributions
-
-\begin{itemize}
-\tightlist
-\item
-  \(p(\theta \mid x, s_{dp})\)
-\item
-  \(p(x \mid \theta, s_{dp})\)
-\end{itemize}
+alternates sampling from the two distributions \(p(\theta \mid x, s_{dp})\)
+and \(p(x \mid \theta, s_{dp})\).
 
 Since \(s_{dp}\) is derived from \(x\), we have \(p(\theta \mid x, s_{dp}) = p(\theta \mid x)\) which
 is just the usual posterior distribution given the confidential data \(x\). The dapper
@@ -201,7 +193,7 @@ the \emph{record additivity} property if
 for some known and tractable functions \(g, t_1, \ldots, t_n\). The sample mean is a
 example of a summary statistic satisfying record additivity where \(t_i(x_i, s_{dp}) = x_i\).
 
-The data augmentation algorithm is in the following pseudo code:
+The data augmentation algorithm is described in the following pseudo code:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -228,6 +220,9 @@ The data augmentation algorithm is in the following pseudo code:
      = \min \left\{ 1, \dfrac{g(s_{dp}, t(x^*, s_{dp}))}{g(s_{dp}, t(x,s_{dp}))} \right\}.
    \]
 \end{enumerate}
+
+Theoretical results such as bounds on the acceptance probability and a proof
+of geometric ergodicity can be found in (Ju et al. 2022).
 
 \hypertarget{the-structure-of-dapper}{%
 \section{The Structure of dapper}\label{the-structure-of-dapper}}
@@ -923,12 +918,14 @@ feature is its flexibility which allows the users to specify a custom
 privacy mechanism. The benefit being that \texttt{dapper} can evaluate already
 established privacy mechanisms and those that have yet to be discovered.
 
-While \texttt{dapper} can be a nice addition to a privacy researcher's tool kit, there
-is still considerably more work that can be done. From a methodological standpoint,
-DAPPER suffers from slow convergence when the privacy budget is small which is problematic
-because this is the scenario where a privacy mechanism can have the greatest impact
-on a statistical analysis. On the computational end, without a statistic that satisfies
-record additivity, computation time can be unpalatable.
+\texttt{dapper} offers a significant step forward in providing general-purpose statistical
+inference tools for privatized data. Despite the strengths of \texttt{dapper}, there
+are notable weaknesses, which highlight the important directions for future work.
+Weaknesses include the requirement for the privacy mechanism to have a density
+(e.g.~the exponential mechanism has no density). The non-private posterior needs
+a relatively efficient sampler. Slow convergence when the privacy budget is small,
+and a statistic that satisfies record additivity to fully leverage \texttt{dapper} computational
+potential.
 
 \hypertarget{references}{%
 \section*{References}\label{references}}

@@ -2874,32 +2874,31 @@ for science and privacy to coexists.</p>
 challenges <span class="citation" data-cites="NIPS2010_sherry">(<a href="#ref-NIPS2010_sherry" role="doc-biblioref">Williams and Mcsherry 2010</a>)</span>, even for seemingly simple models like linear regression.
 The difficulty can be seen from considering the marginal likelihood that results from correctly accounting for the injected
 privacy noise. This function is often analytically intractable and as a result,
-it is difficult or impossible to apply common maximum likelihood methods
+it is difficult or impossible to apply traditional statistical methods
 to derive estimators. In particular, the marginal likelihood can involve a complex
 integral where it is not possible to even evaluate the likelihood
-at a point. This makes gradient based methods, like the Newton-Raphson method,
-impractical. And approximating the likelihood can be computationally
+at a point. And approximating the likelihood can be computationally
 unfeasible since the integral is also of high dimension.
 Few tools are available to researchers to address these issues,
 and their absence is a serious barrier to the wider adoption
 of dissemination methods.</p>
 <p>The <code>dapper</code> package provides a tool for conducting
 valid statistical inference in the presence of privacy noise.
-It implements the Bayesian framework proposed in <span class="citation" data-cites="Ju2022">(<a href="#ref-Ju2022" role="doc-biblioref">Ju et al. 2022</a>)</span>. This framework describes how to modify
+It implements the Bayesian framework proposed in <span class="citation" data-cites="Ju2022">Ju et al. (<a href="#ref-Ju2022" role="doc-biblioref">2022</a>)</span>. This framework describes how to modify
 an existing Bayesian model to account for privacy noise. <code>dapper</code>
-serves as user-friendly interface for implementing the framework in R. It allows the
+serves as a user-friendly interface for implementing the framework in R. It allows the
 user to specify a sampler from an existing Bayesian model and
 automatically constructing a valid posterior sampler that accounts for the
 added privacy noise. Compared to other Bayesian approaches, the <code>dapper</code> framework requires
-no specialized knowledge for tuning samplers since there is no tuning parameter,
-and when the record additivity is satisfied (see section 6), the algorithmic run time
+no specialized knowledge for setting up samplers since there are no tuning parameters.
+And when the record additivity property is satisfied (see section 6), the algorithmic run time
 complexity is similar to the non-private analysis. The goal of <code>dapper</code> is to provide
 a fast, flexible, and user-friendly way to analyze the impact of privacy mechanisms.</p>
-<p>The rest of this article is organized as follows. Section 2 covers the necessary background to understand the mathematical notation
+<p>The rest of this article is organized as follows: Section 2 covers the necessary background to understand the mathematical notation
 and ideas used throughout the paper. Section 3 goes over the main algorithm without
-going into mathematical detail, for specifics see <span class="citation" data-cites="Ju2022">(<a href="#ref-Ju2022" role="doc-biblioref">Ju et al. 2022</a>)</span>. Section 4 provides
+going into mathematical detail; for specifics see <span class="citation" data-cites="Ju2022">(<a href="#ref-Ju2022" role="doc-biblioref">Ju et al. 2022</a>)</span>. Section 4 provides
 an overview of the dapper package and discusses important implementation details.
-Section 5 contains two example of how one might use the package to analyze the
+Section 5 contains two examples of how one might use the package to analyze the
 impact of adding noise for privacy. The first example goes over a typical
 odds ratio analysis for a <span class="math inline">\(2 \times 2\)</span> table and the second example
 covers a linear regression model.</p>
@@ -2970,14 +2969,11 @@ application of the Laplace mechanism to linear regression.</p>
 posterior distribution <span class="math inline">\(p(\theta \mid s_{dp})\)</span>. Since the observed likelihood,
 <span class="math inline">\(p(s_{dp} \mid \theta)\)</span>, often has no simple closed form expression <span class="citation" data-cites="NIPS2010_sherry">(<a href="#ref-NIPS2010_sherry" role="doc-biblioref">Williams and Mcsherry 2010</a>)</span>, most standard
 sampling schemes do not apply. To conduct privacy-aware Bayesian inference, the dapper package implements
-the data augmentation algorithm of <span class="citation" data-cites="Ju2022">(<a href="#ref-Ju2022" role="doc-biblioref">Ju et al. 2022</a>)</span> which allows us to sample from <span class="math inline">\(p(\theta \mid s_{dp})\)</span>
+the data augmentation algorithm of <span class="citation" data-cites="Ju2022">Ju et al. (<a href="#ref-Ju2022" role="doc-biblioref">2022</a>)</span> which allows us to sample from <span class="math inline">\(p(\theta \mid s_{dp})\)</span>
 without needing to specify <span class="math inline">\(p(s_{dp} \mid \theta)\)</span>.</p>
 <p>The algorithm considers the joint distribution <span class="math inline">\(p(\theta, x \mid s_{dp})\)</span> and
-alternates sampling from the two distributions</p>
-<ul>
-<li><span class="math inline">\(p(\theta \mid x, s_{dp})\)</span></li>
-<li><span class="math inline">\(p(x \mid \theta, s_{dp})\)</span></li>
-</ul>
+alternates sampling from the two distributions <span class="math inline">\(p(\theta \mid x, s_{dp})\)</span>
+and <span class="math inline">\(p(x \mid \theta, s_{dp})\)</span>.</p>
 <p>Since <span class="math inline">\(s_{dp}\)</span> is derived from <span class="math inline">\(x\)</span>, we have <span class="math inline">\(p(\theta \mid x, s_{dp}) = p(\theta \mid x)\)</span> which
 is just the usual posterior distribution given the confidential data <span class="math inline">\(x\)</span>. The dapper
 package assumes the user has access to a sampler for <span class="math inline">\(p(\theta \mid x)\)</span>. This can
@@ -2996,7 +2992,7 @@ the <em>record additivity</em> property if
 \]</span>
 for some known and tractable functions <span class="math inline">\(g, t_1, \ldots, t_n\)</span>. The sample mean is a
 example of a summary statistic satisfying record additivity where <span class="math inline">\(t_i(x_i, s_{dp}) = x_i\)</span>.</p>
-<p>The data augmentation algorithm is in the following pseudo code:</p>
+<p>The data augmentation algorithm is described in the following pseudo code:</p>
 <ol type="1">
 <li>Sample <span class="math inline">\(\theta^{t+1}\)</span> from <span class="math inline">\(p(\cdot \mid x^{(t)})\)</span>.</li>
 <li>Sample from <span class="math inline">\(p(x \mid \theta, s_{dp})\)</span> using a three step process
@@ -3012,6 +3008,8 @@ given by:</li>
    = \min \left\{ 1, \dfrac{g(s_{dp}, t(x^*, s_{dp}))}{g(s_{dp}, t(x,s_{dp}))} \right\}.
 \]</span></li>
 </ol>
+<p>Theoretical results such as bounds on the acceptance probability and a proof
+of geometric ergodicity can be found in <span class="citation" data-cites="Ju2022">(<a href="#ref-Ju2022" role="doc-biblioref">Ju et al. 2022</a>)</span>.</p>
 <h2 data-number="4" id="the-structure-of-dapper"><span class="header-section-number">4</span> The Structure of dapper</h2>
 <p>The <code>dapper</code> package is structured around the two functions <code>dapper_sample</code> and
 <code>new_privacy</code>. The first function is used to draw samples from the
@@ -3708,12 +3706,14 @@ for the noise introduced for privacy protection in their statistical analysis. A
 feature is its flexibility which allows the users to specify a custom
 privacy mechanism. The benefit being that <code>dapper</code> can evaluate already
 established privacy mechanisms and those that have yet to be discovered.</p>
-<p>While <code>dapper</code> can be a nice addition to a privacy researcher’s tool kit, there
-is still considerably more work that can be done. From a methodological standpoint,
-DAPPER suffers from slow convergence when the privacy budget is small which is problematic
-because this is the scenario where a privacy mechanism can have the greatest impact
-on a statistical analysis. On the computational end, without a statistic that satisfies
-record additivity, computation time can be unpalatable.</p>
+<p><code>dapper</code> offers a significant step forward in providing general-purpose statistical
+inference tools for privatized data. Despite the strengths of <code>dapper</code>, there
+are notable weaknesses, which highlight the important directions for future work.
+Weaknesses include the requirement for the privacy mechanism to have a density
+(e.g. the exponential mechanism has no density). The non-private posterior needs
+a relatively efficient sampler. Slow convergence when the privacy budget is small,
+and a statistic that satisfies record additivity to fully leverage <code>dapper</code> computational
+potential.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <h3 class="appendix" data-number="7.1" id="cran-packages-used"><span class="header-section-number">7.1</span> CRAN packages used</h3>
 <p><a href="https://cran.r-project.org/package=fmcmc">fmcmc</a>, <a href="https://cran.r-project.org/package=rstan">rstan</a>, <a href="https://cran.r-project.org/package=adaptMCMC">adaptMCMC</a>, <a href="https://cran.r-project.org/package=mcmc">mcmc</a>, <a href="https://cran.r-project.org/package=furrr">furrr</a>, <a href="https://cran.r-project.org/package=progressr">progressr</a>, <a href="https://cran.r-project.org/package=posterior">posterior</a>, <a href="https://cran.r-project.org/package=bayesplot">bayesplot</a></p>
