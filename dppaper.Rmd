@@ -24,7 +24,7 @@ author:
     address:
     - Department of Statistics
     - West Lafayette, IN 47907
-    url: https://www.britannica.com/animal/quokka
+    url: https://jordan-awan.com/
     email: jawan@purdue.edu
   - name: Ruobin Gong
     affiliation: Rutgers University
@@ -76,9 +76,10 @@ examples include Apple [@tang2017privacy], Google [@Erlingsson_2014], Microsoft 
 U.S. Census Bureau [@Abowd2018].
 
 
-Differential privacy works by injecting a suitable amount of 
-noise into a data analysis workflow and there are several approaches for modifying an existing workflow
-to provide differentially private guarantees. These approaches mainly differ in where in the workflow privacy noise is injected. 
+Differential privacy methods provide plausible deniability by injecting a suitable amount of 
+noise into a data analysis workflow. To account for the additional
+noise from differential privacy, several different approaches
+have been proposed. These approaches mainly differ in where in the workflow privacy noise is injected. 
 Broadly speaking, noise can either be injected directly into a statistical estimating 
 procedure or into the data itself. [@Ji2014]
 provide a nice survey of how to modify several common machine learning algorithms
@@ -153,7 +154,7 @@ covers a linear regression model.
 
 Let $x = (x_1, \ldots, x_n) \in \mathcal{X}^n$ represent a confidential 
 database containing $n$ records. Usually, the goal of collecting data 
-is to learn some characteristic about the underlying population. 
+is to learn characteristics about the underlying population. 
 To accomplish this task, a common approach is to assume the population
 is represented by some statistical model $f( \cdot \mid \theta)$. It is often the case
 some function of $\theta$ has relevant meaning to the scientific question at hand. In this setting,
@@ -173,7 +174,7 @@ that has much smaller dimension than the original data. Doing so can
 greatly simplify calculations. In general, there can be information
 loss with using summary statistics, but for models with a sufficient 
 statistic, there is no loss. Curators of large databases
-often use summary statistics to publicize data since it allows them
+often use summary statistics to publish data since it allows them
 to efficiently communicate information contained in large data sets.
 For this reason, summary statistics are a natural target for
 dissemination based privacy approaches.
@@ -184,9 +185,19 @@ While a summary statistic can already partially anonymize data, it is still
 possible to deduce information about an individual entry depending on
 the distribution of $x$. Differential privacy
 solves this problem by taking a summary statistic $s$, and adding noise to it to produce a noisy summary statistic $s_{dp}$.
-While this method is not new [insert citation on swapping and randomized responses], differential privacy
-provides a rigorous framework for specify where and how much
-noise to add. 
+While noise addition has
+been common practice in statistical disclosure control [swapping citation], differential privacy
+provides a rigorous framework to specify where and how much
+noise to add. Most importantly, for the analyst, the differentially private noise mechanism is publicly
+available and can be incorporated into subsequent analyses.
+
+
+There are now many differential privacy frameworks, and the `dapper` method can be applied to
+all of them. For presentation, we focus on the earliest and most common
+formulation of differential privacy, $\epsilon$-differential privacy ($\epsilon$-DP). The
+$\epsilon$ parameter is called the privacy loss budget. The privacy loss budget controls how 
+strong the privacy guarantee is. Larger values of $\epsilon$ correspond to weaker
+privacy guarantees which in turn means less noise being added.
 
 We now describe the $\epsilon$-DP privacy framework in more detail. For the noisy summary 
 statistic, we write $s_{dp} \sim \eta(\cdot \mid x)$. Here,
@@ -197,21 +208,18 @@ by one record (denoted by $d(x,x') \leq 1$), the probability ratio is bounded:
 \[
 \dfrac{\eta(s_{dp} \mid x)}{\eta(s_{dp} \mid x')} \leq \exp(\epsilon), \quad \epsilon > 0.
 \]
-The parameter $\epsilon$ is called the privacy loss budget, and controls how 
-strong the privacy guarantee is. Larger values of $\epsilon$ correspond to weaker
-privacy guarantees which in turn means less noise being added.
 
 The differential privacy framework is used to create and verify privacy 
 mechanisms. One such mechanism is the *Laplace mechanism*. It works by 
-taking a deterministic statistic $s: X \mapsto \mathbb{R}^m$ and constructing
+taking a deterministic statistic $s: X \mapsto \mathbb{R}^m$ and constructs
 the privatized statistic $s_{dp} := s(x) + u$ where $u$ is a $m$-dimensional
-vector of i.i.d. Laplace noise. Using the ratio bound, if we draw
-each $u_i \sim Lap(\Delta (s) / \epsilon)$, we can show $s_dp$ is $\epsilon$-differentially private.
+vector of i.i.d. Laplace random variables. Using the ratio bound, if we draw
+each $u_i \sim \text{Lap}(\Delta (s) / \epsilon)$, we can show $s_{dp}$ is $\epsilon$-differentially private.
 Here $\Delta (s) := \max_{(x,x') \in \mathcal{X}^n \times \mathcal{X}^n; d(x,x') \leq 1} \|s(x) - s(x')\|$ 
 is the $\ell_1$ (global) sensitivity of $s$. Roughly speaking
 global sensitivity can be thought of as quantifying how easy it is to identify
 a particular record. The idea being the easier it is to identify a record (high global sensitivity),
-the more noise that needs to be added to achieve a given privacy guarantee [@Ju2022]. Example 2, will cover an
+the more noise that needs to be added to achieve a given privacy guarantee [@Dwork2006]. Example 2, will cover an
 application of the Laplace mechanism to linear regression.
 
 
@@ -627,7 +635,7 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
 
 ## Linear Regression
 In this section we apply `dapper` to reconstruct an
-example presented in Ju et al. They apply a Laplace privacy 
+example presented in @Ju2022. They apply a Laplace privacy 
 mechanism to a sufficient summary statistic for a linear regression model.
 Let $\{(x_i,y_i)\}_{i=1}^{n}$ be the original, confidential data with $x_i \in \mathbb{R}^2$.
 They assume the true data generating process follows the model
@@ -677,9 +685,10 @@ denote the normalized clamped value of $z$. The clamped statistic is
 t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}_{i})^T \tilde{x}_i).
 \]
 
-Ignoring duplicate entries, the global sensitivity is $\Delta = p^2 + 4p + 3$.
+Ignoring duplicate entries, the global sensitivity is $\Delta = p^2 + 4p + 3$ ^[The original paper, @Ju2022, contains a computation error and uses $\Delta = p^2 + 3p + 3$].
 Using the Laplace mechanism, $\epsilon$-DP privacy can thus be achieved by adding i.i.d. Laplace$(0, \Delta/\epsilon)$
-error to each unique entry. 
+error to each unique entry. Note this only provides an upper bound on sensitivity, and a 
+tighter can be achieved using techniques described in [@Awan2020].
 
 1. `latent_f`: Since the privacy mechanism involves injecting noise into the design
 matrix, it is not possible to use the standard approach where one assumes the design
@@ -991,23 +1000,23 @@ error community has not previously considered [@Smith2011; @Karwa2015].
 
 # Summary
 
-Currently, there is a dearth of software tools privacy researchers can use
+Currently, there is a lack of software tools privacy researchers can use
 to evaluate the impact of privacy mechanisms on statistical analyses.
 While there have been tremendous gains in the theoretical aspects of privacy,
 the lack of software resources to deploy and work with new privacy techniques has
 hampered their adoption. This gap in capability has been noted by several
 large industry entities who have begun building software ecosystems for
-working with differential privacy. SmartNoise by Microsoft [insert citation], for example,
-is a tool for generating synthetic data that has differentially private guarantees.
+working with differential privacy. SmartNoise by Microsoft [insert citation] and SafeTab [insert citation] by the US Census, for example,
+are tools for generating synthetic data that has differentially private guarantees.
 However, the majority of these software tools only address privacy and not the 
-ensuing analysis, or if it does address the analysis, only for specific models.
+ensuing analysis or, if it does, address the analysis only for specific models.
 Privacy researchers currently lack good tools for evaluating the impact
 of privacy mechanisms on a statistical analysis.
 
-Thus `dapper` helps fill an urgent need by providing researchers a way to evaluate
-how a particular privacy mechanism might effect a statistical analysis. A notable
+Thus `dapper` helps fill an urgent need by providing researchers a way to properly account
+for the noise introduced for privacy protection in their statistical analysis. A notable
 feature is its flexibility which allows the users to specify a custom
-privacy mechanism. The benefit being that DAPPER can evaluate already
+privacy mechanism. The benefit being that `dapper` can evaluate already
 established privacy mechanisms and those that have yet to be discovered.
 
 
