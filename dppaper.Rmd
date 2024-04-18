@@ -76,6 +76,7 @@ examples include Apple [@tang2017privacy], Google [@Erlingsson_2014], Microsoft 
 U.S. Census Bureau [@Abowd2018].
 
 
+
 Differential privacy methods provide plausible deniability by injecting a suitable amount of 
 noise into a data analysis workflow. To account for the additional
 noise from differential privacy, several different approaches
