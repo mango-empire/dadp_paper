@@ -627,7 +627,8 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
   facet_wrap(~method) + 
   xlim(1,4) +
   xlab("Odds Ratio") +
-  guides(fill= guide_legend(title= "Data"))
+  guides(fill= guide_legend(title= "Data")) + 
+  theme(legend.position="bottom")
 ```
 
 
@@ -698,7 +699,7 @@ it is necessary to specify a distribution on the covariates $x$.
     ```{r, echo = TRUE}
     latent_f <- function(theta) {
       xmat <- MASS::mvrnorm(50 , mu = c(.9,-1.17), Sigma = diag(2))
-      y <- cbind(1,xmat) %*% theta + rnorm(1, sd = sqrt(2))
+      y <- cbind(1,xmat) %*% theta + rnorm(50, sd = sqrt(2))
       cbind(y,xmat)
     }
     ```
@@ -884,7 +885,8 @@ coef_post <- coef_post %>%
 rbind(coef_df, coef_post) %>%
   ggplot(aes(x = estimate, group = method, fill = method)) + geom_density(alpha = .5) + 
   geom_vline(aes(xintercept = value), data = coef_true, linetype = "dashed") +
-  facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7))
+  facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7)) +
+  theme(legend.position="bottom")
 ```
 
 
@@ -914,7 +916,8 @@ rbind(coef_df, coef_post) %>%
   mutate(data = as_factor(data)) %>% 
   ggplot(aes(x = estimate, group = data, fill = data)) + geom_density(alpha = .5) + 
   geom_vline(aes(xintercept = value), data = coef_true, linetype = "dashed") +
-  facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7)) 
+  facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7)) +
+  theme(legend.position="bottom")
 
 ```
 

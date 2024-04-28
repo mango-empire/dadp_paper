@@ -650,7 +650,7 @@ tighter can be achieved using techniques described in (Awan and Slavković 2020)
 \begin{verbatim}
 latent_f <- function(theta) {
   xmat <- MASS::mvrnorm(50 , mu = c(.9,-1.17), Sigma = diag(2))
-  y <- cbind(1,xmat) %*% theta + rnorm(1, sd = sqrt(2))
+  y <- cbind(1,xmat) %*% theta + rnorm(50, sd = sqrt(2))
   cbind(y,xmat)
 }
 \end{verbatim}
