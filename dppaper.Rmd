@@ -425,6 +425,45 @@ we represent the confidential admissions data as a $1 \times 4$ matrix.
 Below we walk through the process of defining a privacy model.
 
 
+```{r, eval = FALSE}
+tdf <- rstatix::counts_to_cases(adm_cnf)
+tdf$Admit <- as.integer(tdf$Admit)
+tdf$Gender <- as.integer(tdf$Gender)
+
+
+pdf <- tdf
+rflip <- as.logical(rbinom(nrow(tdf), 1, .5))
+li <- sample(1:4, nrow(tdf), replace = TRUE)
+lc <- list(c(1,1), c(2,2), c(1,2), c(2,1))
+for(i in 1:nrow(tdf)) {
+  if(rflip[i]) {
+    pdf[i,] <- lc[[li[i]]]
+  }
+}
+
+latent_f <- function(theta) {
+  tmp  <- t(rmultinom(1, 4526, theta))
+  tmp2 <- matrix(c(tmp[1], tmp[2], tmp[3], tmp[4]), nrow = 2, ncol= 2)
+  tmp3 <- rstatix::counts_to_cases(tmp2)
+  tmp4 <- cbind(as.integer(tmp3$Var1), as.integer(tmp3$Var2))
+}
+    
+post_f <- function(dmat, theta) {
+  x <- c(table(as.data.frame(dmat)))
+  t1 <- rgamma(4, x + 1, 1)
+  t1/sum(t1)
+}
+
+st_f <- function(dmat) {
+  c(dmat[,1], dmat[,2])
+}
+
+priv_f <- function(sdp, x) {
+  dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
+}
+
+```
+
 1. `latent_f`: Since we can condition on the table total $N$, we can model the original, unobserved table counts as a multinomial
 distribution. We can easily draw from this distribution using the
 `rmultinom` function in the `base` stats package. Note, in this example,
@@ -596,7 +635,7 @@ uncertainty associated with the odds ratio estimate.
 
 ```{r post-or-compare, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
 caption <- "Comparison between using dapper and a naive Bayesian anaylsis on the
-noise infused data and the original confidential data."
+noise infused data and the original confidential data." 
 
 set.seed(1)
 confidential_data <- x
@@ -735,10 +774,10 @@ global sensitivity.
       pmin(pmax(dmat,-10),10) / 10
     }
     
-    st_f <- function(dmat) {
-      sdp_mat <- clamp_data(dmat)
-      ydp <- sdp_mat[,1, drop = FALSE]
-      xdp <- cbind(1,sdp_mat[,-1, drop = FALSE])
+    st_f <- function(i, tx, sdp) {
+      sdp_mat <- clamp_data(tx)
+      ydp <- tx[1]
+      xdp <- cbind(1,t(tx[-1]))
     
       s1 <- t(xdp) %*% ydp
       s2 <- t(ydp) %*% ydp
