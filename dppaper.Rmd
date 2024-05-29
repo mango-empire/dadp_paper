@@ -631,8 +631,8 @@ noise infused data and the original confidential data."
 
 set.seed(1)
 x <- cnf_df
-x$gender <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
-x$status <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+x$gender <- case_match(cnf_df$gender, "Male" ~ 1, "Female"~ 0)
+x$status <- case_match(cnf_df$status, "Admitted" ~ 1, "Rejected"~ 0)
 confidential_data <- x
 cps <- t(sapply(1:16000, function(s) post_f(confidential_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
@@ -659,7 +659,7 @@ df <- rbind(df1,df2)
 df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) + 
   geom_density(alpha = .5) + 
   facet_wrap(~method) + 
-  xlim(1,4) +
+  xlim(0,8) +
   xlab("Odds Ratio") +
   guides(fill= guide_legend(title= "Data")) + 
   theme(legend.position="bottom")
