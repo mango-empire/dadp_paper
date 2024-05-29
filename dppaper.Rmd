@@ -411,11 +411,32 @@ set.seed(1)
 tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
 adm_cnf <- Reduce('+', tmp)
 adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
+
+cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
+                 status = c("Admitted","Rejected","Admitted","Rejected"),
+                 n = c(1198, 1493, 557, 1278)) %>% uncount(n)
+
+set.seed(1) 
+ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
+cnf_df <- cnf_df[ix,]
+prv_df <- adm_df
+ip1 <- as.logical(rbinom(400, 1, .5))
+ip2 <- as.logical(rbinom(400, 1, .5))
+prv_df$gender[ip1] <- sample(c("Male", "Female"), sum(ip1), replace = TRUE)
+prv_df$status[ip2] <- sample(c("Admitted", "Rejected"), sum(ip2), replace = TRUE)
+
+adm_cnf <- table(cnf_df)
+adm_prv <- table(prv_df)
+
+v1 <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
+v2 <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+
+sdp <- c(v1, v2)
 ```
 
 
 ```{r, echo = FALSE}
-kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
+kbl(list(t(adm_cnf), t(adm_prv)), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
 ```
 
@@ -425,45 +446,6 @@ we represent the confidential admissions data as a $1 \times 4$ matrix.
 Below we walk through the process of defining a privacy model.
 
 
-```{r, eval = FALSE}
-tdf <- rstatix::counts_to_cases(adm_cnf)
-tdf$Admit <- as.integer(tdf$Admit)
-tdf$Gender <- as.integer(tdf$Gender)
-
-
-pdf <- tdf
-rflip <- as.logical(rbinom(nrow(tdf), 1, .5))
-li <- sample(1:4, nrow(tdf), replace = TRUE)
-lc <- list(c(1,1), c(2,2), c(1,2), c(2,1))
-for(i in 1:nrow(tdf)) {
-  if(rflip[i]) {
-    pdf[i,] <- lc[[li[i]]]
-  }
-}
-
-latent_f <- function(theta) {
-  tmp  <- t(rmultinom(1, 4526, theta))
-  tmp2 <- matrix(c(tmp[1], tmp[2], tmp[3], tmp[4]), nrow = 2, ncol= 2)
-  tmp3 <- rstatix::counts_to_cases(tmp2)
-  tmp4 <- cbind(as.integer(tmp3$Var1), as.integer(tmp3$Var2))
-}
-    
-post_f <- function(dmat, theta) {
-  x <- c(table(as.data.frame(dmat)))
-  t1 <- rgamma(4, x + 1, 1)
-  t1/sum(t1)
-}
-
-st_f <- function(dmat) {
-  c(dmat[,1], dmat[,2])
-}
-
-priv_f <- function(sdp, x) {
-  dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
-}
-
-```
-
 1. `latent_f`: Since we can condition on the table total $N$, we can model the original, unobserved table counts as a multinomial
 distribution. We can easily draw from this distribution using the
 `rmultinom` function in the `base` stats package. Note, in this example,
@@ -471,7 +453,9 @@ the return value of one sample from `rmultinom` is a $4 \times 1$ matrix, so
 in order to conform with our confidential data representation we take the transpose.
     ```{r, echo = TRUE}
     latent_f <- function(theta) {
-      t(rmultinom(1, 4526, theta))
+      tl <- list(c(1,1), c(1,0), c(0,1), c(0,0))
+      rs <- sample(tl, 400, replace = TRUE, prob = theta)
+      do.call(rbind, rs)
     }
     ```
 2. `post_f`: Given confidential data, we can derive the posterior analytically
@@ -479,8 +463,8 @@ using a Dirichlet prior. In this example, we use a flat prior which
 corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
 can be generated using random draws from the gamma distribution.
     ```{r, echo = TRUE}
-    post_f <- function(dmat, theta) {
-      x <- c(dmat)
+     post_f <- function(dmat, theta) {
+      x <- c(table(as.data.frame(dmat)))
       t1 <- rgamma(4, x + 1, 1)
       t1/sum(t1)
     }
@@ -488,8 +472,11 @@ can be generated using random draws from the gamma distribution.
 3. `st_f`: Since the latent model only returns one observation from a multinomial
 distribution, we can just use the identity function as the summary statistic.
     ```{r, echo = TRUE}
-    st_f <- function(dmat) {
-      c(dmat)
+    st_f <- function(i, xi, sdp) {
+      x    <- rep(0, 400 * 2)
+      x[i] <- xi[1]
+      x[i + 400] <- xi[2]
+      x
     }
     ```
 4. `priv_f`: The privacy mechanism is Guassian white noise drawn from independent $N(0,100^2)$ distributions. Hence given
@@ -500,8 +487,9 @@ confidential table cells $(n_{11}, n_{22}, n_{12}, n_{21})$
 Here $\phi(\cdot;\mu,\sigma^2)$ is the density of the normal distribution
 with mean and variance $\mu,\sigma^2$.
     ```{r, echo = TRUE}
-    priv_f <- function(sdp, x) {
-      dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
+    priv_f <- function(sdp, tx) {
+      t1 <- sum(sdp == tx)
+      t1 * log(3/4) + (800 - t1) * log(1/4)
     }
     ```
 
@@ -511,7 +499,7 @@ with mean and variance $\mu,\sigma^2$.
 The `UBCAdmissions` data set is part of the `datasets` base package.
 Below we load the data and create the noisy admissions table.
 
-```{r, echo = TRUE}
+```{r, echo = TRUE, eval = FALSE}
 set.seed(1)
 tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
 adm_cnf <- Reduce('+', tmp)
@@ -531,18 +519,18 @@ draws with a burn-in of 1000.
 
 ```{r, echo = TRUE}
 library(dapper)
+
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
                     priv_f   = priv_f,
                     st_f     = st_f,
-                    add      = FALSE,
                     npar     = 4,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
-                  niter = 10000,
-                  warmup = 1000,
+                  niter = 4000,
+                  warmup = 100,
                   chains = 1,
                   init_par = rep(.25,4))
 ```
@@ -554,11 +542,15 @@ would produce four chains using two CPU's.
 
 ```{r, eval = FALSE, echo = TRUE}
 library(furrr)
+library(progressr)
 plan(multisession, workers = 2)
+handlers(global = TRUE)
+handlers("cli")
+
 
 dp_out <- dapper_sample(dmod,
-                  sdp = c(adm_prv),
-                  niter = 10000,
+                  sdp = sdp,
+                  niter = 5000,
                   warmup = 1000,
                   chains = 4,
                   init_par = rep(.25,4))
@@ -571,15 +563,15 @@ parallel computing case.
 
 ```{r, eval = FALSE, echo = TRUE}
 library(progressr)
+handlers(global = TRUE)
 
-with_progress({
-  dp_out <- dapper_sample(dmod,
+handlers("cli")
+dp_out <- dapper_sample(dmod,
                   sdp = c(adm_prv),
                   niter = 10000,
-                  warmup = 1000,
+                  warmup = 100,
                   chains = 4,
                   init_par = rep(.25,4))
-})
 ```
 
 results can be quickly summarized using the `summary` function which is 
@@ -611,7 +603,7 @@ an explanation of the "paradox" of this result.
 ```{r post-or-density, fig.cap="posterior density estimate for the odds ratio using 9000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
-ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,4) + xlab("Odds Ratio")
+ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,10) + xlab("Odds Ratio")
 ```
 
 
@@ -638,15 +630,18 @@ caption <- "Comparison between using dapper and a naive Bayesian anaylsis on the
 noise infused data and the original confidential data." 
 
 set.seed(1)
+x <- cnf_df
+x$gender <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
+x$status <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
 confidential_data <- x
-cps <- t(sapply(1:9000, function(s) post_f(confidential_data, NULL)))
+cps <- t(sapply(1:16000, function(s) post_f(confidential_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_conf  <- odds_male/odds_female
 
 set.seed(1)
-noisy_data <- sdp
-cps <- t(sapply(1:9000, function(s) post_f(noisy_data, NULL)))
+noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
+cps <- t(sapply(1:16000, function(s) post_f(noisy_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_noisy  <- odds_male/odds_female
