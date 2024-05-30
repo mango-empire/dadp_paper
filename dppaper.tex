@@ -365,19 +365,19 @@ the noise infused table.
 \centering
 \begin{tabular}[t]{lrr}
 \toprule
-  & Male & Female\\
+  & Female & Male\\
 \midrule
-Admitted & 1198 & 557\\
-Rejected & 1493 & 1278\\
+Admitted & 46 & 109\\
+Rejected & 118 & 127\\
 \bottomrule
 \end{tabular}
 \centering
 \begin{tabular}[t]{lrr}
 \toprule
-  & Male & Female\\
+  & Female & Male\\
 \midrule
-Admitted & 1135.35 & 473.44\\
-Rejected & 1511.36 & 1437.53\\
+Admitted & 66 & 107\\
+Rejected & 100 & 127\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -398,7 +398,9 @@ Below we walk through the process of defining a privacy model.
 
 \begin{verbatim}
 latent_f <- function(theta) {
-  t(rmultinom(1, 4526, theta))
+  tl <- list(c(1,1), c(1,0), c(0,1), c(0,0))
+  rs <- sample(tl, 400, replace = TRUE, prob = theta)
+  do.call(rbind, rs)
 }
 \end{verbatim}
 \item
@@ -408,8 +410,8 @@ latent_f <- function(theta) {
   can be generated using random draws from the gamma distribution.
 
 \begin{verbatim}
-post_f <- function(dmat, theta) {
-  x <- c(dmat)
+ post_f <- function(dmat, theta) {
+  x <- c(table(as.data.frame(dmat)))
   t1 <- rgamma(4, x + 1, 1)
   t1/sum(t1)
 }
@@ -419,8 +421,11 @@ post_f <- function(dmat, theta) {
   distribution, we can just use the identity function as the summary statistic.
 
 \begin{verbatim}
-st_f <- function(dmat) {
-  c(dmat)
+st_f <- function(i, xi, sdp) {
+  x    <- rep(0, 400 * 2)
+  x[i] <- xi[1]
+  x[i + 400] <- xi[2]
+  x
 }
 \end{verbatim}
 \item
@@ -433,8 +438,9 @@ st_f <- function(dmat) {
   with mean and variance \(\mu,\sigma^2\).
 
 \begin{verbatim}
-priv_f <- function(sdp, x) {
-  dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
+priv_f <- function(sdp, tx) {
+  t1 <- sum(sdp == tx)
+  t1 * log(3/4) + (800 - t1) * log(1/4)
 }
 \end{verbatim}
 \end{enumerate}
@@ -459,19 +465,21 @@ draws with a burn-in of 1000.
 
 \begin{verbatim}
 library(dapper)
+library(furrr)
+plan(multisession, workers = 4)
+
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
                     priv_f   = priv_f,
                     st_f     = st_f,
-                    add      = FALSE,
                     npar     = 4,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
-                  niter = 10000,
+                  niter = 5000,
                   warmup = 1000,
-                  chains = 1,
+                  chains = 4,
                   init_par = rep(.25,4))
 \end{verbatim}
 
@@ -482,11 +490,15 @@ would produce four chains using two CPU's.
 
 \begin{verbatim}
 library(furrr)
+library(progressr)
 plan(multisession, workers = 2)
+handlers(global = TRUE)
+handlers("cli")
+
 
 dp_out <- dapper_sample(dmod,
-                  sdp = c(adm_prv),
-                  niter = 10000,
+                  sdp = sdp,
+                  niter = 5000,
                   warmup = 1000,
                   chains = 4,
                   init_par = rep(.25,4))
@@ -499,15 +511,15 @@ parallel computing case.
 
 \begin{verbatim}
 library(progressr)
+handlers(global = TRUE)
 
-with_progress({
-  dp_out <- dapper_sample(dmod,
+handlers("cli")
+dp_out <- dapper_sample(dmod,
                   sdp = c(adm_prv),
                   niter = 10000,
-                  warmup = 1000,
+                  warmup = 100,
                   chains = 4,
                   init_par = rep(.25,4))
-})
 \end{verbatim}
 
 results can be quickly summarized using the \texttt{summary} function which is
@@ -516,12 +528,12 @@ the chain has run long enough to achieve adequate mixing.
 
 \begin{verbatim}
 #> # A tibble: 4 x 10
-#>   variable  mean median     sd    mad     q5   q95  rhat ess_bulk ess_tail
-#>   <chr>    <num>  <num>  <num>  <num>  <num> <num> <num>    <num>    <num>
-#> 1 pi_11    0.247  0.247 0.0248 0.0247 0.207  0.287  1.00    173.     434. 
-#> 2 pi_21    0.332  0.333 0.0248 0.0255 0.291  0.371  1.00    187.     448. 
-#> 3 pi_12    0.107  0.107 0.0253 0.0272 0.0659 0.147  1.01     62.8     98.7
-#> 4 pi_22    0.314  0.313 0.0248 0.0252 0.274  0.355  1.00    213.     508.
+#>   variable   mean median     sd    mad      q5   q95  rhat ess_bulk ess_tail
+#>   <chr>     <dbl>  <dbl>  <dbl>  <dbl>   <dbl> <dbl> <dbl>    <dbl>    <dbl>
+#> 1 pi_11    0.281  0.282  0.0521 0.0525 0.193   0.363  1.01     300.     488.
+#> 2 pi_21    0.363  0.361  0.0659 0.0656 0.259   0.475  1.01     382.     615.
+#> 3 pi_12    0.0690 0.0633 0.0448 0.0475 0.00809 0.151  1.01     218.     487.
+#> 4 pi_22    0.287  0.288  0.0531 0.0536 0.198   0.371  1.01     296.     511.
 \end{verbatim}
 
 Diagnostic checks using trace plots can be done using the \pkg{Bayesplot} package
@@ -690,10 +702,10 @@ clamp_data <- function(dmat) {
   pmin(pmax(dmat,-10),10) / 10
 }
 
-st_f <- function(dmat) {
-  sdp_mat <- clamp_data(dmat)
-  ydp <- sdp_mat[,1, drop = FALSE]
-  xdp <- cbind(1,sdp_mat[,-1, drop = FALSE])
+st_f <- function(i, tx, sdp) {
+  txc <- clamp_data(tx)
+  ydp <- txc[1]
+  xdp <- cbind(1,t(txc[-1]))
 
   s1 <- t(xdp) %*% ydp
   s2 <- t(ydp) %*% ydp
@@ -731,7 +743,8 @@ beta <- c(-1.79, -2.89, -0.66)
 y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
 
 #clamp the confidential data in xmat
-sdp <- st_f(cbind(y,xmat))
+dmat <- cbind(y,xmat)
+sdp <-  apply(sapply(1:nrow(dmat), function(i) st_f(i, dmat[i,], sdp)), 1, sum)
 
 #add Laplace noise 
 sdp <- sdp + VGAM::rlaplace(length(sdp), location = 0, scale = deltaa/epsilon)
@@ -741,7 +754,7 @@ We construct a privacy model using the \texttt{new\_privacy} function and
 make 25,000 MCMC draws with a burn in of 1000 draws.
 
 \begin{verbatim}
-library(progressr)
+library(dapper)
 
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
@@ -751,14 +764,13 @@ dmod <- new_privacy(post_f   = post_f,
                     varnames = c("beta0", "beta1", "beta2"))
 
 
-with_progress({
+
 dp_out <- dapper_sample(dmod,
                         sdp = sdp,
                         niter = 25000,
                         warmup = 1000,
                         chains = 1,
                         init_par = rep(0,3))
-})
 \end{verbatim}
 
 For comparison, we consider a Bayesian analysis where the design matrix

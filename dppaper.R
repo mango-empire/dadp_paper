@@ -25,73 +25,106 @@ tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
 adm_cnf <- Reduce('+', tmp)
 adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
 
+cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
+                 status = c("Admitted","Rejected","Admitted","Rejected"),
+                 n = c(1198, 1493, 557, 1278)) %>% uncount(n)
+
+set.seed(1) 
+ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
+cnf_df <- cnf_df[ix,]
+prv_df <- cnf_df
+ip1 <- as.logical(rbinom(400, 1, .5))
+ip2 <- as.logical(rbinom(400, 1, .5))
+prv_df$gender[ip1] <- sample(c("Male", "Female"), sum(ip1), replace = TRUE)
+prv_df$status[ip2] <- sample(c("Admitted", "Rejected"), sum(ip2), replace = TRUE)
+
+adm_cnf <- table(cnf_df)
+adm_prv <- table(prv_df)
+
+v1 <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
+v2 <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+
+sdp <- c(v1, v2)
+
 
 ## ----echo = FALSE-------------------------------------------------------------
-kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
+kbl(list(t(adm_cnf), t(adm_prv)), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
 
 
 ## ----echo = TRUE--------------------------------------------------------------
 latent_f <- function(theta) {
-  t(rmultinom(1, 4526, theta))
+  tl <- list(c(1,1), c(1,0), c(0,1), c(0,0))
+  rs <- sample(tl, 400, replace = TRUE, prob = theta)
+  do.call(rbind, rs)
 }
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-post_f <- function(dmat, theta) {
-  x <- c(dmat)
+ post_f <- function(dmat, theta) {
+  x <- c(table(as.data.frame(dmat)))
   t1 <- rgamma(4, x + 1, 1)
   t1/sum(t1)
 }
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-st_f <- function(dmat) {
-  c(dmat)
+st_f <- function(i, xi, sdp) {
+  x    <- rep(0, 400 * 2)
+  x[i] <- xi[1]
+  x[i + 400] <- xi[2]
+  x
 }
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-priv_f <- function(sdp, x) {
-  dnorm(sdp - x, mean = 0, sd = 100, log = TRUE)
+priv_f <- function(sdp, tx) {
+  t1 <- sum(sdp == tx)
+  t1 * log(3/4) + (800 - t1) * log(1/4)
 }
 
 
-## ----echo = TRUE--------------------------------------------------------------
-set.seed(1)
-tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
-adm_cnf <- Reduce('+', tmp)
-adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
-
-x <- c(adm_cnf)
-sdp <- c(adm_prv)
+## ----echo = TRUE, eval = FALSE------------------------------------------------
+#> set.seed(1)
+#> tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
+#> adm_cnf <- Reduce('+', tmp)
+#> adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
+#> 
+#> x <- c(adm_cnf)
+#> sdp <- c(adm_prv)
 
 
 ## ----echo = TRUE--------------------------------------------------------------
 library(dapper)
+library(furrr)
+plan(multisession, workers = 4)
+
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
                     priv_f   = priv_f,
                     st_f     = st_f,
-                    add      = FALSE,
                     npar     = 4,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
-                  niter = 10000,
+                  niter = 5000,
                   warmup = 1000,
-                  chains = 1,
+                  chains = 4,
                   init_par = rep(.25,4))
 
 
 ## ----eval = FALSE, echo = TRUE------------------------------------------------
 #> library(furrr)
+#> library(progressr)
 #> plan(multisession, workers = 2)
+#> handlers(global = TRUE)
+#> handlers("cli")
+#> 
 #> 
 #> dp_out <- dapper_sample(dmod,
-#>                   sdp = c(adm_prv),
-#>                   niter = 10000,
+#>                   sdp = sdp,
+#>                   niter = 5000,
 #>                   warmup = 1000,
 #>                   chains = 4,
 #>                   init_par = rep(.25,4))
@@ -99,15 +132,15 @@ dp_out <- dapper_sample(dmod,
 
 ## ----eval = FALSE, echo = TRUE------------------------------------------------
 #> library(progressr)
+#> handlers(global = TRUE)
 #> 
-#> with_progress({
-#>   dp_out <- dapper_sample(dmod,
+#> handlers("cli")
+#> dp_out <- dapper_sample(dmod,
 #>                   sdp = c(adm_prv),
 #>                   niter = 10000,
-#>                   warmup = 1000,
+#>                   warmup = 100,
 #>                   chains = 4,
 #>                   init_par = rep(.25,4))
-#> })
 
 
 ## ----echo = FALSE-------------------------------------------------------------
@@ -121,23 +154,26 @@ plot(dp_out)
 ## ----post-or-density, fig.cap="posterior density estimate for the odds ratio using 9000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
-ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,4) + xlab("Odds Ratio")
+ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,10) + xlab("Odds Ratio")
 
 
 ## ----post-or-compare, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
 caption <- "Comparison between using dapper and a naive Bayesian anaylsis on the
-noise infused data and the original confidential data."
+noise infused data and the original confidential data." 
 
 set.seed(1)
+x <- cnf_df
+x$gender <- case_match(cnf_df$gender, "Male" ~ 1, "Female"~ 0)
+x$status <- case_match(cnf_df$status, "Admitted" ~ 1, "Rejected"~ 0)
 confidential_data <- x
-cps <- t(sapply(1:9000, function(s) post_f(confidential_data, NULL)))
+cps <- t(sapply(1:16000, function(s) post_f(confidential_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_conf  <- odds_male/odds_female
 
 set.seed(1)
-noisy_data <- sdp
-cps <- t(sapply(1:9000, function(s) post_f(noisy_data, NULL)))
+noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
+cps <- t(sapply(1:16000, function(s) post_f(noisy_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_noisy  <- odds_male/odds_female
@@ -155,7 +191,7 @@ df <- rbind(df1,df2)
 df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) + 
   geom_density(alpha = .5) + 
   facet_wrap(~method) + 
-  xlim(1,4) +
+  xlim(0,8) +
   xlab("Odds Ratio") +
   guides(fill= guide_legend(title= "Data")) + 
   theme(legend.position="bottom")
@@ -186,11 +222,11 @@ clamp_data <- function(dmat) {
   pmin(pmax(dmat,-10),10) / 10
 }
 
-st_f <- function(dmat) {
-  sdp_mat <- clamp_data(dmat)
-  ydp <- sdp_mat[,1, drop = FALSE]
-  xdp <- cbind(1,sdp_mat[,-1, drop = FALSE])
-
+st_f <- function(i, tx, sdp) {
+  txc <- clamp_data(tx)
+  ydp <- txc[1]
+  xdp <- cbind(1,t(txc[-1]))
+    
   s1 <- t(xdp) %*% ydp
   s2 <- t(ydp) %*% ydp
   s3 <- t(xdp) %*% xdp
@@ -219,14 +255,15 @@ beta <- c(-1.79, -2.89, -0.66)
 y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
 
 #clamp the confidential data in xmat
-sdp <- st_f(cbind(y,xmat))
+dmat <- cbind(y,xmat)
+sdp <-  apply(sapply(1:nrow(dmat), function(i) st_f(i, dmat[i,], sdp)), 1, sum)
 
 #add Laplace noise 
 sdp <- sdp + VGAM::rlaplace(length(sdp), location = 0, scale = deltaa/epsilon)
 
 
 ## ----echo = TRUE, cache = TRUE------------------------------------------------
-library(progressr)
+library(dapper)
 
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
@@ -236,14 +273,14 @@ dmod <- new_privacy(post_f   = post_f,
                     varnames = c("beta0", "beta1", "beta2"))
 
 
-with_progress({
+
 dp_out <- dapper_sample(dmod,
                         sdp = sdp,
                         niter = 25000,
                         warmup = 1000,
                         chains = 1,
                         init_par = rep(0,3))
-})
+
 
 
 ## ----echo = FALSE-------------------------------------------------------------

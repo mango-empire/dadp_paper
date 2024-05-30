@@ -419,7 +419,7 @@ cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
 set.seed(1) 
 ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
 cnf_df <- cnf_df[ix,]
-prv_df <- adm_df
+prv_df <- cnf_df
 ip1 <- as.logical(rbinom(400, 1, .5))
 ip2 <- as.logical(rbinom(400, 1, .5))
 prv_df$gender[ip1] <- sample(c("Male", "Female"), sum(ip1), replace = TRUE)
@@ -519,6 +519,8 @@ draws with a burn-in of 1000.
 
 ```{r, echo = TRUE}
 library(dapper)
+library(furrr)
+plan(multisession, workers = 4)
 
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
@@ -529,9 +531,9 @@ dmod <- new_privacy(post_f   = post_f,
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
-                  niter = 4000,
-                  warmup = 100,
-                  chains = 1,
+                  niter = 5000,
+                  warmup = 1000,
+                  chains = 4,
                   init_par = rep(.25,4))
 ```
 
@@ -770,10 +772,10 @@ global sensitivity.
     }
     
     st_f <- function(i, tx, sdp) {
-      sdp_mat <- clamp_data(tx)
-      ydp <- tx[1]
-      xdp <- cbind(1,t(tx[-1]))
-    
+      txc <- clamp_data(tx)
+      ydp <- txc[1]
+      xdp <- cbind(1,t(txc[-1]))
+        
       s1 <- t(xdp) %*% ydp
       s2 <- t(ydp) %*% ydp
       s3 <- t(xdp) %*% xdp
@@ -807,7 +809,8 @@ beta <- c(-1.79, -2.89, -0.66)
 y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
 
 #clamp the confidential data in xmat
-sdp <- st_f(cbind(y,xmat))
+dmat <- cbind(y,xmat)
+sdp <-  apply(sapply(1:nrow(dmat), function(i) st_f(i, dmat[i,], sdp)), 1, sum)
 
 #add Laplace noise 
 sdp <- sdp + VGAM::rlaplace(length(sdp), location = 0, scale = deltaa/epsilon)
@@ -817,7 +820,7 @@ We construct a privacy model using the `new_privacy` function and
 make 25,000 MCMC draws with a burn in of 1000 draws.
 
 ```{r, echo = TRUE, cache = TRUE}
-library(progressr)
+library(dapper)
 
 dmod <- new_privacy(post_f   = post_f,
                     latent_f = latent_f,
@@ -827,14 +830,14 @@ dmod <- new_privacy(post_f   = post_f,
                     varnames = c("beta0", "beta1", "beta2"))
 
 
-with_progress({
+
 dp_out <- dapper_sample(dmod,
                         sdp = sdp,
                         niter = 25000,
                         warmup = 1000,
                         chains = 1,
                         init_par = rep(0,3))
-})
+
 ```
 
 
