@@ -294,15 +294,9 @@ into account in order to avoid slow or unexpected behavior.
 
 Before delving into  the specifics of each component, it is necessary to clearly
 define how the confidential data is represented. Internally, the 
-confidential database is encoded as a 2D matrix. There can be multiple ways
-of doing this as is often the case when dealing with a likelihood function
-that has a sufficient statistic. For example, if our data consist 
-of 100 responses from a two question, yes/no, survey. Then we can either encode
-the data as a $1 \times 4$ matrix of total counts, or a $100 \times 2$ matrix of binary responses. Both are mathematically
-equivalent, but the $1 \times 4$ matrix will be much more memory efficient.
-In general, the representation that uses the least amount of memory should be
-used. Correctly specifying the privacy model will require using a consistent 
-representation among all of its components.
+confidential database is encoded as a 2D matrix. Each row
+of this matrix must correspond to a record.
+
 
 ## Privacy Model
 
@@ -312,22 +306,21 @@ section.
 
 ```{r, echo=TRUE, eval=FALSE}
 new_privacy(post_f = NULL, latent_f = NULL, priv_f = NULL,
-            st_f = NULL, add = FALSE, npar = NULL)
+            st_f = NULL, npar = NULL)
 ```
 
 The internal implementation of the data augmentation algorithm in `dapper_sample` requires
 some care in how each component is constructed. 
 
 * `latent_f` is an R function that samples from the latent process.
-The latent process being the probability model which dictates how
+The latent process, in this case, is the probability model which dictates how
 to generate a new confidential record $x$, given $\theta$.
 Its syntax should be `latent_f(theta)` where `theta` is a vector
 representing the model parameters being estimated. This function
 must work with the supplied initial parameter provide in the `init_par`
 argument of `dapper_sample` function. The output is a $n \times p$ matrix
-where $n$ is the number of observations and $p$ is the dimension of a record $x$. It is 
-critical to remember the correct values for $n$ and $p$ are dependent on the choice of how the latent data is
-represented as discussed in the beginning of section 4.
+where $n$ is the number of observations and $p$ is the dimension of a record $x$. 
+
 
 
 * `post_f` is a function which makes draws from the posterior sampler. It should
@@ -473,9 +466,11 @@ can be generated using random draws from the gamma distribution.
 distribution, we can just use the identity function as the summary statistic.
     ```{r, echo = TRUE}
     st_f <- function(i, xi, sdp) {
-      x    <- rep(0, 400 * 2)
+      x <- rep(0, 400 * 2)
+      
       x[i] <- xi[1]
       x[i + 400] <- xi[2]
+
       x
     }
     ```
