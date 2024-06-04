@@ -341,9 +341,11 @@ the value of $s_{dp}$ and `arg2` is the confidential summary statistic $s$.
 This is the return value of the `st_f` function described in the next bullet.
 
 
-* `st_f` is an R function which calculates a summary statistic. The optional
-argument `add` is a flag which represents whether $st_f$ should be interpreted as 
-satisfying record additivity or not.
+* `st_f` is an R function which calculates a summary statistic. It
+must be defined using the three arguments named `i`, `xi` and `sdp`
+in the stated order. The role of this function is to represent terms in the definition of record additivity
+with each of the three arguments in `st_f` corresponding the the similarly spelled
+terms in $t_i(x_i, s_{dp})$.
 
 * `npar` is an integer value that represents the dimension of $\theta$. It 
 should output a vector of the same length as `post_f`.
