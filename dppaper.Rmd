@@ -577,7 +577,7 @@ from the dapper model. The large odds ratio values would seem
 to indicate there is bias favoring the males. See [@Bickel1975] for
 an explanation of the "paradox" of this result.
 
-```{r post-or-density, fig.cap="posterior density estimate for the odds ratio using 9000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
+```{r post-or-density, fig.cap="(Example 1) posterior density estimate for the odds ratio using 9000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,10) + xlab("Odds Ratio")
@@ -603,7 +603,7 @@ uncertainty associated with the odds ratio estimate.
 
 
 ```{r post-or-compare, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
-caption <- "Comparison between using dapper and a naive Bayesian anaylsis on the
+caption <- "(Example 1) comparison between using dapper and a naive Bayesian anaylsis on the
 noise infused data and the original confidential data." 
 
 set.seed(1)
@@ -685,7 +685,7 @@ t(x_i,y_i) = ((x_{i})^T y_i, y_i^2, (x_{i})^T x_i),
 with $\epsilon$-DP privacy guarantees. To achieve this guarantee it is 
 necessary to bound the value of the statistic. This will ensure
 a data point cannot be too "unique." Intuitively, an outlier is 
-easy to identify, so in essence we want to make sure no data point
+easy to identify, so we want to make sure no data point
 is an extreme outlier. In the language of differential
 privacy, this equates to bounding the global sensitivity. This was accomplished
 by clamping the data. More precisely, we define 
@@ -869,8 +869,8 @@ uncertainty to the estimates.
 
 
 ```{r regression-compare, fig.cap = caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
-caption <- "Comparison between dapper and a naive approach that ignores the privacy mechanism. The dashed lines
-are the true coefficient values."
+caption <- "(Example 2) comparison between dapper and a naive approach that ignores the privacy mechanism. 
+The dashed lines are the true coefficient values."
 
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
@@ -903,7 +903,7 @@ rbind(coef_df, coef_post) %>%
 
 
 ```{r regression-data-compare, fig.cap=caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
-caption <- "Comparison between using dapper on the noisy data set and a standard
+caption <- "(Example 2) comparison for example between using dapper on the noisy data set and a standard
 Bayesian analysis on the confidential data set."
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
@@ -984,7 +984,7 @@ defined as
 \gamma &:= 1 - \dfrac{E[Var(\theta \mid s, x) \mid s]}{Var(\theta \mid s)} = 1 - \dfrac{E[Var(\theta \mid x)]}{Var(\theta \mid s)}.
 \end{align*}
 
-plugging in the appropriate quantities gives us 
+Plugging in the appropriate quantities into the above panel gives us 
 
 \begin{align*}
 \gamma &= 1 - \dfrac{\sigma^2}{\sigma^2 + \epsilon^{-2}} = 1 - \dfrac{1}{1 + \dfrac{\epsilon^{-2}}{\sigma^2}}.

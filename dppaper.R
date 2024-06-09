@@ -11,7 +11,7 @@ library(knitr)
 
 ## ----echo=TRUE, eval=FALSE----------------------------------------------------
 #> new_privacy(post_f = NULL, latent_f = NULL, priv_f = NULL,
-#>             st_f = NULL, add = FALSE, npar = NULL)
+#>             st_f = NULL, npar = NULL)
 
 
 ## ----echo = TRUE, eval = FALSE------------------------------------------------
@@ -70,9 +70,11 @@ latent_f <- function(theta) {
 
 ## ----echo = TRUE--------------------------------------------------------------
 st_f <- function(i, xi, sdp) {
-  x    <- rep(0, 400 * 2)
+  x <- rep(0, 400 * 2)
+  
   x[i] <- xi[1]
   x[i + 400] <- xi[2]
+
   x
 }
 
@@ -151,14 +153,14 @@ summary(dp_out)
 plot(dp_out)
 
 
-## ----post-or-density, fig.cap="posterior density estimate for the odds ratio using 9000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
+## ----post-or-density, fig.cap="(Example 1) posterior density estimate for the odds ratio using 9000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,10) + xlab("Odds Ratio")
 
 
 ## ----post-or-compare, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "Comparison between using dapper and a naive Bayesian anaylsis on the
+caption <- "(Example 1) comparison between using dapper and a naive Bayesian anaylsis on the
 noise infused data and the original confidential data." 
 
 set.seed(1)
@@ -303,8 +305,8 @@ sigma_hat <- 2^2 * s3
 
 
 ## ----regression-compare, fig.cap = caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "Comparison between dapper and a naive approach that ignores the privacy mechanism. The dashed lines
-are the true coefficient values."
+caption <- "(Example 2) comparison between dapper and a naive approach that ignores the privacy mechanism. 
+The dashed lines are the true coefficient values."
 
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
@@ -336,7 +338,7 @@ rbind(coef_df, coef_post) %>%
 
 
 ## ----regression-data-compare, fig.cap=caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "Comparison between using dapper on the noisy data set and a standard
+caption <- "(Example 2) comparison for example between using dapper on the noisy data set and a standard
 Bayesian analysis on the confidential data set."
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
