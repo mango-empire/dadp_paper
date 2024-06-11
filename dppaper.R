@@ -71,10 +71,8 @@ latent_f <- function(theta) {
 ## ----echo = TRUE--------------------------------------------------------------
 st_f <- function(i, xi, sdp) {
   x <- rep(0, 400 * 2)
-  
   x[i] <- xi[1]
   x[i + 400] <- xi[2]
-
   x
 }
 
@@ -92,8 +90,26 @@ priv_f <- function(sdp, tx) {
 #> adm_cnf <- Reduce('+', tmp)
 #> adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
 #> 
-#> x <- c(adm_cnf)
-#> sdp <- c(adm_prv)
+#> cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
+#>                  status = c("Admitted","Rejected","Admitted","Rejected"),
+#>                  n = c(1198, 1493, 557, 1278)) %>% uncount(n)
+#> 
+#> set.seed(1)
+#> ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
+#> cnf_df <- cnf_df[ix,]
+#> prv_df <- cnf_df
+#> ip1 <- as.logical(rbinom(400, 1, .5))
+#> ip2 <- as.logical(rbinom(400, 1, .5))
+#> prv_df$gender[ip1] <- sample(c("Male", "Female"), sum(ip1), replace = TRUE)
+#> prv_df$status[ip2] <- sample(c("Admitted", "Rejected"), sum(ip2), replace = TRUE)
+#> 
+#> adm_cnf <- table(cnf_df)
+#> adm_prv <- table(prv_df)
+#> 
+#> v1 <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
+#> v2 <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+#> 
+#> sdp <- c(v1, v2)
 
 
 ## ----echo = TRUE--------------------------------------------------------------
@@ -117,22 +133,6 @@ dp_out <- dapper_sample(dmod,
 
 
 ## ----eval = FALSE, echo = TRUE------------------------------------------------
-#> library(furrr)
-#> library(progressr)
-#> plan(multisession, workers = 2)
-#> handlers(global = TRUE)
-#> handlers("cli")
-#> 
-#> 
-#> dp_out <- dapper_sample(dmod,
-#>                   sdp = sdp,
-#>                   niter = 5000,
-#>                   warmup = 1000,
-#>                   chains = 4,
-#>                   init_par = rep(.25,4))
-
-
-## ----eval = FALSE, echo = TRUE------------------------------------------------
 #> library(progressr)
 #> handlers(global = TRUE)
 #> 
@@ -149,11 +149,11 @@ dp_out <- dapper_sample(dmod,
 summary(dp_out)
 
 
-## ----trace-plot,  fig.cap="trace plots.", fig.height=3, fig.width=5, fig.align='center'----
+## ----trace-plot,  fig.cap="(Example 1) trace plots.", fig.height=3, fig.width=5, fig.align='center'----
 plot(dp_out)
 
 
-## ----post-or-density, fig.cap="(Example 1) posterior density estimate for the odds ratio using 9000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
+## ----post-or-density, fig.cap="(Example 1) posterior density estimate for the odds ratio using 16,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,10) + xlab("Odds Ratio")
@@ -176,6 +176,124 @@ odds_ratio_conf  <- odds_male/odds_female
 set.seed(1)
 noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
 cps <- t(sapply(1:16000, function(s) post_f(noisy_data, NULL)))
+odds_male   <- cps[,1] / cps[,2]
+odds_female <- cps[,3] / cps[,4]
+odds_ratio_noisy  <- odds_male/odds_female
+
+df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
+  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
+  mutate(method = "naive")
+
+df2 <- tibble(confidential = odds_ratio_conf, noisy = or) %>%
+  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
+  mutate(method = "dapper")
+
+df <- rbind(df1,df2)
+
+df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) + 
+  geom_density(alpha = .5) + 
+  facet_wrap(~method) + 
+  xlim(0,8) +
+  xlab("Odds Ratio") +
+  guides(fill= guide_legend(title= "Data")) + 
+  theme(legend.position="bottom")
+
+
+## ----echo = FALSE-------------------------------------------------------------
+set.seed(1)
+tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
+adm_cnf <- Reduce('+', tmp)
+adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
+
+cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
+                 status = c("Admitted","Rejected","Admitted","Rejected"),
+                 n = c(1198, 1493, 557, 1278)) %>% uncount(n)
+
+set.seed(1) 
+ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
+cnf_df <- cnf_df[ix,]
+
+
+set.seed(1)
+rd <- dapper::rdnorm(4, 0, 10)
+adm_cnf <- table(cnf_df)
+adm_prv <- table(cnf_df) + rd
+sdp <- c(adm_prv)
+
+#bad ordering! dirty fix
+#sdp <- c(110, 142, 39, 109)
+
+
+## ----echo = FALSE-------------------------------------------------------------
+kbl(list(t(adm_cnf), t(adm_prv)), booktabs = TRUE) %>%
+  kable_styling(position = 'center', latex_options = c("hold_position"))
+
+
+## ----echo = TRUE--------------------------------------------------------------
+st_f <- function(i, xi, sdp) {
+  if(xi[1] & xi[2]) {
+    c(1,0,0,0)
+  } else if (xi[1] & !xi[2]) {
+    c(0,1,0,0)
+  } else if (!xi[1] & xi[2]) {
+    c(0,0,1,0)
+  } else {
+    c(0,0,0,1)
+  }
+}
+
+
+## ----echo = TRUE--------------------------------------------------------------
+priv_f <- function(sdp, tx) {
+  sum(dapper::ddnorm(sdp - tx, mu = 0, sigma = 10, log = TRUE))
+}
+
+
+## ----echo = FALSE-------------------------------------------------------------
+library(dapper)
+
+dmod <- new_privacy(post_f   = post_f,
+                    latent_f = latent_f,
+                    priv_f   = priv_f,
+                    st_f     = st_f,
+                    npar     = 4,
+                    varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
+                  
+dp_out <- dapper_sample(dmod,
+                  sdp = sdp,
+                  niter = 2000,
+                  warmup = 1000,
+                  chains = 1,
+                  init_par = rep(.25,4))
+
+
+## ----echo = TRUE--------------------------------------------------------------
+summary(dp_out)
+
+
+## ----post-or-density-dg, fig.cap="(Example 2) posterior density estimate for the odds ratio using 16,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
+tv <- dp_out$chain
+or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
+ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,2.5) + xlab("Odds Ratio")
+
+
+## ----post-or-compare-dg, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
+caption <- "(Example 2) comparison between using dapper and a naive Bayesian anaylsis on the
+noise infused data and the original confidential data." 
+
+set.seed(1)
+x <- cnf_df
+x$gender <- case_match(cnf_df$gender, "Male" ~ 1, "Female"~ 0)
+x$status <- case_match(cnf_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+confidential_data <- x
+cps <- t(sapply(1:1000, function(s) post_f(confidential_data, NULL)))
+odds_male   <- cps[,1] / cps[,2]
+odds_female <- cps[,3] / cps[,4]
+odds_ratio_conf  <- odds_male/odds_female
+
+set.seed(1)
+noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
+cps <- t(sapply(1:1000, function(s) post_f(noisy_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_noisy  <- odds_male/odds_female
@@ -285,6 +403,10 @@ dp_out <- dapper_sample(dmod,
 
 
 
+## ----echo = TRUE--------------------------------------------------------------
+summary(dp_out)
+
+
 ## ----echo = FALSE-------------------------------------------------------------
 #x^Ty
 s1 <- sdp[1:3]
@@ -305,7 +427,7 @@ sigma_hat <- 2^2 * s3
 
 
 ## ----regression-compare, fig.cap = caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "(Example 2) comparison between dapper and a naive approach that ignores the privacy mechanism. 
+caption <- "(Example 3) comparison between dapper and a naive approach that ignores the privacy mechanism. 
 The dashed lines are the true coefficient values."
 
 coef_df <- dp_out$chain %>% 
@@ -338,7 +460,7 @@ rbind(coef_df, coef_post) %>%
 
 
 ## ----regression-data-compare, fig.cap=caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "(Example 2) comparison for example between using dapper on the noisy data set and a standard
+caption <- "(Example 3) comparison for example between using dapper on the noisy data set and a standard
 Bayesian analysis on the confidential data set."
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%

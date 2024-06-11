@@ -6,8 +6,8 @@ abstract: >
     This paper serves as a reference and introduction on using the dapper R
     package. It is an MCMC sampling framework which targets the
     exact posterior distribution given privitized data. 
-    The goal of this package is to provide researchers a tool for exploring the
-    impact of different privacy regimes on a Bayesian analysis. A strength of
+    The goal of this package is to provide researchers a tool to perform
+    valid Bayesian inference on data protected by differential privacy. A strength of
     this framework is the ability to target the exact posterior in settings
     where the likelihood is too complex to analytically express.
 draft: true
@@ -31,27 +31,28 @@ author:
     address:
     - Department of Statistics
     - Piscataway, NJ 08854
-    url: https://www.britannica.com/animal/quokka
+    url: https://ruobingong.github.io/
     email: ruobin.gong@rutgers.edu
   - name: Nianqiao Phyllis Ju
     affiliation: Purdue University
     address:
     - Department of Statistics
     - West Lafayette, IN 47907
-    url: https://www.britannica.com/animal/quokka
+    url: https://nianqiaoju.github.io/
     email: nianqiao@purdue.edu
   - name: Vinayak A. Rao
     affiliation: Purdue University
     address:
     - Department of Statistics
     - West Lafayette, IN 47907
-    url: https://www.britannica.com/animal/quokka
+    url: https://varao.github.io/
     email: varao@purdue.edu
 type: package
 output: 
   rjtools::rjournal_article:
     self_contained: yes
     toc: no
+  extra_dependencies: ["amsmath", "amssymb"]
 bibliography: RJreferences.bib
 
 ---
@@ -69,9 +70,16 @@ library(knitr)
 # Introduction
 
 Differential privacy provides a rigorous framework for protecting 
-confidential information from re identification attacks by using random
+confidential information from re-identification attacks by using random
 noise to obscure the connection between the individual and data [@Dwork2006].
-It has served as the theoretical foundation for many recent advances in privacy technology. Several high profile
+Its development was spurred on by successful attacks
+on anonymized data sets containing sensitive personal information. Prior
+to differential privacy, anonymization schemes did not always have sound
+theoretical guarantees despite appearing adequate. In one instance,
+a privacy research was able use a publicly released medical data set
+to deduce William Weld, then Governor of Massachusetts, medical diagnoses and prescriptions.
+This changed with the introduction of differential privacy and it has served as the theoretical foundation 
+for many recent advances in privacy technology. Several recent high profile
 examples include Apple [@tang2017privacy], Google [@Erlingsson_2014], Microsoft [@ding2017collecting], and the 
 U.S. Census Bureau [@Abowd2018].
 
@@ -105,19 +113,19 @@ of differential privacy.
 
 The `dapper` package provides a tool for conducting
 valid statistical inference in the presence of privacy noise.
-It implements the Bayesian framework proposed in @Ju2022. This framework describes how to modify
-an existing Bayesian model to account for privacy noise. `dapper`
-serves as a user-friendly interface for implementing the framework in R. It allows the
+It implements the Bayesian framework proposed by @Ju2022. This framework describes how to modify
+an existing Bayesian model to account for privacy noise and `dapper`
+serves as its user-friendly R interface. It allows the
 user to specify a sampler from an existing Bayesian model and
 automatically constructing a valid posterior sampler that accounts for the 
-added privacy noise. Compared to other Bayesian approaches, the `dapper` framework requires
-no specialized knowledge for setting up samplers since there are no tuning parameters.
-And when the record additivity property is satisfied (see section 6), the algorithmic run time 
-complexity is similar to the non-private analysis. The goal of  `dapper` is to provide
-a fast, flexible, and user-friendly way to analyze privatized data.
+added privacy noise. Compared to other Bayesian approaches, the `dapper` framework 
+is model agnostic and requires no tuning parameters. The algorithmic run time 
+complexity of dapper is similar to the non-private analysis (section 2). The goal of  `dapper` is to provide
+a fast, flexible, and user-friendly way to obtain a valid Bayesian analysis of privatized data.
 
 
-The rest of this article is organized as follows: Section 2 covers the necessary background to understand the mathematical notation
+The rest of this article is organized as follows: 
+Section 2 covers the necessary background to understand the mathematical notation
 and ideas used throughout the paper. Section 3 goes over the main algorithm without
 going into mathematical detail; for specifics see [@Ju2022]. Section 4 provides
 an overview of the dapper package and discusses important implementation details.
@@ -129,17 +137,18 @@ covers a linear regression model.
 # Background
 
 Let $x = (x_1, \ldots, x_n) \in \mathcal{X}^n$ represent a confidential 
-database containing $n$ records. Usually, the goal of collecting data 
-is to learn characteristics about the underlying population. 
-To accomplish this task, a common approach is to assume the population
-is represented by some statistical model $f( \cdot \mid \theta)$. It is often the case
+database containing $n$ records. We will assume the
+data is generated by some statistical model $f( x \mid \theta)$. It is often the case
 some function of $\theta$ has relevant meaning to the scientific question at hand. In this setting,
 learning characteristics of a population reduces to learning about $\theta$. 
 
-In the Bayesian statistical framework, learning about $\theta$ is accomplished by drawing samples from the 
+In the Bayesian statistical framework, learning about $\theta$ is 
+accomplished by using the data $x$ to update the 
 posterior $p(\theta \mid x) \propto f(x \mid \theta) p(\theta)$. 
 Here, $p(\theta)$ is called the prior distribution, and represents
-the researcher's belief about $\theta$ before seeing any data. 
+the researcher's belief about $\theta$ before seeing any data. The
+posterior represents uncertainty around $\theta$ and is formed by using Baye's rule to fuse together the
+observed data and the research's prior belief.
 One major advantage of the Bayesian method is that, through the prior, 
 it provides a mechanism for incorporating information not explicitly contained
 in the data at hand. This is especially useful in settings where there 
@@ -205,8 +214,8 @@ application of the Laplace mechanism to linear regression.
 # Methodology
 Given data privatized data, $s_{dp}$, the goal of Bayesian inference is to sample from the 
 posterior distribution $p(\theta \mid s_{dp})$. Since the observed likelihood,
-$p(s_{dp} \mid \theta)$, often has no simple closed form expression [@NIPS2010_sherry], most standard
-sampling schemes do not apply. To conduct privacy-aware Bayesian inference, the dapper package implements
+$p(s_{dp} \mid \theta)$, often has no simple closed form expression [@NIPS2010_sherry], most standard approaches
+do not apply. To conduct privacy-aware Bayesian inference, the dapper package implements
 the data augmentation algorithm of @Ju2022 which allows us to sample from $p(\theta \mid s_{dp})$
 without needing to specify $p(s_{dp} \mid \theta)$.
 
@@ -260,7 +269,7 @@ The `dapper` package is structured around the two functions `dapper_sample` and
 `new_privacy`. The first function is used to draw samples from the 
 posterior. The second function is used to create a privacy data model object
 which the `dapper_sample` function requires as input. The purpose of the data model
-object is to collect all the components specific to the data augmentation algorithm
+object is to collect all the components specific to the data generating process 
 into one bundle. This way, the other arguments into `dapper_sample` pertain only 
 to sampling parameters such as the number of iterations.
 
@@ -268,12 +277,8 @@ to sampling parameters such as the number of iterations.
 Since the input to these functions are R functions, there is a great deal of freedom
 in implementation. The next two sections describe in detail the inputs into
 these functions and highlight some considerations that should be taken
-into account in order to avoid slow or unexpected behavior.
+into account in order to avoid unexpected behavior. 
 
-Before delving into  the specifics of each component, it is necessary to clearly
-define how the confidential data is represented. Internally, the 
-confidential database is encoded as a 2D matrix. Each row
-of this matrix must correspond to a record.
 
 
 ## Privacy Model
@@ -293,37 +298,42 @@ some care in how each component is constructed.
 * `latent_f` is an R function that samples from the latent process.
 The latent process, in this case, is the probability model which dictates how
 to generate a new confidential record $x$, given $\theta$.
-Its syntax should be `latent_f(theta)` where `theta` is a vector
+Its syntax should be `latent_f(theta)` where `theta` is a R vector
 representing the model parameters being estimated. This function
 must work with the supplied initial parameter provide in the `init_par`
 argument of `dapper_sample` function. The output is a $n \times p$ matrix
 where $n$ is the number of observations and $p$ is the dimension of a record $x$. 
+The matrix requirement is strict, so even if there is only one dimension
+`latent_f` should return a $n \times 1$ matrix and not a R vector of length $n$.
 
 
 
-* `post_f` is a function which makes draws from the posterior sampler. It should
-have the syntax `post_f(dmat, theta)`. Here `dmat` is the 
-hypothetical data set representing the confidential data. This sampler can be generated by wrapping MCMC samplers generated from other R packages 
+* `post_f` is a function which makes draws from the posterior sampler. It has
+the syntax `post_f(dmat, theta)`. Here `dmat` is an R matrix representing the confidential data. 
+Note `dmat` must be a matrix even if there is only one dimension. Thus, `dmat` cannot
+be a vector for instance. This function can be constructed by wrapping MCMC samplers generated from other R packages 
 (e.g. \CRANpkg{rstan}, \CRANpkg{fmcmc}, \CRANpkg{adaptMCMC}).
 If using this approach, it is recommended to avoid using packages 
 with a large initialization overhead such as \CRANpkg{mcmc} since the sampler is reinitialized
 every loop iteration. In the case of \CRANpkg{mcmc},
 the Metropolis-Hastings loop is implemented in C so there is a significant initialization cost
-when calling from an R function. The purpose of the `theta` argument is 
+when calling from an R function. The `theta` argument is an R vector and its purpose is 
 to serve as the initialization point if samples from `post_f` are draws
 from say a Metropolis-Hastings sampler.
 
 * `priv_f` is an R function that represents the log of the privacy mechanism density, $\eta(s_{sdp} \mid x)$. 
-Typically this function has the form `priv_f(arg1, arg2)` where `arg1` is the
-the value of $s_{dp}$ and `arg2` is the confidential summary statistic $s$. 
-This is the return value of the `st_f` function described in the next bullet.
-
+This function has the form `priv_f(sdp, sx)` where `sdp` is an R vector representing the
+the value of $s_{dp}$ and `sx` is an R vector representing the value of the confidential summary statistic 
+$s := \sum_{i=1}^{n} t_i(x_i, s_{dp})$.
+The arguments must appear in the exact order with the same variables names as defined above.
+Finally, the return value of `priv_f` must be a real number.
 
 * `st_f` is an R function which calculates a summary statistic. It
 must be defined using the three arguments named `i`, `xi` and `sdp`
 in the stated order. The role of this function is to represent terms in the definition of record additivity
 with each of the three arguments in `st_f` corresponding the the similarly spelled
-terms in $t_i(x_i, s_{dp})$.
+terms in $t_i(x_i, s_{dp})$. Here the type class for `i` is an integer,
+while `xi` and `sdp` are R vectors.
 
 * `npar` is an integer value that represents the dimension of $\theta$. It 
 should output a vector of the same length as `post_f`.
@@ -338,9 +348,9 @@ dapper_sample(data_model, sdp, init_par, niter = 2000, warmup = floor(niter / 2)
            chains = 1, varnames = NULL)
 ```
 
-The three required inputs into `dapper_sample` function are the privacy model (`data_model`) whose construction is described in 4.1, the value
-of the  observed privatized statistic (`sdp`), and the total number of observations 
-in the complete data (`nobs`). The dapper
+The three required inputs into `dapper_sample` function are the privacy model (`data_model`) 
+whose construction is described in 4.1, and the value
+of the observed privatized statistic (`sdp`) encoded as a R vector. The dapper
 package is best suited for problems where the complete data can be represented in
 tabular form. This is because internally, it is represented as a matrix.
 
@@ -364,20 +374,35 @@ plugged directly into the popular \CRANpkg{bayesplot} package. Additionaly,
 as those found when using \CRANpkg{rstan}. Overall, this should make working with `dapper` easier 
 for anyone already familiar with the \CRANpkg{rstan} ecosystem.
 
+
+## Privacy Mechanisms
+
+`dapper` implements the probability mass and sampling functions for the 
+discrete Gaussian and discrete Laplace distributions. The nomenclature and use
+closely follow the base `stats` package. The probability mass functions are
+named `ddnorm` and `ddlaplace` and the sampling functions are named
+`rdnorm` and `rdlaplace`.
+
+A random variable $X$ that follows a discrete Laplace distribution with
+scale parameter $t$ has a probability mass function given by
+
+\[
+P[X = x] = \dfrac{e^{1/t} - 1}{e^{1/t} + 1} e^{|x|/t}.
+\]
+
+Random draws can be generated using an accept reject scheme and
+`dapper` implements one such scheme outlined in []
+
 # Examples
 
-## 2x2 Contingency Table
-As a demonstration, we analyze the UC Berkeley admissions data, which is often
+## Example 1: 2x2 Contingency Table (Randomized Response)
+As a demonstration, we analyze a subset of the UC Berkeley admissions data, which is often
 used as an illustrative example of Simpson's paradox. The question posed is whether
 the data suggest there is bias against females during the college admissions 
 process. Below is a table of the aggregate admissions result from six departments based on sex
-for a total of $N = 4526$ applicants. The table on the left represents
-the true admissions data and the table on the right is the result of adding
-independent, $N(0,100^2)$ error to each cell. Throughout the example
-we assume we only have access to the original total count, $N$, and
-the noise infused table.
-
-
+for a total of $N = 400$ applicants. The table on the left represents
+the true admissions data and the table on the right is the result of anonymizing
+the data with a differentially private mechanism.
 
 ```{r, echo = FALSE}
 set.seed(1)
@@ -413,17 +438,30 @@ kbl(list(t(adm_cnf), t(adm_prv)), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
 ```
 
-As mentioned in section 4, it is critical to choose a consistent
-matrix representation for the confidential data. In this example
-we represent the confidential admissions data as a $1 \times 4$ matrix.
-Below we walk through the process of defining a privacy model.
+To see how the privacy mechanism works, we envision the record level data set as a $N \times 2$ matrix with
+the first column representing sex and the second column representing 
+admission status. Thus each row in the matrix is the response of an
+individual. To anonymize the results, we apply a random response scheme
+where for each answer we flip a fair coin twice. As a concrete example,
+suppose Robert is a male who was rejected. To anonymize his response,
+we would first flip a coin to determine if his sex response is randomized. If
+the first flip is heads we keep his original response of being a male. If we see tails,
+then we would flip the coin again and change the answer to male or female depending 
+on whether we see heads or tails respectively. We then repeat this process for 
+his admission status. This anonymization scheme conforms to a mechanism with
+a privacy budget of at most $\epsilon = 2\log(3)$.
+
+To set up dapper to analyze the anonymized admissions data, we first encode our anonymized record level data using 
+a binary matrix where male and admit take the value 1. From this 
+we can construct $s_{dp}$  as the columns of the binary
+matrix stacked on top of each other.
 
 
-1. `latent_f`: Since we can condition on the table total $N$, we can model the original, unobserved table counts as a multinomial
-distribution. We can easily draw from this distribution using the
-`rmultinom` function in the `base` stats package. Note, in this example,
-the return value of one sample from `rmultinom` is a $4 \times 1$ matrix, so
-in order to conform with our confidential data representation we take the transpose.
+1. `latent_f`: For each individual there are four possible
+sex/status responses which can be modeled using a multinomial distribution.
+To implement draws from the multinomial distribution we use the `sample` function
+to take samples from a list of containing the four possible binary vectors. Note
+the final line results in a $400 \times 2$ matrix.
     ```{r, echo = TRUE}
     latent_f <- function(theta) {
       tl <- list(c(1,1), c(1,0), c(0,1), c(0,0))
@@ -442,25 +480,24 @@ can be generated using random draws from the gamma distribution.
       t1/sum(t1)
     }
     ```
-3. `st_f`: Since the latent model only returns one observation from a multinomial
-distribution, we can just use the identity function as the summary statistic.
+3. `st_f`: The private summary statistic $s_{dp}$ can be written as a record additive
+statistic using indicator functions. Let $v_i$ be a binary vector of length $2 \times 400$
+where the entries with index $i$ and $400 + i$ are the only possible non zero entries.
+We let these two entries correspond to the sex and admission status response of 
+the individual with record $x_i$. With this construction we have $s_{dp} = \sum_{i=1}^{400} v_i$.
     ```{r, echo = TRUE}
     st_f <- function(i, xi, sdp) {
       x <- rep(0, 400 * 2)
-      
       x[i] <- xi[1]
       x[i + 400] <- xi[2]
-
       x
     }
     ```
-4. `priv_f`: The privacy mechanism is Guassian white noise drawn from independent $N(0,100^2)$ distributions. Hence given
-confidential table cells $(n_{11}, n_{22}, n_{12}, n_{21})$
-\[
-\eta(s_{dp} \mid x) = \prod \phi(s_{sd}; n_{ij}, 100^2).
-\]
-Here $\phi(\cdot;\mu,\sigma^2)$ is the density of the normal distribution
-with mean and variance $\mu,\sigma^2$.
+4. `priv_f`: The privacy mechanism is the result of two fair coin flips, so for
+each answer there is a 3/4 chance it remains the same and a 1/4 chance it changes.
+Hence the log likelihood of observing $s_{dp}$ given the current value of the latent
+database, `tx`, is $\log(3/4)$ times the number of entries that match plus $\log(1/4)$ times
+the number of entries which differ.
     ```{r, echo = TRUE}
     priv_f <- function(sdp, tx) {
       t1 <- sum(sdp == tx)
@@ -480,8 +517,26 @@ tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
 adm_cnf <- Reduce('+', tmp)
 adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
 
-x <- c(adm_cnf)
-sdp <- c(adm_prv)
+cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
+                 status = c("Admitted","Rejected","Admitted","Rejected"),
+                 n = c(1198, 1493, 557, 1278)) %>% uncount(n)
+
+set.seed(1) 
+ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
+cnf_df <- cnf_df[ix,]
+prv_df <- cnf_df
+ip1 <- as.logical(rbinom(400, 1, .5))
+ip2 <- as.logical(rbinom(400, 1, .5))
+prv_df$gender[ip1] <- sample(c("Male", "Female"), sum(ip1), replace = TRUE)
+prv_df$status[ip2] <- sample(c("Admitted", "Rejected"), sum(ip2), replace = TRUE)
+
+adm_cnf <- table(cnf_df)
+adm_prv <- table(prv_df)
+
+v1 <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
+v2 <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+
+sdp <- c(v1, v2)
 ```
 
 
@@ -489,8 +544,8 @@ sdp <- c(adm_prv)
 
 Once we have defined all components of the model we can
 create a new privacy model object using the `new_privacy` function and
-feed this into the `dapper_sample` function. Below we simulate 10,000 posterior
-draws with a burn-in of 1000. 
+feed this into the `dapper_sample` function. Below we run four chains
+in parallel each with 5,000 posterior draws with a burn-in of 1000. 
 
 ```{r, echo = TRUE}
 library(dapper)
@@ -504,27 +559,6 @@ dmod <- new_privacy(post_f   = post_f,
                     npar     = 4,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
                   
-dp_out <- dapper_sample(dmod,
-                  sdp = sdp,
-                  niter = 5000,
-                  warmup = 1000,
-                  chains = 4,
-                  init_par = rep(.25,4))
-```
-
-To run the `dapper_sample` function with parallel chains
-we can import the `furrr` package and use the `plan` function
-to determine the number of works used. The example code chunk below
-would produce four chains using two CPU's.
-
-```{r, eval = FALSE, echo = TRUE}
-library(furrr)
-library(progressr)
-plan(multisession, workers = 2)
-handlers(global = TRUE)
-handlers("cli")
-
-
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
                   niter = 5000,
@@ -565,7 +599,7 @@ with `dapper` since sticky chains are likely to be produced
 when the amount of injected noise is high. See the discussion section
 for a more detailed explanation. 
 
-```{r trace-plot,  fig.cap="trace plots.", fig.height=3, fig.width=5, fig.align='center'}
+```{r trace-plot,  fig.cap="(Example 1) trace plots.", fig.height=3, fig.width=5, fig.align='center'}
 plot(dp_out)
 ```
 
@@ -577,7 +611,7 @@ from the dapper model. The large odds ratio values would seem
 to indicate there is bias favoring the males. See [@Bickel1975] for
 an explanation of the "paradox" of this result.
 
-```{r post-or-density, fig.cap="(Example 1) posterior density estimate for the odds ratio using 9000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
+```{r post-or-density, fig.cap="(Example 1) posterior density estimate for the odds ratio using 16,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,10) + xlab("Odds Ratio")
@@ -643,9 +677,181 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
 ```
 
 
+## Example 2: 2x2 Contingency Table (Discrete Gaussian)
+
+To highlight the flexibility of `dapper` we reanalyze example 1
+with a different privacy mechanism. For this example we taking inspiration from the US Census, 
+which is currently in the process of arguably the largest deployment of differential privacy. 
+Deploying large privacy system requires the careful analysis 
+of the privacy / utility trade-off of different candidate mechanisms. This is especially
+true in the case of census data which has many users with different inference goals.
+One of the mechanisms under consideration is the discrete Gaussian distribution. 
+In the context of the admissions data, this privacy mechanism works by injecting
+noise into the the total cell counts given the 2x2 table. This is quite different from
+example 1 where the randomized response scheme injected noise at the record level.
+In fact, the discrete Gaussian distribution satisfies an entirely different
+definition of differential privacy, namely zCDP [cite].
+The strength of `dapper` comes from the fact we can analyze both scenarios under the
+same framework.
+
+The discrete Gaussian mechanism has a probability mass function given by (CHECK THIS
+MATCHES WITH CENSUS DEFINITION)
+
+\[
+f(x) = \dfrac{e^{-(x - \mu)^2/2\sigma^2}}{\sum_{y \in \mathbb{Z}} e^{-(x-\mu)^2/2\sigma^2}}
+\]
+
+where $x \in \mathbb{Z}$ and $(\mu,\sigma)$ are parameters governing the location and 
+scale respectively. The `dapper` functions `ddnorm` and `rdnorm` provide the
+density and sampling features for the discrete gaussian distribution.
+
+Since the primary goal of this example is to 
+show to how `dapper` is used operationally, we arbitrary set
+$\sigma$ to ??? without reference to the theoretical process one would use to 
+associate a privacy budget with a specific value of $\sigma$. To see how a value of 
+$\sigma$ can be chosen to satisfy zCDP guarantees see [cite].
+
+```{r, echo = FALSE}
+set.seed(1)
+tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
+adm_cnf <- Reduce('+', tmp)
+adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
+
+cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
+                 status = c("Admitted","Rejected","Admitted","Rejected"),
+                 n = c(1198, 1493, 557, 1278)) %>% uncount(n)
+
+set.seed(1) 
+ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
+cnf_df <- cnf_df[ix,]
 
 
-## Linear Regression
+set.seed(1)
+rd <- dapper::rdnorm(4, 0, 10)
+adm_cnf <- table(cnf_df)
+adm_prv <- table(cnf_df) + rd
+sdp <- c(adm_prv)
+
+#bad ordering! dirty fix
+#sdp <- c(110, 142, 39, 109)
+```
+
+
+```{r, echo = FALSE}
+kbl(list(t(adm_cnf), t(adm_prv)), booktabs = TRUE) %>%
+  kable_styling(position = 'center', latex_options = c("hold_position"))
+```
+
+The US Census only releases cell counts, so a natural
+statistic to consider is the vector of cell counts. As in
+example 1, we imagine the latent database as a 
+$400 \times 2$ binary matrix. Below
+we describe the process for analyzing the privatized
+data using `dapper`. Since the latent process
+and posterior are the same as example 1, we only describe
+how to construct `st_f` and `priv_f`.
+
+1. `st_f`: The private summary statistic $s_{dp}$ can be written as a record additive
+statistic using the indicator vectors $(1,0,0,0), (0,1,0,0), (0,0,0,1)$ and $(0,0,0,1)$.
+These four vectors correspond to the four possible cells.
+    ```{r, echo = TRUE}
+    st_f <- function(i, xi, sdp) {
+      if(xi[1] & xi[2]) {
+        c(1,0,0,0)
+      } else if (xi[1] & !xi[2]) {
+        c(0,1,0,0)
+      } else if (!xi[1] & xi[2]) {
+        c(0,0,1,0)
+      } else {
+        c(0,0,0,1)
+      }
+    }
+    ```
+2. `priv_f`: The privacy mechanism us a discrete Gaussian distribution centered
+at 0.
+    ```{r, echo = TRUE}
+    priv_f <- function(sdp, tx) {
+      sum(dapper::ddnorm(sdp - tx, mu = 0, sigma = 10, log = TRUE))
+    }
+    ```
+
+```{r, echo = FALSE}
+library(dapper)
+
+dmod <- new_privacy(post_f   = post_f,
+                    latent_f = latent_f,
+                    priv_f   = priv_f,
+                    st_f     = st_f,
+                    npar     = 4,
+                    varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
+                  
+dp_out <- dapper_sample(dmod,
+                  sdp = sdp,
+                  niter = 2000,
+                  warmup = 1000,
+                  chains = 1,
+                  init_par = rep(.25,4))
+```
+
+The summary table below show the results of running a chain for 2000 iterations with a burn-in of 1000 runs.
+
+```{r, echo = TRUE}
+summary(dp_out)
+```
+
+The posterior density estimate for the odds ratio is.
+
+```{r post-or-density-dg, fig.cap="(Example 2) posterior density estimate for the odds ratio using 16,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
+tv <- dp_out$chain
+or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
+ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,2.5) + xlab("Odds Ratio")
+```
+
+Like example 1, we can compare the naive analysis with the one under
+the discrete Guassian mechanism. [FIX GRAPHS!]
+
+```{r post-or-compare-dg, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
+caption <- "(Example 2) comparison between using dapper and a naive Bayesian anaylsis on the
+noise infused data and the original confidential data." 
+
+set.seed(1)
+x <- cnf_df
+x$gender <- case_match(cnf_df$gender, "Male" ~ 1, "Female"~ 0)
+x$status <- case_match(cnf_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+confidential_data <- x
+cps <- t(sapply(1:1000, function(s) post_f(confidential_data, NULL)))
+odds_male   <- cps[,1] / cps[,2]
+odds_female <- cps[,3] / cps[,4]
+odds_ratio_conf  <- odds_male/odds_female
+
+set.seed(1)
+noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
+cps <- t(sapply(1:1000, function(s) post_f(noisy_data, NULL)))
+odds_male   <- cps[,1] / cps[,2]
+odds_female <- cps[,3] / cps[,4]
+odds_ratio_noisy  <- odds_male/odds_female
+
+df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
+  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
+  mutate(method = "naive")
+
+df2 <- tibble(confidential = odds_ratio_conf, noisy = or) %>%
+  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
+  mutate(method = "dapper")
+
+df <- rbind(df1,df2)
+
+df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) + 
+  geom_density(alpha = .5) + 
+  facet_wrap(~method) + 
+  xlim(0,8) +
+  xlab("Odds Ratio") +
+  guides(fill= guide_legend(title= "Data")) + 
+  theme(legend.position="bottom")
+```
+
+
+## Example 3: Linear Regression
 In this section we apply `dapper` to reconstruct an
 example presented in @Ju2022. They apply a Laplace privacy 
 mechanism to a sufficient summary statistic for a linear regression model.
@@ -699,8 +905,8 @@ t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}_{i})^T \t
 
 Ignoring duplicate entries, the global sensitivity is $\Delta = p^2 + 4p + 3$ ^[The original paper, @Ju2022, contains a computation error and uses $\Delta = p^2 + 3p + 3$].
 Using the Laplace mechanism, $\epsilon$-DP privacy can thus be achieved by adding i.i.d. Laplace$(0, \Delta/\epsilon)$
-error to each unique entry. Note this only provides an upper bound on sensitivity, and a 
-tighter can be achieved using techniques described in [@Awan2020].
+error to each unique entry. A tighter bound on sensitivity can be achieved using 
+other techniques, see [@Awan2020].
 
 1. `latent_f`: Since the privacy mechanism involves injecting noise into the design
 matrix, it is not possible to use the standard approach where one assumes the design
@@ -815,6 +1021,12 @@ dp_out <- dapper_sample(dmod,
 
 ```
 
+The output of the MCM run is reported below.
+
+```{r, echo = TRUE}
+summary(dp_out)
+```
+
 
 For comparison, we consider a Bayesian analysis where the design matrix
 is a fixed known constant and $\sigma^2$ is known. Using the
@@ -869,7 +1081,7 @@ uncertainty to the estimates.
 
 
 ```{r regression-compare, fig.cap = caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
-caption <- "(Example 2) comparison between dapper and a naive approach that ignores the privacy mechanism. 
+caption <- "(Example 3) comparison between dapper and a naive approach that ignores the privacy mechanism. 
 The dashed lines are the true coefficient values."
 
 coef_df <- dp_out$chain %>% 
@@ -903,7 +1115,7 @@ rbind(coef_df, coef_post) %>%
 
 
 ```{r regression-data-compare, fig.cap=caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
-caption <- "(Example 2) comparison for example between using dapper on the noisy data set and a standard
+caption <- "(Example 3) comparison for example between using dapper on the noisy data set and a standard
 Bayesian analysis on the confidential data set."
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
