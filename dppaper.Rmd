@@ -178,7 +178,9 @@ available and can be incorporated into subsequent analyses.
 
 
 There are now many differential privacy frameworks, and the `dapper` method can be applied to
-all of them. For presentation, we focus on the earliest and most common
+all of them. Section ??? provides details about utility functions for working with dapper
+in the concentrated differential privacy framework. However, for presentation,
+in this section we focus on the earliest and most common
 formulation of differential privacy, $\epsilon$-differential privacy ($\epsilon$-DP). The
 $\epsilon$ parameter is called the privacy loss budget. The privacy loss budget controls how 
 strong the privacy guarantee is. Larger values of $\epsilon$ correspond to weaker
@@ -209,7 +211,6 @@ global sensitivity can be thought of as quantifying how easy it is to identify
 a particular record. The idea being the easier it is to identify a record (high global sensitivity),
 the more noise that needs to be added to achieve a given privacy guarantee [@Dwork2006]. Example 2, will cover an
 application of the Laplace mechanism to linear regression.
-
 
 # Methodology
 Given data privatized data, $s_{dp}$, the goal of Bayesian inference is to sample from the 
@@ -375,23 +376,43 @@ as those found when using \CRANpkg{rstan}. Overall, this should make working wit
 for anyone already familiar with the \CRANpkg{rstan} ecosystem.
 
 
-## Privacy Mechanisms
+## Privacy Mechanisms (or Privacy Utility Functions?)
+[FILL IN CITATIONS]
+The `dapper` package provides several utility functions 
+for analyzing privatized count data. Currently, the US Census 
+is a major driver behind the deployment and research of privatized 
+count data, and these functions were created for census oriented
+researchers in mind.
 
-`dapper` implements the probability mass and sampling functions for the 
-discrete Gaussian and discrete Laplace distributions. The nomenclature and use
-closely follow the base `stats` package. The probability mass functions are
-named `ddnorm` and `ddlaplace` and the sampling functions are named
-`rdnorm` and `rdlaplace`.
+One shortcoming of $\epsilon$-differential privacy mechanisms
+are that they inject continuous noise which is ill suited
+for count data. This is one reason why the census data is privatized 
+under a slightly different framework called the concentrated differential privacy. 
+A main difference being the latter frame work uses discrete distributions as sources for privacy noise.
 
-A random variable $X$ that follows a discrete Laplace distribution with
-scale parameter $t$ has a probability mass function given by
+`dapper` implements probably mass and sampling functions
+for the discrete Gaussian and discrete Laplace distributions. These
+are two potential mechanisms for deploying concentrated differential privacy,
+and both are, in fact, under consideration for use in the US Census data.
 
+The discrete Gaussian / Laplacian mechanism have probability mass functions given in the
+panel below.
+[LINE UP ANNOTATION]
 \[
-P[X = x] = \dfrac{e^{1/t} - 1}{e^{1/t} + 1} e^{|x|/t}.
+\begin{aligned}
+P[X = x] &= \dfrac{e^{-(x - \mu)^2/2\sigma^2}}{\sum_{y \in \mathbb{Z}} e^{-(x-\mu)^2/2\sigma^2}} \quad \text{(Discrete Gaussian)}\\
+P[X = x] &= \dfrac{e^{1/t} - 1}{e^{1/t} + 1} e^{-|x|/t} \quad \text{(Discrete Laplacian)}
+\end{aligned}
 \]
 
-Random draws can be generated using an accept reject scheme and
-`dapper` implements one such scheme outlined in []
+For both distributions $x \in \mathbb{Z}$. The discrete Gaussian has 
+two parameters $(\mu,\sigma)$ which govern the location and 
+scale respectively. The `dapper` functions `ddnorm` and `rdnorm` provide the
+density and sampling features for the discrete Gaussian distribution. The functions
+`ddlaplace` and `rdlaplace` provide similar features for the discrete Laplace distribution.
+
+
+
 
 # Examples
 
@@ -405,36 +426,35 @@ the true admissions data and the table on the right is the result of anonymizing
 the data with a differentially private mechanism.
 
 ```{r, echo = FALSE}
-set.seed(1)
-tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
-adm_cnf <- Reduce('+', tmp)
-adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
-
-cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
-                 status = c("Admitted","Rejected","Admitted","Rejected"),
+#Original UCBAdmissions data.
+cnf_df <- tibble(sex = c(1, 1, 0, 0),
+                 status = c(1, 0, 1, 0),
                  n = c(1198, 1493, 557, 1278)) %>% uncount(n)
 
 set.seed(1) 
 ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
 cnf_df <- cnf_df[ix,]
-prv_df <- cnf_df
-ip1 <- as.logical(rbinom(400, 1, .5))
-ip2 <- as.logical(rbinom(400, 1, .5))
-prv_df$gender[ip1] <- sample(c("Male", "Female"), sum(ip1), replace = TRUE)
-prv_df$status[ip2] <- sample(c("Admitted", "Rejected"), sum(ip2), replace = TRUE)
 
-adm_cnf <- table(cnf_df)
-adm_prv <- table(prv_df)
+#Answers to be randomized
+ri <- as.logical(rbinom(800, 1, 1/2)) 
 
-v1 <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
-v2 <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+#Randomized answers
+ra <- rbinom(sum(ri), 1, 1/2)
 
-sdp <- c(v1, v2)
+#Create sdp
+sdp <- c(cnf_df$sex, cnf_df$status)
+sdp[ri] <- ra
+
+prv_df <- tibble(sex = sdp[1:400], status = sdp[401:800])
 ```
 
 
 ```{r, echo = FALSE}
-kbl(list(t(adm_cnf), t(adm_prv)), booktabs = TRUE) %>%
+tmp1_df <- cnf_df %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
+                             status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
+tmp2_df <- prv_df %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
+                             status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
+kbl(list(table(tmp1_df), table(tmp2_df)), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
 ```
 
@@ -475,7 +495,17 @@ corresponds to Dirch(1) distribution. A sample from the Dirichlet distribution
 can be generated using random draws from the gamma distribution.
     ```{r, echo = TRUE}
      post_f <- function(dmat, theta) {
-      x <- c(table(as.data.frame(dmat)))
+      sex <- dmat[,1]
+      status <- dmat[,2]
+      
+      #Male & Admit
+      x1 <- sum(sex & status)
+      x2 <- sum(sex & !status)
+      x3 <- sum(!sex & status)
+      x4 <- sum(!sex & !status)
+    
+      x <- c(x1, x2, x3, x4)
+        
       t1 <- rgamma(4, x + 1, 1)
       t1/sum(t1)
     }
@@ -507,36 +537,27 @@ the number of entries which differ.
 
 
 <!-- end of list -->
-
-The `UBCAdmissions` data set is part of the `datasets` base package.
 Below we load the data and create the noisy admissions table.
 
 ```{r, echo = TRUE, eval = FALSE}
-set.seed(1)
-tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
-adm_cnf <- Reduce('+', tmp)
-adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
-
-cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
-                 status = c("Admitted","Rejected","Admitted","Rejected"),
+#Original UCBAdmissions data.
+cnf_df <- tibble(sex = c(1, 1, 0, 0),
+                 status = c(1, 0, 1, 0),
                  n = c(1198, 1493, 557, 1278)) %>% uncount(n)
 
 set.seed(1) 
 ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
 cnf_df <- cnf_df[ix,]
-prv_df <- cnf_df
-ip1 <- as.logical(rbinom(400, 1, .5))
-ip2 <- as.logical(rbinom(400, 1, .5))
-prv_df$gender[ip1] <- sample(c("Male", "Female"), sum(ip1), replace = TRUE)
-prv_df$status[ip2] <- sample(c("Admitted", "Rejected"), sum(ip2), replace = TRUE)
 
-adm_cnf <- table(cnf_df)
-adm_prv <- table(prv_df)
+#Answers to be randomized
+ri <- as.logical(rbinom(800, 1, 1/2)) 
 
-v1 <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
-v2 <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+#Randomized answers
+ra <- rbinom(sum(ri), 1, 1/2)
 
-sdp <- c(v1, v2)
+#Create sdp
+sdp <- c(cnf_df$sex, cnf_df$status)
+sdp[ri] <- ra
 ```
 
 
@@ -561,7 +582,7 @@ dmod <- new_privacy(post_f   = post_f,
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
-                  niter = 5000,
+                  niter = 6000,
                   warmup = 1000,
                   chains = 4,
                   init_par = rep(.25,4))
@@ -641,18 +662,15 @@ caption <- "(Example 1) comparison between using dapper and a naive Bayesian ana
 noise infused data and the original confidential data." 
 
 set.seed(1)
-x <- cnf_df
-x$gender <- case_match(cnf_df$gender, "Male" ~ 1, "Female"~ 0)
-x$status <- case_match(cnf_df$status, "Admitted" ~ 1, "Rejected"~ 0)
-confidential_data <- x
-cps <- t(sapply(1:16000, function(s) post_f(confidential_data, NULL)))
+confidential_data <- as.matrix(cnf_df)
+cps <- t(sapply(1:20000, function(s) post_f(confidential_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_conf  <- odds_male/odds_female
 
 set.seed(1)
 noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
-cps <- t(sapply(1:16000, function(s) post_f(noisy_data, NULL)))
+cps <- t(sapply(1:20000, function(s) post_f(noisy_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_noisy  <- odds_male/odds_female
@@ -689,56 +707,40 @@ One of the mechanisms under consideration is the discrete Gaussian distribution.
 In the context of the admissions data, this privacy mechanism works by injecting
 noise into the the total cell counts given the 2x2 table. This is quite different from
 example 1 where the randomized response scheme injected noise at the record level.
-In fact, the discrete Gaussian distribution satisfies an entirely different
-definition of differential privacy, namely zCDP [cite].
+In fact, the discrete Gaussian distribution satisfies a privacy framework called
+concentrated differential privacy [@Canonne2021].
 The strength of `dapper` comes from the fact we can analyze both scenarios under the
 same framework.
 
-The discrete Gaussian mechanism has a probability mass function given by (CHECK THIS
-MATCHES WITH CENSUS DEFINITION)
-
-\[
-f(x) = \dfrac{e^{-(x - \mu)^2/2\sigma^2}}{\sum_{y \in \mathbb{Z}} e^{-(x-\mu)^2/2\sigma^2}}
-\]
-
-where $x \in \mathbb{Z}$ and $(\mu,\sigma)$ are parameters governing the location and 
-scale respectively. The `dapper` functions `ddnorm` and `rdnorm` provide the
-density and sampling features for the discrete gaussian distribution.
-
-Since the primary goal of this example is to 
-show to how `dapper` is used operationally, we arbitrary set
-$\sigma$ to ??? without reference to the theoretical process one would use to 
-associate a privacy budget with a specific value of $\sigma$. To see how a value of 
-$\sigma$ can be chosen to satisfy zCDP guarantees see [cite].
+Suppose we want to compare how our analysis from example 1 would look like
+under the Census's discrete Gaussian privacy mechanism. Under the Census's 
+current privacy 
+parameters^[There is only a direct relationship between zCDP and $(\epsilon, \delta)$-differential privacy. To make comparisons between pure $\epsilon$-differential privacy and zCDP, the Census uses the value $\delta = 10^{-10}$.], setting
+the scale parameter $\sigma = 6.25$ implies a pure $\epsilon$-differential
+privacy budget of $2\log(3)$^[@Canonne2021 showed $\dfrac{1}{2} \epsilon^2$-concentrated differential privacy implies $\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)$-differential privacy.]. Using the `rdnorm` function allows
+us to easily construct a hypothetical table privated using a discrete
+Gaussian mechanism. [Label tables]
 
 ```{r, echo = FALSE}
-set.seed(1)
-tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
-adm_cnf <- Reduce('+', tmp)
-adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
-
-cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
-                 status = c("Admitted","Rejected","Admitted","Rejected"),
+#Original UCBAdmissions data.
+cnf_df <- tibble(sex = c(1, 1, 0, 0),
+                 status = c(1, 0, 1, 0),
                  n = c(1198, 1493, 557, 1278)) %>% uncount(n)
 
 set.seed(1) 
 ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
-cnf_df <- cnf_df[ix,]
-
-
-set.seed(1)
-rd <- dapper::rdnorm(4, 0, 10)
-adm_cnf <- table(cnf_df)
-adm_prv <- table(cnf_df) + rd
-sdp <- c(adm_prv)
-
-#bad ordering! dirty fix
-#sdp <- c(110, 142, 39, 109)
+rd <- dapper::rdnorm(4, 0, 6.25)
 ```
 
 
 ```{r, echo = FALSE}
-kbl(list(t(adm_cnf), t(adm_prv)), booktabs = TRUE) %>%
+tmp_df <- cnf_df[ix,] %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
+                             status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
+
+adm_cnf <- table(tmp_df)
+adm_prv <- adm_cnf + rd
+
+kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
 ```
 
@@ -749,7 +751,7 @@ $400 \times 2$ binary matrix. Below
 we describe the process for analyzing the privatized
 data using `dapper`. Since the latent process
 and posterior are the same as example 1, we only describe
-how to construct `st_f` and `priv_f`.
+how to construct `st_f` and `priv_f`. [MENTION TOTAL COUNTS ARE ALSO GIVEN]
 
 1. `st_f`: The private summary statistic $s_{dp}$ can be written as a record additive
 statistic using the indicator vectors $(1,0,0,0), (0,1,0,0), (0,0,0,1)$ and $(0,0,0,1)$.
@@ -771,7 +773,7 @@ These four vectors correspond to the four possible cells.
 at 0.
     ```{r, echo = TRUE}
     priv_f <- function(sdp, tx) {
-      sum(dapper::ddnorm(sdp - tx, mu = 0, sigma = 10, log = TRUE))
+      sum(dapper::ddnorm(sdp - tx, mu = 0, sigma = 6.25, log = TRUE))
     }
     ```
 
@@ -786,7 +788,7 @@ dmod <- new_privacy(post_f   = post_f,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
                   
 dp_out <- dapper_sample(dmod,
-                  sdp = sdp,
+                  sdp = c(131, 119, 47, 122),
                   niter = 2000,
                   warmup = 1000,
                   chains = 1,
@@ -801,10 +803,10 @@ summary(dp_out)
 
 The posterior density estimate for the odds ratio is.
 
-```{r post-or-density-dg, fig.cap="(Example 2) posterior density estimate for the odds ratio using 16,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
+```{r post-or-density-dg, fig.cap="(Example 2) posterior density estimate for the odds ratio using 1,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
-ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,2.5) + xlab("Odds Ratio")
+ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,8) + xlab("Odds Ratio")
 ```
 
 Like example 1, we can compare the naive analysis with the one under
@@ -814,19 +816,21 @@ the discrete Guassian mechanism. [FIX GRAPHS!]
 caption <- "(Example 2) comparison between using dapper and a naive Bayesian anaylsis on the
 noise infused data and the original confidential data." 
 
+table_post <- function(x) {
+    t1 <- rgamma(4, x + 1, 1)
+    t1/sum(t1)
+}
+
 set.seed(1)
-x <- cnf_df
-x$gender <- case_match(cnf_df$gender, "Male" ~ 1, "Female"~ 0)
-x$status <- case_match(cnf_df$status, "Admitted" ~ 1, "Rejected"~ 0)
-confidential_data <- x
-cps <- t(sapply(1:1000, function(s) post_f(confidential_data, NULL)))
+confidential_data <- c(109, 127, 46, 118)
+cps <- t(sapply(1:1000, function(s) table_post(confidential_data)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_conf  <- odds_male/odds_female
 
 set.seed(1)
-noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
-cps <- t(sapply(1:1000, function(s) post_f(noisy_data, NULL)))
+sdp <- c(110, 131, 47, 110)
+cps <- t(sapply(1:1000, function(s) table_post(sdp)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_noisy  <- odds_male/odds_female

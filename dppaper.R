@@ -20,35 +20,34 @@ library(knitr)
 
 
 ## ----echo = FALSE-------------------------------------------------------------
-set.seed(1)
-tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
-adm_cnf <- Reduce('+', tmp)
-adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
-
-cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
-                 status = c("Admitted","Rejected","Admitted","Rejected"),
+#Original UCBAdmissions data.
+cnf_df <- tibble(sex = c(1, 1, 0, 0),
+                 status = c(1, 0, 1, 0),
                  n = c(1198, 1493, 557, 1278)) %>% uncount(n)
 
 set.seed(1) 
 ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
 cnf_df <- cnf_df[ix,]
-prv_df <- cnf_df
-ip1 <- as.logical(rbinom(400, 1, .5))
-ip2 <- as.logical(rbinom(400, 1, .5))
-prv_df$gender[ip1] <- sample(c("Male", "Female"), sum(ip1), replace = TRUE)
-prv_df$status[ip2] <- sample(c("Admitted", "Rejected"), sum(ip2), replace = TRUE)
 
-adm_cnf <- table(cnf_df)
-adm_prv <- table(prv_df)
+#Answers to be randomized
+ri <- as.logical(rbinom(800, 1, 1/2)) 
 
-v1 <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
-v2 <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+#Randomized answers
+ra <- rbinom(sum(ri), 1, 1/2)
 
-sdp <- c(v1, v2)
+#Create sdp
+sdp <- c(cnf_df$sex, cnf_df$status)
+sdp[ri] <- ra
+
+prv_df <- tibble(sex = sdp[1:400], status = sdp[401:800])
 
 
 ## ----echo = FALSE-------------------------------------------------------------
-kbl(list(t(adm_cnf), t(adm_prv)), booktabs = TRUE) %>%
+tmp1_df <- cnf_df %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
+                             status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
+tmp2_df <- prv_df %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
+                             status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
+kbl(list(table(tmp1_df), table(tmp2_df)), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
 
 
@@ -62,7 +61,17 @@ latent_f <- function(theta) {
 
 ## ----echo = TRUE--------------------------------------------------------------
  post_f <- function(dmat, theta) {
-  x <- c(table(as.data.frame(dmat)))
+  sex <- dmat[,1]
+  status <- dmat[,2]
+  
+  #Male & Admit
+  x1 <- sum(sex & status)
+  x2 <- sum(sex & !status)
+  x3 <- sum(!sex & status)
+  x4 <- sum(!sex & !status)
+
+  x <- c(x1, x2, x3, x4)
+    
   t1 <- rgamma(4, x + 1, 1)
   t1/sum(t1)
 }
@@ -85,31 +94,24 @@ priv_f <- function(sdp, tx) {
 
 
 ## ----echo = TRUE, eval = FALSE------------------------------------------------
-#> set.seed(1)
-#> tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
-#> adm_cnf <- Reduce('+', tmp)
-#> adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
-#> 
-#> cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
-#>                  status = c("Admitted","Rejected","Admitted","Rejected"),
+#> #Original UCBAdmissions data.
+#> cnf_df <- tibble(sex = c(1, 1, 0, 0),
+#>                  status = c(1, 0, 1, 0),
 #>                  n = c(1198, 1493, 557, 1278)) %>% uncount(n)
 #> 
 #> set.seed(1)
 #> ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
 #> cnf_df <- cnf_df[ix,]
-#> prv_df <- cnf_df
-#> ip1 <- as.logical(rbinom(400, 1, .5))
-#> ip2 <- as.logical(rbinom(400, 1, .5))
-#> prv_df$gender[ip1] <- sample(c("Male", "Female"), sum(ip1), replace = TRUE)
-#> prv_df$status[ip2] <- sample(c("Admitted", "Rejected"), sum(ip2), replace = TRUE)
 #> 
-#> adm_cnf <- table(cnf_df)
-#> adm_prv <- table(prv_df)
+#> #Answers to be randomized
+#> ri <- as.logical(rbinom(800, 1, 1/2))
 #> 
-#> v1 <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
-#> v2 <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+#> #Randomized answers
+#> ra <- rbinom(sum(ri), 1, 1/2)
 #> 
-#> sdp <- c(v1, v2)
+#> #Create sdp
+#> sdp <- c(cnf_df$sex, cnf_df$status)
+#> sdp[ri] <- ra
 
 
 ## ----echo = TRUE--------------------------------------------------------------
@@ -126,7 +128,7 @@ dmod <- new_privacy(post_f   = post_f,
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
-                  niter = 5000,
+                  niter = 6000,
                   warmup = 1000,
                   chains = 4,
                   init_par = rep(.25,4))
@@ -164,18 +166,15 @@ caption <- "(Example 1) comparison between using dapper and a naive Bayesian ana
 noise infused data and the original confidential data." 
 
 set.seed(1)
-x <- cnf_df
-x$gender <- case_match(cnf_df$gender, "Male" ~ 1, "Female"~ 0)
-x$status <- case_match(cnf_df$status, "Admitted" ~ 1, "Rejected"~ 0)
-confidential_data <- x
-cps <- t(sapply(1:16000, function(s) post_f(confidential_data, NULL)))
+confidential_data <- as.matrix(cnf_df)
+cps <- t(sapply(1:20000, function(s) post_f(confidential_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_conf  <- odds_male/odds_female
 
 set.seed(1)
 noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
-cps <- t(sapply(1:16000, function(s) post_f(noisy_data, NULL)))
+cps <- t(sapply(1:20000, function(s) post_f(noisy_data, NULL)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_noisy  <- odds_male/odds_female
@@ -200,32 +199,24 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
 
 
 ## ----echo = FALSE-------------------------------------------------------------
-set.seed(1)
-tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
-adm_cnf <- Reduce('+', tmp)
-adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
-
-cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
-                 status = c("Admitted","Rejected","Admitted","Rejected"),
+#Original UCBAdmissions data.
+cnf_df <- tibble(sex = c(1, 1, 0, 0),
+                 status = c(1, 0, 1, 0),
                  n = c(1198, 1493, 557, 1278)) %>% uncount(n)
 
 set.seed(1) 
 ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
-cnf_df <- cnf_df[ix,]
-
-
-set.seed(1)
-rd <- dapper::rdnorm(4, 0, 10)
-adm_cnf <- table(cnf_df)
-adm_prv <- table(cnf_df) + rd
-sdp <- c(adm_prv)
-
-#bad ordering! dirty fix
-#sdp <- c(110, 142, 39, 109)
+rd <- dapper::rdnorm(4, 0, 6.25)
 
 
 ## ----echo = FALSE-------------------------------------------------------------
-kbl(list(t(adm_cnf), t(adm_prv)), booktabs = TRUE) %>%
+tmp_df <- cnf_df[ix,] %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
+                             status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
+
+adm_cnf <- table(tmp_df)
+adm_prv <- adm_cnf + rd
+
+kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
   kable_styling(position = 'center', latex_options = c("hold_position"))
 
 
@@ -245,7 +236,7 @@ st_f <- function(i, xi, sdp) {
 
 ## ----echo = TRUE--------------------------------------------------------------
 priv_f <- function(sdp, tx) {
-  sum(dapper::ddnorm(sdp - tx, mu = 0, sigma = 10, log = TRUE))
+  sum(dapper::ddnorm(sdp - tx, mu = 0, sigma = 6.25, log = TRUE))
 }
 
 
@@ -260,7 +251,7 @@ dmod <- new_privacy(post_f   = post_f,
                     varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
                   
 dp_out <- dapper_sample(dmod,
-                  sdp = sdp,
+                  sdp = c(131, 119, 47, 122),
                   niter = 2000,
                   warmup = 1000,
                   chains = 1,
@@ -271,29 +262,31 @@ dp_out <- dapper_sample(dmod,
 summary(dp_out)
 
 
-## ----post-or-density-dg, fig.cap="(Example 2) posterior density estimate for the odds ratio using 16,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
+## ----post-or-density-dg, fig.cap="(Example 2) posterior density estimate for the odds ratio using 1,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
-ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,2.5) + xlab("Odds Ratio")
+ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,8) + xlab("Odds Ratio")
 
 
 ## ----post-or-compare-dg, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
 caption <- "(Example 2) comparison between using dapper and a naive Bayesian anaylsis on the
 noise infused data and the original confidential data." 
 
+table_post <- function(x) {
+    t1 <- rgamma(4, x + 1, 1)
+    t1/sum(t1)
+}
+
 set.seed(1)
-x <- cnf_df
-x$gender <- case_match(cnf_df$gender, "Male" ~ 1, "Female"~ 0)
-x$status <- case_match(cnf_df$status, "Admitted" ~ 1, "Rejected"~ 0)
-confidential_data <- x
-cps <- t(sapply(1:1000, function(s) post_f(confidential_data, NULL)))
+confidential_data <- c(109, 127, 46, 118)
+cps <- t(sapply(1:1000, function(s) table_post(confidential_data)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_conf  <- odds_male/odds_female
 
 set.seed(1)
-noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
-cps <- t(sapply(1:1000, function(s) post_f(noisy_data, NULL)))
+sdp <- c(110, 131, 47, 110)
+cps <- t(sapply(1:1000, function(s) table_post(sdp)))
 odds_male   <- cps[,1] / cps[,2]
 odds_female <- cps[,3] / cps[,4]
 odds_ratio_noisy  <- odds_male/odds_female

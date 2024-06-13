@@ -121,7 +121,9 @@ noise to add. Most importantly, for the analyst, the differentially private nois
 available and can be incorporated into subsequent analyses.
 
 There are now many differential privacy frameworks, and the \texttt{dapper} method can be applied to
-all of them. For presentation, we focus on the earliest and most common
+all of them. Section ??? provides details about utility functions for working with dapper
+in the concentrated differential privacy framework. However, for presentation,
+in this section we focus on the earliest and most common
 formulation of differential privacy, \(\epsilon\)-differential privacy (\(\epsilon\)-DP). The
 \(\epsilon\) parameter is called the privacy loss budget. The privacy loss budget controls how
 strong the privacy guarantee is. Larger values of \(\epsilon\) correspond to weaker
@@ -329,6 +331,43 @@ plugged directly into the popular \CRANpkg{bayesplot} package. Additionaly,
 as those found when using \CRANpkg{rstan}. Overall, this should make working with \texttt{dapper} easier
 for anyone already familiar with the \CRANpkg{rstan} ecosystem.
 
+\hypertarget{privacy-mechanisms-or-privacy-utility-functions}{%
+\subsection{Privacy Mechanisms (or Privacy Utility Functions?)}\label{privacy-mechanisms-or-privacy-utility-functions}}
+
+{[}FILL IN CITATIONS{]}
+The \texttt{dapper} package provides several utility functions
+for analyzing privatized count data. Currently, the US Census
+is a major driver behind the deployment and research of privatized
+count data, and these functions were created for census oriented
+researchers in mind.
+
+One shortcoming of \(\epsilon\)-differential privacy mechanisms
+are that they inject continuous noise which is ill suited
+for count data. This is one reason why the census data is privatized
+under a slightly different framework called the concentrated differential privacy.
+A main difference being the latter frame work uses discrete distributions as sources for privacy noise.
+
+\texttt{dapper} implements probably mass and sampling functions
+for the discrete Gaussian and discrete Laplace distributions. These
+are two potential mechanisms for deploying concentrated differential privacy,
+and both are, in fact, under consideration for use in the US Census data.
+
+The discrete Gaussian / Laplacian mechanism have probability mass functions given in the
+panel below.
+{[}LINE UP ANNOTATION{]}
+\[
+\begin{aligned}
+P[X = x] &= \dfrac{e^{-(x - \mu)^2/2\sigma^2}}{\sum_{y \in \mathbb{Z}} e^{-(x-\mu)^2/2\sigma^2}} \quad \text{(Discrete Gaussian)}\\
+P[X = x] &= \dfrac{e^{1/t} - 1}{e^{1/t} + 1} e^{-|x|/t} \quad \text{(Discrete Laplacian)}
+\end{aligned}
+\]
+
+For both distributions \(x \in \mathbb{Z}\). The discrete Gaussian has
+two parameters \((\mu,\sigma)\) which govern the location and
+scale respectively. The \texttt{dapper} functions \texttt{ddnorm} and \texttt{rdnorm} provide the
+density and sampling features for the discrete Gaussian distribution. The functions
+\texttt{ddlaplace} and \texttt{rdlaplace} provide similar features for the discrete Laplace distribution.
+
 \hypertarget{examples}{%
 \section{Examples}\label{examples}}
 
@@ -348,19 +387,19 @@ the data with a differentially private mechanism.
 \centering
 \begin{tabular}[t]{lrr}
 \toprule
-  & Female & Male\\
+  & Admitted & Rejected\\
 \midrule
-Admitted & 46 & 109\\
-Rejected & 118 & 127\\
+Female & 46 & 118\\
+Male & 109 & 127\\
 \bottomrule
 \end{tabular}
 \centering
 \begin{tabular}[t]{lrr}
 \toprule
-  & Female & Male\\
+  & Admitted & Rejected\\
 \midrule
-Admitted & 66 & 107\\
-Rejected & 100 & 127\\
+Female & 74 & 102\\
+Male & 104 & 120\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -407,7 +446,17 @@ latent_f <- function(theta) {
 
 \begin{verbatim}
  post_f <- function(dmat, theta) {
-  x <- c(table(as.data.frame(dmat)))
+  sex <- dmat[,1]
+  status <- dmat[,2]
+
+  #Male & Admit
+  x1 <- sum(sex & status)
+  x2 <- sum(sex & !status)
+  x3 <- sum(!sex & status)
+  x4 <- sum(!sex & !status)
+
+  x <- c(x1, x2, x3, x4)
+
   t1 <- rgamma(4, x + 1, 1)
   t1/sum(t1)
 }
@@ -442,35 +491,27 @@ priv_f <- function(sdp, tx) {
 \end{verbatim}
 \end{enumerate}
 
-The \texttt{UBCAdmissions} data set is part of the \texttt{datasets} base package.
 Below we load the data and create the noisy admissions table.
 
 \begin{verbatim}
-set.seed(1)
-tmp <- apply(UCBAdmissions, 3, identity, simplify=FALSE)
-adm_cnf <- Reduce('+', tmp)
-adm_prv <- round(adm_cnf + rnorm(4, mean = 0, sd = 100), 2)
-
-cnf_df <- tibble(gender = c("Male", "Male", "Female", "Female"),
-                 status = c("Admitted","Rejected","Admitted","Rejected"),
+#Original UCBAdmissions data.
+cnf_df <- tibble(sex = c(1, 1, 0, 0),
+                 status = c(1, 0, 1, 0),
                  n = c(1198, 1493, 557, 1278)) %>% uncount(n)
 
 set.seed(1) 
 ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
 cnf_df <- cnf_df[ix,]
-prv_df <- cnf_df
-ip1 <- as.logical(rbinom(400, 1, .5))
-ip2 <- as.logical(rbinom(400, 1, .5))
-prv_df$gender[ip1] <- sample(c("Male", "Female"), sum(ip1), replace = TRUE)
-prv_df$status[ip2] <- sample(c("Admitted", "Rejected"), sum(ip2), replace = TRUE)
 
-adm_cnf <- table(cnf_df)
-adm_prv <- table(prv_df)
+#Answers to be randomized
+ri <- as.logical(rbinom(800, 1, 1/2)) 
 
-v1 <- case_match(prv_df$gender, "Male" ~ 1, "Female"~ 0)
-v2 <- case_match(prv_df$status, "Admitted" ~ 1, "Rejected"~ 0)
+#Randomized answers
+ra <- rbinom(sum(ri), 1, 1/2)
 
-sdp <- c(v1, v2)
+#Create sdp
+sdp <- c(cnf_df$sex, cnf_df$status)
+sdp[ri] <- ra
 \end{verbatim}
 
 Once we have defined all components of the model we can
@@ -492,7 +533,7 @@ dmod <- new_privacy(post_f   = post_f,
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
-                  niter = 5000,
+                  niter = 6000,
                   warmup = 1000,
                   chains = 4,
                   init_par = rep(.25,4))
@@ -522,12 +563,12 @@ the chain has run long enough to achieve adequate mixing.
 
 \begin{verbatim}
 #> # A tibble: 4 x 10
-#>   variable   mean median     sd    mad      q5   q95  rhat ess_bulk ess_tail
-#>   <chr>     <dbl>  <dbl>  <dbl>  <dbl>   <dbl> <dbl> <dbl>    <dbl>    <dbl>
-#> 1 pi_11    0.281  0.282  0.0521 0.0525 0.193   0.363  1.01     300.     488.
-#> 2 pi_21    0.363  0.361  0.0659 0.0656 0.259   0.475  1.01     382.     615.
-#> 3 pi_12    0.0690 0.0633 0.0448 0.0475 0.00809 0.151  1.01     218.     487.
-#> 4 pi_22    0.287  0.288  0.0531 0.0536 0.198   0.371  1.01     296.     511.
+#>   variable  mean median     sd    mad     q5   q95  rhat ess_bulk ess_tail
+#>   <chr>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
+#> 1 pi_11    0.281  0.281 0.0633 0.0643 0.179  0.386  1.01     351.    1136.
+#> 2 pi_21    0.339  0.339 0.0678 0.0674 0.228  0.451  1.01     390.     898.
+#> 3 pi_12    0.111  0.109 0.0556 0.0579 0.0222 0.207  1.02     221.     440.
+#> 4 pi_22    0.268  0.267 0.0622 0.0627 0.168  0.374  1.02     280.     708.
 \end{verbatim}
 
 Diagnostic checks using trace plots can be done using the \pkg{Bayesplot} package
@@ -600,46 +641,38 @@ One of the mechanisms under consideration is the discrete Gaussian distribution.
 In the context of the admissions data, this privacy mechanism works by injecting
 noise into the the total cell counts given the 2x2 table. This is quite different from
 example 1 where the randomized response scheme injected noise at the record level.
-In fact, the discrete Gaussian distribution satisfies an entirely different
-definition of differential privacy, namely zCDP {[}cite{]}.
+In fact, the discrete Gaussian distribution satisfies a privacy framework called
+concentrated differential privacy (Canonne, Kamath, and Steinke 2021).
 The strength of \texttt{dapper} comes from the fact we can analyze both scenarios under the
 same framework.
 
-The discrete Gaussian mechanism has a probability mass function given by (CHECK THIS
-MATCHES WITH CENSUS DEFINITION)
-
-\[
-f(x) = \dfrac{e^{-(x - \mu)^2/2\sigma^2}}{\sum_{y \in \mathbb{Z}} e^{-(x-\mu)^2/2\sigma^2}}
-\]
-
-where \(x \in \mathbb{Z}\) and \((\mu,\sigma)\) are parameters governing the location and
-scale respectively. The \texttt{dapper} functions \texttt{ddnorm} and \texttt{rdnorm} provide the
-density and sampling features for the discrete gaussian distribution.
-
-Since the primary goal of this example is to
-show to how \texttt{dapper} is used operationally, we arbitrary set
-\(\sigma\) to ??? without reference to the theoretical process one would use to
-associate a privacy budget with a specific value of \(\sigma\). To see how a value of
-\(\sigma\) can be chosen to satisfy zCDP guarantees see {[}cite{]}.
+Suppose we want to compare how our analysis from example 1 would look like
+under the Census's discrete Gaussian privacy mechanism. Under the Census's
+current privacy
+parameters\footnote{There is only a direct relationship between zCDP and \((\epsilon, \delta)\)-differential privacy. To make comparisons between pure \(\epsilon\)-differential privacy and zCDP, the Census uses the value \(\delta = 10^{-10}\).}, setting
+the scale parameter \(\sigma = 6.25\) implies a pure \(\epsilon\)-differential
+privacy budget of \(2\log(3)\)\footnote{Canonne, Kamath, and Steinke (2021) showed \(\dfrac{1}{2} \epsilon^2\)-concentrated differential privacy implies \(\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)\)-differential privacy.}. Using the \texttt{rdnorm} function allows
+us to easily construct a hypothetical table privated using a discrete
+Gaussian mechanism. {[}Label tables{]}
 
 \begin{table}[!h]
 \centering
 \centering
 \begin{tabular}[t]{lrr}
 \toprule
-  & Female & Male\\
+  & Admitted & Rejected\\
 \midrule
-Admitted & 46 & 109\\
-Rejected & 118 & 127\\
+Female & 46 & 118\\
+Male & 109 & 127\\
 \bottomrule
 \end{tabular}
 \centering
 \begin{tabular}[t]{lrr}
 \toprule
-  & Female & Male\\
+  & Admitted & Rejected\\
 \midrule
-Admitted & 44 & 89\\
-Rejected & 119 & 116\\
+Female & 47 & 110\\
+Male & 110 & 131\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -651,7 +684,7 @@ example 1, we imagine the latent database as a
 we describe the process for analyzing the privatized
 data using \texttt{dapper}. Since the latent process
 and posterior are the same as example 1, we only describe
-how to construct \texttt{st\_f} and \texttt{priv\_f}.
+how to construct \texttt{st\_f} and \texttt{priv\_f}. {[}MENTION TOTAL COUNTS ARE ALSO GIVEN{]}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -679,7 +712,7 @@ st_f <- function(i, xi, sdp) {
 
 \begin{verbatim}
 priv_f <- function(sdp, tx) {
-  sum(dapper::ddnorm(sdp - tx, mu = 0, sigma = 10, log = TRUE))
+  sum(dapper::ddnorm(sdp - tx, mu = 0, sigma = 6.25, log = TRUE))
 }
 \end{verbatim}
 \end{enumerate}
@@ -692,12 +725,12 @@ summary(dp_out)
 
 \begin{verbatim}
 #> # A tibble: 4 x 10
-#>   variable  mean median     sd    mad    q5   q95  rhat ess_bulk ess_tail
-#>   <chr>    <dbl>  <dbl>  <dbl>  <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl>
-#> 1 pi_11    0.249  0.247 0.0328 0.0335 0.195 0.305 0.999    1165.     771.
-#> 2 pi_21    0.242  0.241 0.0304 0.0295 0.190 0.293 1.02      244.     604.
-#> 3 pi_12    0.314  0.314 0.0306 0.0309 0.264 0.365 1.01      413.     565.
-#> 4 pi_22    0.194  0.194 0.0305 0.0315 0.146 0.244 1.00     1048.     665.
+#>   variable  mean median     sd    mad     q5   q95  rhat ess_bulk ess_tail
+#>   <chr>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
+#> 1 pi_11    0.314  0.314 0.0278 0.0271 0.269  0.362  1.00     619.     874.
+#> 2 pi_21    0.286  0.285 0.0264 0.0259 0.246  0.332  1.00     663.     762.
+#> 3 pi_12    0.107  0.107 0.0209 0.0216 0.0743 0.143  1.00     355.     510.
+#> 4 pi_22    0.293  0.293 0.0271 0.0281 0.249  0.337  1.00     508.     714.
 \end{verbatim}
 
 The posterior density estimate for the odds ratio is.
@@ -708,7 +741,7 @@ The posterior density estimate for the odds ratio is.
 
 }
 
-\caption{(Example 2) posterior density estimate for the odds ratio using 16,000 MCMC draws.}\label{fig:post-or-density-dg}
+\caption{(Example 2) posterior density estimate for the odds ratio using 1,000 MCMC draws.}\label{fig:post-or-density-dg}
 \end{figure}
 
 Like example 1, we can compare the naive analysis with the one under
@@ -1108,6 +1141,9 @@ Awan, Jordan, and Aleksandra Slavković. 2020. {``Structure and Sensitivity in D
 
 \leavevmode\vadjust pre{\hypertarget{ref-Bickel1975}{}}%
 Bickel, Peter J., Eugene A. Hammel, and John W. O'Connell. 1975. {``Sex Bias in Graduate Admissions: Data from Berkeley: Measuring Bias Is Harder Than Is Usually Assumed, and the Evidence Is Sometimes Contrary to Expectation.''} \emph{Science} 187 (4175): 398--404. \url{https://doi.org/10.1126/science.187.4175.398}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Canonne2021}{}}%
+Canonne, Clément L., Gautam Kamath, and Thomas Steinke. 2021. {``The Discrete Gaussian for Differential Privacy.''} \url{https://arxiv.org/abs/2004.00010}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Carroll2006}{}}%
 Carroll, Raymond J., David Ruppert, Leonard A. Stefanski, and Ciprian M. Crainiceanu. 2006. \emph{Measurement Error in Nonlinear Models}. Chapman; Hall/CRC. \url{https://doi.org/10.1201/9781420010138}.
