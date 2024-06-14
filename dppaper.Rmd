@@ -442,7 +442,7 @@ ri <- as.logical(rbinom(800, 1, 1/2))
 ra <- rbinom(sum(ri), 1, 1/2)
 
 #Create sdp
-sdp <- c(cnf_df$sex, cnf_df$status)
+sdp <- as.matrix(cnf_df)
 sdp[ri] <- ra
 
 prv_df <- tibble(sex = sdp[1:400], status = sdp[401:800])
@@ -516,10 +516,9 @@ where the entries with index $i$ and $400 + i$ are the only possible non zero en
 We let these two entries correspond to the sex and admission status response of 
 the individual with record $x_i$. With this construction we have $s_{dp} = \sum_{i=1}^{400} v_i$.
     ```{r, echo = TRUE}
-    st_f <- function(i, xi, sdp) {
-      x <- rep(0, 400 * 2)
-      x[i] <- xi[1]
-      x[i + 400] <- xi[2]
+    st_f <- function(xi, sdp, i) {
+      x <- matrix(0, nrow = 400, ncol = 2)
+      x[i,] <- xi
       x
     }
     ```
@@ -556,7 +555,7 @@ ri <- as.logical(rbinom(800, 1, 1/2))
 ra <- rbinom(sum(ri), 1, 1/2)
 
 #Create sdp
-sdp <- c(cnf_df$sex, cnf_df$status)
+sdp <- as.matrix(cnf_df)
 sdp[ri] <- ra
 ```
 
@@ -760,7 +759,7 @@ how to construct `st_f` and `priv_f`. [MENTION TOTAL COUNTS ARE ALSO GIVEN]
 statistic using the indicator vectors $(1,0,0,0), (0,1,0,0), (0,0,0,1)$ and $(0,0,0,1)$.
 These four vectors correspond to the four possible cells.
     ```{r, echo = TRUE}
-    st_f <- function(i, xi, sdp) {
+    st_f <- function(xi, sdp, i) {
       if(xi[1] & xi[2]) {
         c(1,0,0,0)
       } else if (xi[1] & !xi[2]) {
