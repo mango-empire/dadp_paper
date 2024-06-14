@@ -656,7 +656,11 @@ us to easily construct a hypothetical table privated using a discrete
 Gaussian mechanism. {[}Label tables{]}
 
 \begin{table}[!h]
-\centering
+\centering\caption{\label{tab:unnamed-chunk-14}Left table represents a random sub-sample of 400
+    observations from the UCBAdmissions data set. The table on the right reprents
+    the left table with independent discrete Gaussian noise added to each cell.}
+\begin{table}
+
 \centering
 \begin{tabular}[t]{lrr}
 \toprule
@@ -666,6 +670,8 @@ Female & 46 & 118\\
 Male & 109 & 127\\
 \bottomrule
 \end{tabular}
+\end{table}\begin{table}
+
 \centering
 \begin{tabular}[t]{lrr}
 \toprule
@@ -675,6 +681,7 @@ Female & 47 & 110\\
 Male & 110 & 131\\
 \bottomrule
 \end{tabular}
+\end{table}
 \end{table}
 
 The US Census only releases cell counts, so a natural

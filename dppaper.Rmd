@@ -740,8 +740,11 @@ tmp_df <- cnf_df[ix,] %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female")
 adm_cnf <- table(tmp_df)
 adm_prv <- adm_cnf + rd
 
-kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
-  kable_styling(position = 'center', latex_options = c("hold_position"))
+kbl(list(adm_cnf, adm_prv), caption = "Left table represents a random sub-sample of 400
+    observations from the UCBAdmissions data set. The table on the right reprents
+    the left table with independent discrete Gaussian noise added to each cell.", booktabs = TRUE) %>%
+  kable_styling(position = 'center', 
+                latex_options = c("hold_position"))
 ```
 
 The US Census only releases cell counts, so a natural
