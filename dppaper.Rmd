@@ -408,7 +408,9 @@ P[X = x] &= \dfrac{e^{1/t} - 1}{e^{1/t} + 1} e^{-|x|/t} \quad \text{(Discrete La
 For both distributions $x \in \mathbb{Z}$. The discrete Gaussian has 
 two parameters $(\mu,\sigma)$ which govern the location and 
 scale respectively. The `dapper` functions `ddnorm` and `rdnorm` provide the
-density and sampling features for the discrete Gaussian distribution. The functions
+density and sampling features for the discrete Gaussian distribution. The `ddnorm` 
+function contains a calculation for the normalizing constant which is expensive. To
+speed up repeated execution, memoization is used via the \CRANpkg{memoise} package. Finally, the functions
 `ddlaplace` and `rdlaplace` provide similar features for the discrete Laplace distribution.
 
 
@@ -577,7 +579,7 @@ dmod <- new_privacy(post_f   = post_f,
                     priv_f   = priv_f,
                     st_f     = st_f,
                     npar     = 4,
-                    varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
+                    varnames = c("pi_11", "pi_10", "pi_01", "pi_00"))
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
@@ -697,28 +699,32 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
 ## Example 2: 2x2 Contingency Table (Discrete Gaussian)
 
 To highlight the flexibility of `dapper` we reanalyze example 1
-with a different privacy mechanism. For this example we taking inspiration from the US Census, 
-which is currently in the process of arguably the largest deployment of differential privacy. 
-Deploying large privacy system requires the careful analysis 
-of the privacy / utility trade-off of different candidate mechanisms. This is especially
-true in the case of census data which has many users with different inference goals.
-One of the mechanisms under consideration is the discrete Gaussian distribution. 
-In the context of the admissions data, this privacy mechanism works by injecting
-noise into the the total cell counts given the 2x2 table. This is quite different from
-example 1 where the randomized response scheme injected noise at the record level.
-In fact, the discrete Gaussian distribution satisfies a privacy framework called
-concentrated differential privacy [@Canonne2021].
-The strength of `dapper` comes from the fact we can analyze both scenarios under the
-same framework.
+with a different privacy mechanism. Here we take inspiration from the US Census, 
+which is in the process of deploying a novel privacy protection system for count data. 
+Because there are many users of Census data, a succesful deployment requires 
+a careful analysis of the privacy / utility trade-off and includes
+studing how different mechanisms and privacy parameters affect
+down stream analyses.
 
-Suppose we want to compare how our analysis from example 1 would look like
-under the Census's discrete Gaussian privacy mechanism. Under the Census's 
-current privacy 
-parameters^[There is only a direct relationship between zCDP and $(\epsilon, \delta)$-differential privacy. To make comparisons between pure $\epsilon$-differential privacy and zCDP, the Census uses the value $\delta = 10^{-10}$.], setting
-the scale parameter $\sigma = 6.25$ implies a pure $\epsilon$-differential
-privacy budget of $2\log(3)$^[@Canonne2021 showed $\dfrac{1}{2} \epsilon^2$-concentrated differential privacy implies $\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)$-differential privacy.]. Using the `rdnorm` function allows
-us to easily construct a hypothetical table privated using a discrete
-Gaussian mechanism. [Label tables]
+One of the mechanisms under consideration is the discrete Gaussian distribution. 
+In our admissions data example, this privacy mechanism works by injecting
+noise into the the total cell counts given in the 2x2 table. The 
+randomized response scheme, in contrast, injects noise at the record level.
+In fact, the discrete Gaussian distribution satisfies a different privacy framework called
+zero concentrated differential privacy (zCDP) [@Canonne2021].
+`dapper` accomodates both the randomized response and
+the discrete Gaussian mechanisms, allowing us to compare the impact 
+of the two approaches.
+
+To begine comparing the two approaches, we need to set comparable privacy parameters.
+Since the two frameworks use different metrics, there does not exist
+a direct comparison^[There is only a direct relationship between zCDP and $(\epsilon, \delta)$-differential privacy. To make comparisons between pure $\epsilon$-differential privacy and zCDP, the Census uses the value $\delta = 10^{-10}$.]. However we can, in a sense, choose zCDP parameters that ensure
+protection at least as good as that achieved with the randomized responses. This
+can be achieved by setting the scale parameter in the discrete Guassian
+distribution to $6.25$ which will guarantee it is $2\log(3)$-differentially private^[$\dfrac{1}{2} \epsilon^2$-concentrated differential privacy implies $\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)$-differential privacy [@Canonne2021]].  
+
+The table below on the right represents a hypothetical data protected using a discrete
+Gaussian mechanism.
 
 ```{r, echo = FALSE}
 #Original UCBAdmissions data.
@@ -739,21 +745,22 @@ tmp_df <- cnf_df[ix,] %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female")
 adm_cnf <- table(tmp_df)
 adm_prv <- adm_cnf + rd
 
-kbl(list(adm_cnf, adm_prv), caption = "Left table represents a random sub-sample of 400
-    observations from the UCBAdmissions data set. The table on the right reprents
-    the left table with independent discrete Gaussian noise added to each cell.", booktabs = TRUE) %>%
+kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
   kable_styling(position = 'center', 
                 latex_options = c("hold_position"))
 ```
 
-The US Census only releases cell counts, so a natural
-statistic to consider is the vector of cell counts. As in
+For the public, the US Census only releases aggregate cell counts along with
+the true total count of said cells. In our example,
+this means the Census would have released the right hand 
+table along with the fact that $N = 400$ in the original
+table. Thus, it natural to let $s_{dp}$ be the vector of cell counts. As in
 example 1, we imagine the latent database as a 
 $400 \times 2$ binary matrix. Below
 we describe the process for analyzing the privatized
 data using `dapper`. Since the latent process
 and posterior are the same as example 1, we only describe
-how to construct `st_f` and `priv_f`. [MENTION TOTAL COUNTS ARE ALSO GIVEN]
+how to construct `st_f` and `priv_f`.
 
 1. `st_f`: The private summary statistic $s_{dp}$ can be written as a record additive
 statistic using the indicator vectors $(1,0,0,0), (0,1,0,0), (0,0,0,1)$ and $(0,0,0,1)$.
@@ -787,7 +794,7 @@ dmod <- new_privacy(post_f   = post_f,
                     priv_f   = priv_f,
                     st_f     = st_f,
                     npar     = 4,
-                    varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
+                    varnames = c("pi_11", "pi_01", "pi_10", "pi_00"))
                   
 dp_out <- dapper_sample(dmod,
                   sdp = c(131, 119, 47, 122),
@@ -803,16 +810,30 @@ The summary table below show the results of running a chain for 2000 iterations 
 summary(dp_out)
 ```
 
-The posterior density estimate for the odds ratio is.
+
+Figure \@ref(fig:post-or-compare-dg) juxtaposes the private posterior under the 
+randomized(dashed line) and discrete Gaussian (solid line) mechanism. Comparing 
+the two suggest using discrete Guassian noise leads to slightly less
+posterior uncertainty and a mode closer to the true, confidential posterior.
+
+
+[LEGEND DOESN'T WORK]
 
 ```{r post-or-density-dg, fig.cap="(Example 2) posterior density estimate for the odds ratio using 1,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
-tv <- dp_out$chain
-or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
-ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,8) + xlab("Odds Ratio")
+tv2 <- dp_out$chain
+or2 <- as.numeric((tv2[,1] * tv2[,4]) / (tv2[,2] * tv2[,3]))
+ggplot(tibble(x=or2), aes(x, linetype = "dotdash")) + geom_density() + 
+  geom_density(data = tibble(x=or), aes(x, linetype = "solid")) +
+  xlim(0,10) + xlab("Odds Ratio") + 
+  scale_linetype_discrete(name="Privacy", 
+                          breaks=c(1, 2), 
+                          labels = c("group1", "group2"))
+  
 ```
 
-Like example 1, we can compare the naive analysis with the one under
-the discrete Guassian mechanism. [FIX GRAPHS!]
+If we compare the left hand plots of 
+\@ref(fig:post-or-compare) and figure \@ref(fig:post-or-compare-dg),
+the discrete Gaussian induced considerably less bias when using the naive analysis.
 
 ```{r post-or-compare-dg, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
 caption <- "(Example 2) comparison between using dapper and a naive Bayesian anaylsis on the
@@ -841,7 +862,7 @@ df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
   pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
   mutate(method = "naive")
 
-df2 <- tibble(confidential = odds_ratio_conf, noisy = or) %>%
+df2 <- tibble(confidential = odds_ratio_conf, noisy = or2) %>%
   pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
   mutate(method = "dapper")
 

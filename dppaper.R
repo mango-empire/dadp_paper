@@ -36,7 +36,7 @@ ri <- as.logical(rbinom(800, 1, 1/2))
 ra <- rbinom(sum(ri), 1, 1/2)
 
 #Create sdp
-sdp <- c(cnf_df$sex, cnf_df$status)
+sdp <- as.matrix(cnf_df)
 sdp[ri] <- ra
 
 prv_df <- tibble(sex = sdp[1:400], status = sdp[401:800])
@@ -78,10 +78,9 @@ latent_f <- function(theta) {
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-st_f <- function(i, xi, sdp) {
-  x <- rep(0, 400 * 2)
-  x[i] <- xi[1]
-  x[i + 400] <- xi[2]
+st_f <- function(xi, sdp, i) {
+  x <- matrix(0, nrow = 400, ncol = 2)
+  x[i,] <- xi
   x
 }
 
@@ -110,7 +109,7 @@ priv_f <- function(sdp, tx) {
 #> ra <- rbinom(sum(ri), 1, 1/2)
 #> 
 #> #Create sdp
-#> sdp <- c(cnf_df$sex, cnf_df$status)
+#> sdp <- as.matrix(cnf_df)
 #> sdp[ri] <- ra
 
 
@@ -124,7 +123,7 @@ dmod <- new_privacy(post_f   = post_f,
                     priv_f   = priv_f,
                     st_f     = st_f,
                     npar     = 4,
-                    varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
+                    varnames = c("pi_11", "pi_10", "pi_01", "pi_00"))
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
@@ -216,15 +215,13 @@ tmp_df <- cnf_df[ix,] %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female")
 adm_cnf <- table(tmp_df)
 adm_prv <- adm_cnf + rd
 
-kbl(list(adm_cnf, adm_prv), caption = "Left table represents a random sub-sample of 400
-    observations from the UCBAdmissions data set. The table on the right reprents
-    the left table with independent discrete Gaussian noise added to each cell.", booktabs = TRUE) %>%
+kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
   kable_styling(position = 'center', 
                 latex_options = c("hold_position"))
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-st_f <- function(i, xi, sdp) {
+st_f <- function(xi, sdp, i) {
   if(xi[1] & xi[2]) {
     c(1,0,0,0)
   } else if (xi[1] & !xi[2]) {
@@ -251,7 +248,7 @@ dmod <- new_privacy(post_f   = post_f,
                     priv_f   = priv_f,
                     st_f     = st_f,
                     npar     = 4,
-                    varnames = c("pi_11", "pi_21", "pi_12", "pi_22"))
+                    varnames = c("pi_11", "pi_01", "pi_10", "pi_00"))
                   
 dp_out <- dapper_sample(dmod,
                   sdp = c(131, 119, 47, 122),
@@ -266,9 +263,15 @@ summary(dp_out)
 
 
 ## ----post-or-density-dg, fig.cap="(Example 2) posterior density estimate for the odds ratio using 1,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
-tv <- dp_out$chain
-or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
-ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,8) + xlab("Odds Ratio")
+tv2 <- dp_out$chain
+or2 <- as.numeric((tv2[,1] * tv2[,4]) / (tv2[,2] * tv2[,3]))
+ggplot(tibble(x=or2), aes(x, linetype = "dotdash")) + geom_density() + 
+  geom_density(data = tibble(x=or), aes(x, linetype = "solid")) +
+  xlim(0,10) + xlab("Odds Ratio") + 
+  scale_linetype_discrete(name="Privacy", 
+                          breaks=c(1, 2), 
+                          labels = c("group1", "group2"))
+  
 
 
 ## ----post-or-compare-dg, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
@@ -298,7 +301,7 @@ df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
   pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
   mutate(method = "naive")
 
-df2 <- tibble(confidential = odds_ratio_conf, noisy = or) %>%
+df2 <- tibble(confidential = odds_ratio_conf, noisy = or2) %>%
   pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
   mutate(method = "dapper")
 
