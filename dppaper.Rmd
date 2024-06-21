@@ -323,8 +323,8 @@ to serve as the initialization point if samples from `post_f` are draws
 from say a Metropolis-Hastings sampler.
 
 * `priv_f` is an R function that represents the log of the privacy mechanism density, $\eta(s_{sdp} \mid x)$. 
-This function has the form `priv_f(sdp, sx)` where `sdp` is an R vector representing the
-the value of $s_{dp}$ and `sx` is an R vector representing the value of the confidential summary statistic 
+This function has the form `priv_f(sdp, sx)` where `sdp` is an R vector or matrix representing the
+the value of $s_{dp}$ and `sx` is an R vector or matrix (whichever one matches `sdp`) representing the value of the confidential summary statistic 
 $s := \sum_{i=1}^{n} t_i(x_i, s_{dp})$.
 The arguments must appear in the exact order with the same variables names as defined above.
 Finally, the return value of `priv_f` must be a real number.
@@ -334,7 +334,7 @@ must be defined using the three arguments named `i`, `xi` and `sdp`
 in the stated order. The role of this function is to represent terms in the definition of record additivity
 with each of the three arguments in `st_f` corresponding the the similarly spelled
 terms in $t_i(x_i, s_{dp})$. Here the type class for `i` is an integer,
-while `xi` and `sdp` are R vectors.
+while `xi` is an R vector and `sdp` is an R vector or matrix.
 
 * `npar` is an integer value that represents the dimension of $\theta$. It 
 should output a vector of the same length as `post_f`.
