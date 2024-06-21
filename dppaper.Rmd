@@ -695,6 +695,42 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
   theme(legend.position="bottom")
 ```
 
+```{r post-or-compare2, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
+caption <- "(Example 1) comparison between using dapper and a naive Bayesian anaylsis on the
+noise infused data and the original confidential data." 
+
+set.seed(1)
+confidential_data <- as.matrix(cnf_df)
+cps <- t(sapply(1:20000, function(s) post_f(confidential_data, NULL)))
+odds_male   <- cps[,1] / cps[,2]
+odds_female <- cps[,3] / cps[,4]
+odds_ratio_conf  <- odds_male/odds_female
+
+set.seed(1)
+noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
+cps <- t(sapply(1:20000, function(s) post_f(noisy_data, NULL)))
+odds_male   <- cps[,1] / cps[,2]
+odds_female <- cps[,3] / cps[,4]
+odds_ratio_noisy  <- odds_male/odds_female
+
+df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
+  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
+  mutate(method = "naive")
+
+df2 <- tibble(confidential = odds_ratio_conf, noisy = or) %>%
+  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
+  mutate(method = "dapper")
+
+df <- rbind(df1,df2)
+
+df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) + 
+  geom_density(alpha = .5) + 
+  facet_wrap(~method) + 
+  xlim(0,8) +
+  xlab("Odds Ratio") +
+  guides(fill= guide_legend(title= "Data")) + 
+  theme(legend.position="bottom")
+```
 
 ## Example 2: 2x2 Contingency Table (Discrete Gaussian)
 
@@ -1234,13 +1270,12 @@ From the right hand term in the above panel, we can see $\gamma$
 depends only on $\epsilon^{-2}/\sigma^2$ and as the privacy budget decreases (i.e. more noise is being added to $x$),
 $\gamma \to 1$.
 
-Thus when poor mixing is observed, we recommend seeing if increasing the privacy
-budget helps. Unfortunately, if one is not at liberty to alter the privacy budget, 
-there is no quick fix, and other sampling scheme may be needed.
-In the case where a small privacy budget results
-in a posterior much more diffuse than under the confidential data set, one
-can draw samples using the pseudo-likelihood scheme as proposed in [@Andrieu2009]. This
-scheme fits in the same data augmentation framework as `dapper` but is not implemented.
+Thus we recommend playing with the privacy budget to troubleshoot the cause of slow mixing
+chains. In particular it may be useful to use a relatively large
+privacy budget for qualitative comparisons so that the privacy / utility trade-off can
+be explored more easily. If a faster sampler is needed, and it has been
+determined that the privacy budget is the issue, the pseudo-likelihood scheme proposed by [@Andrieu2009]
+may offer significant speed ups. This scheme fits in the same data augmentation framework as `dapper` but is not implemented.
 
 ## Related Work
 Adjusting statistical workflows to account for added noise in covariates
