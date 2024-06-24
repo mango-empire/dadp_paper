@@ -114,16 +114,15 @@ of differential privacy.
 The `dapper` package provides a set of tools for conducting
 privacy-aware Bayesian inference. It serves as a user-friendly R
 interface for the data augmentation framework proposed by @Ju2022,
-allowing existing Bayesian model to be extended to handle
+allowing existing Bayesian models to be extended to handle
 noise infused data. The package is designed to integrate well with existing Bayesian workflows;
-results can by analyzed using tools from the `rstan` ecosystem. Additionally, 
-construction of the privacy-aware sampler is simplified 
+results can by analyzed using tools from the `rstan` ecosystem in a drop-in fashion. Additionally, 
+construction of a privacy-aware sampler is simplified 
 through the specification of four independent modules.
 The benefits are twofold: several privacy mechanisms --- these can even be from different privacy frameworks---
 can be compared easily by only swapping out relevant modules. And privacy mechanisms
 that have non-smooth transformations (see example 3) can be incorporated with little work. As a result,
-`dapper` may prove particularly useful to those engaged in studying the privacy utility trade-off of several
-approaches or dealing with a privacy mechanism involves multiple transformations.
+`dapper` may prove particularly useful to those engaged in studying the privacy utility trade-off or dealing with a privacy mechanism that involves multiple transformations.
 
 The rest of this article is organized as follows: 
 Section 2 covers the necessary background to understand the mathematical notation
