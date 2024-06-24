@@ -197,6 +197,43 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
   theme(legend.position="bottom")
 
 
+## ----post-or-compare2, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
+caption <- "(Example 1) comparison between using dapper and a naive Bayesian anaylsis on the
+noise infused data and the original confidential data." 
+
+set.seed(1)
+confidential_data <- as.matrix(cnf_df)
+cps <- t(sapply(1:20000, function(s) post_f(confidential_data, NULL)))
+odds_male   <- cps[,1] / cps[,2]
+odds_female <- cps[,3] / cps[,4]
+odds_ratio_conf  <- odds_male/odds_female
+
+set.seed(1)
+noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
+cps <- t(sapply(1:20000, function(s) post_f(noisy_data, NULL)))
+odds_male   <- cps[,1] / cps[,2]
+odds_female <- cps[,3] / cps[,4]
+odds_ratio_noisy  <- odds_male/odds_female
+
+df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
+  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
+  mutate(method = "naive")
+
+df2 <- tibble(confidential = odds_ratio_conf, noisy = or) %>%
+  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
+  mutate(method = "dapper")
+
+df <- rbind(df1,df2)
+
+df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) + 
+  geom_density(alpha = .5) + 
+  facet_wrap(~method) + 
+  xlim(0,8) +
+  xlab("Odds Ratio") +
+  guides(fill= guide_legend(title= "Data")) + 
+  theme(legend.position="bottom")
+
+
 ## ----echo = FALSE-------------------------------------------------------------
 #Original UCBAdmissions data.
 cnf_df <- tibble(sex = c(1, 1, 0, 0),

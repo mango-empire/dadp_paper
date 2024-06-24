@@ -54,17 +54,18 @@ Few tools are available to researchers to address these issues,
 and their absence is a serious barrier to the wider adoption
 of differential privacy.
 
-The \texttt{dapper} package provides a tool for conducting
-valid statistical inference in the presence of privacy noise.
-It implements the Bayesian framework proposed by Ju et al. (2022). This framework describes how to modify
-an existing Bayesian model to account for privacy noise and \texttt{dapper}
-serves as its user-friendly R interface. It allows the
-user to specify a sampler from an existing Bayesian model and
-automatically constructing a valid posterior sampler that accounts for the
-added privacy noise. Compared to other Bayesian approaches, the \texttt{dapper} framework
-is model agnostic and requires no tuning parameters. The algorithmic run time
-complexity of dapper is similar to the non-private analysis (section 2). The goal of \texttt{dapper} is to provide
-a fast, flexible, and user-friendly way to obtain a valid Bayesian analysis of privatized data.
+The \texttt{dapper} package provides a set of tools for conducting
+privacy-aware Bayesian inference. It serves as a user-friendly R
+interface for the data augmentation framework proposed by Ju et al. (2022),
+allowing existing Bayesian models to be extended to handle
+noise infused data. The package is designed to integrate well with existing Bayesian workflows;
+results can by analyzed using tools from the \texttt{rstan} ecosystem in a drop-in fashion. Additionally,
+construction of a privacy-aware sampler is simplified
+through the specification of four independent modules.
+The benefits are twofold: several privacy mechanisms --- these can even be from different privacy frameworks---
+can be compared easily by only swapping out relevant modules. And privacy mechanisms
+that have non-smooth transformations (see example 3) can be incorporated with little work. As a result,
+\texttt{dapper} may prove particularly useful to those engaged in studying the privacy utility trade-off or dealing with a privacy mechanism that involves multiple transformations.
 
 The rest of this article is organized as follows:
 Section 2 covers the necessary background to understand the mathematical notation
@@ -278,8 +279,8 @@ some care in how each component is constructed.
   from say a Metropolis-Hastings sampler.
 \item
   \texttt{priv\_f} is an R function that represents the log of the privacy mechanism density, \(\eta(s_{sdp} \mid x)\).
-  This function has the form \texttt{priv\_f(sdp,\ sx)} where \texttt{sdp} is an R vector representing the
-  the value of \(s_{dp}\) and \texttt{sx} is an R vector representing the value of the confidential summary statistic
+  This function has the form \texttt{priv\_f(sdp,\ sx)} where \texttt{sdp} is an R vector or matrix representing the
+  the value of \(s_{dp}\) and \texttt{sx} is an R vector or matrix (whichever one matches \texttt{sdp}) representing the value of the confidential summary statistic
   \(s := \sum_{i=1}^{n} t_i(x_i, s_{dp})\).
   The arguments must appear in the exact order with the same variables names as defined above.
   Finally, the return value of \texttt{priv\_f} must be a real number.
@@ -289,7 +290,7 @@ some care in how each component is constructed.
   in the stated order. The role of this function is to represent terms in the definition of record additivity
   with each of the three arguments in \texttt{st\_f} corresponding the the similarly spelled
   terms in \(t_i(x_i, s_{dp})\). Here the type class for \texttt{i} is an integer,
-  while \texttt{xi} and \texttt{sdp} are R vectors.
+  while \texttt{xi} is an R vector and \texttt{sdp} is an R vector or matrix.
 \item
   \texttt{npar} is an integer value that represents the dimension of \(\theta\). It
   should output a vector of the same length as \texttt{post\_f}.
@@ -627,6 +628,16 @@ uncertainty associated with the odds ratio estimate.
 
 \caption{(Example 1) comparison between using dapper and a naive Bayesian anaylsis on the
 noise infused data and the original confidential data.}\label{fig:post-or-compare}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics{dppaper_files/figure-latex/post-or-compare2-1} 
+
+}
+
+\caption{(Example 1) comparison between using dapper and a naive Bayesian anaylsis on the
+noise infused data and the original confidential data.}\label{fig:post-or-compare2}
 \end{figure}
 
 \hypertarget{example-2-2x2-contingency-table-discrete-gaussian}{%
@@ -1086,13 +1097,12 @@ From the right hand term in the above panel, we can see \(\gamma\)
 depends only on \(\epsilon^{-2}/\sigma^2\) and as the privacy budget decreases (i.e.~more noise is being added to \(x\)),
 \(\gamma \to 1\).
 
-Thus when poor mixing is observed, we recommend seeing if increasing the privacy
-budget helps. Unfortunately, if one is not at liberty to alter the privacy budget,
-there is no quick fix, and other sampling scheme may be needed.
-In the case where a small privacy budget results
-in a posterior much more diffuse than under the confidential data set, one
-can draw samples using the pseudo-likelihood scheme as proposed in (Andrieu and Roberts 2009). This
-scheme fits in the same data augmentation framework as \texttt{dapper} but is not implemented.
+Thus we recommend playing with the privacy budget to troubleshoot the cause of slow mixing
+chains. In particular it may be useful to use a relatively large
+privacy budget for qualitative comparisons so that the privacy / utility trade-off can
+be explored more easily. If a faster sampler is needed, and it has been
+determined that the privacy budget is the issue, the pseudo-likelihood scheme proposed by (Andrieu and Roberts 2009)
+may offer significant speed ups. This scheme fits in the same data augmentation framework as \texttt{dapper} but is not implemented.
 
 \hypertarget{related-work}{%
 \subsection{Related Work}\label{related-work}}
