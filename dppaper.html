@@ -2884,9 +2884,10 @@ noise infused data. The package is designed to integrate well with existing Baye
 results can by analyzed using tools from the <code>rstan</code> ecosystem in a drop-in fashion. Additionally,
 construction of a privacy-aware sampler is simplified
 through the specification of four independent modules.
-The benefits are twofold: several privacy mechanisms — these can even be from different formal privacy frameworks—
+The benefits are twofold: several privacy mechanisms — these can even be from different formal privacy frameworks —
 can be compared easily by only swapping out relevant modules. And privacy mechanisms
-that have non-smooth transformations (see example 3) can be incorporated with little work. As a result,
+that have non-smooth transformations resulting in aforementioned intractable likelihoods
+(see example 3) can be incorporated with little work. As a result,
 <code>dapper</code> may prove particularly useful to those engaged in studying the privacy utility trade-off or dealing with a privacy mechanism that involves multiple transformations.</p>
 <p>The rest of this article is organized as follows:
 Section 2 covers the necessary background to understand the mathematical notation
@@ -3012,19 +3013,20 @@ given by:</li>
 <p>Theoretical results such as bounds on the acceptance probability and a proof
 of geometric ergodicity can be found in <span class="citation" data-cites="Ju2022">(<a href="#ref-Ju2022" role="doc-biblioref">Ju et al. 2022</a>)</span>.</p>
 <h2 data-number="4" id="the-structure-of-dapper"><span class="header-section-number">4</span> The Structure of dapper</h2>
-<p>The <code>dapper</code> package is structured around the two functions <code>dapper_sample</code> and
-<code>new_privacy</code>. The first function is used to draw samples from the
-posterior. The second function is used to create a privacy data model object
-which the <code>dapper_sample</code> function requires as input. The purpose of the data model
-object is to collect all the components specific to the data generating process
-into one bundle. This way, the other arguments into <code>dapper_sample</code> pertain only
-to sampling parameters such as the number of iterations.</p>
-<p>Since the input to these functions are R functions, there is a great deal of freedom
-in implementation. The next two sections describe in detail the inputs into
-these functions and highlight some considerations that should be taken
-into account in order to avoid unexpected behavior.</p>
+<p>The <code>dapper</code> package is structured around the two functions <code>dapper_sample()</code> and
+<code>new_privacy()</code>. The function of <code>dapper_sample()</code> is to generate MCMC draws from
+the private posterior. Targeting the correct private posterior requires
+a large set of inputs. In order to simplify the process of setting up the
+sampler, the <code>dapper_sample()</code> function uses a <code>privacy</code> object to encapsulate
+all information about the data generating process. And the role of <code>new_privacy()</code> is to
+construct <code>privacy</code> objects. This separates inputs describing the data generating
+process from inputs describing simulation parameters, which decreases
+the chance for input related bugs.</p>
+<p>Utility functions facilitating work with count data are also included.
+These center around the mass function and random number generators of the
+discrete Gaussian and discrete Laplacian distributions.</p>
 <h3 data-number="4.1" id="privacy-model"><span class="header-section-number">4.1</span> Privacy Model</h3>
-<p>Creating a privacy model is done using the <code>new_privacy</code> constructor. The
+<p>Creating a privacy model is done using the <code>new_privacy()</code> constructor. The
 main arguments consist of the four components as outlined in the methodology
 section.</p>
 <div class="layout-chunk" data-layout="l-body">
@@ -3033,60 +3035,68 @@ section.</p>
 <span>            st_f <span class="op">=</span> <span class="cn">NULL</span>, npar <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre>
 </div>
 </div>
-<p>The internal implementation of the data augmentation algorithm in <code>dapper_sample</code> requires
-some care in how each component is constructed.</p>
+<p>To minimize the potential for bugs, there are a set of requirements the four main components
+must adhere to which are described below:</p>
 <ul>
-<li><p><code>latent_f</code> is an R function that samples from the latent process.
-The latent process, in this case, is the probability model which dictates how
-to generate a new confidential record <span class="math inline">\(x\)</span>, given <span class="math inline">\(\theta\)</span>.
-Its syntax should be <code>latent_f(theta)</code> where <code>theta</code> is a R vector
-representing the model parameters being estimated. This function
-must work with the supplied initial parameter provide in the <code>init_par</code>
-argument of <code>dapper_sample</code> function. The output is a <span class="math inline">\(n \times p\)</span> matrix
+<li><p><code>latent_f()</code> is a function that samples from the parametric model
+describing how to generate a new confidential database <span class="math inline">\(x\)</span> given model parameters <span class="math inline">\(\theta\)</span>.
+Its syntax must be <code>latent_f(theta)</code> where <code>theta</code> is a numeric vector
+representing the model parameters. This function
+must work with the <code>init_par</code> argument of <code>dapper_sample()</code>. The output must be a <span class="math inline">\(n \times p\)</span> numeric matrix
 where <span class="math inline">\(n\)</span> is the number of observations and <span class="math inline">\(p\)</span> is the dimension of a record <span class="math inline">\(x\)</span>.
-The matrix requirement is strict, so even if there is only one dimension
-<code>latent_f</code> should return a <span class="math inline">\(n \times 1\)</span> matrix and not a R vector of length <span class="math inline">\(n\)</span>.</p></li>
-<li><p><code>post_f</code> is a function which makes draws from the posterior sampler. It has
-the syntax <code>post_f(dmat, theta)</code>. Here <code>dmat</code> is an R matrix representing the confidential data.
-Note <code>dmat</code> must be a matrix even if there is only one dimension. Thus, <code>dmat</code> cannot
-be a vector for instance. This function can be constructed by wrapping MCMC samplers generated from other R packages
-(e.g. <a href="https://cran.r-project.org/package=rstan">rstan</a>, <a href="https://cran.r-project.org/package=fmcmc">fmcmc</a>, <a href="https://cran.r-project.org/package=adaptMCMC">adaptMCMC</a>).
-If using this approach, it is recommended to avoid using packages
-with a large initialization overhead such as <a href="https://cran.r-project.org/package=mcmc">mcmc</a> since the sampler is reinitialized
-every loop iteration. In the case of <a href="https://cran.r-project.org/package=mcmc">mcmc</a>,
-the Metropolis-Hastings loop is implemented in C so there is a significant initialization cost
-when calling from an R function. The <code>theta</code> argument is an R vector and its purpose is
-to serve as the initialization point if samples from <code>post_f</code> are draws
-from say a Metropolis-Hastings sampler.</p></li>
-<li><p><code>priv_f</code> is an R function that represents the log of the privacy mechanism density, <span class="math inline">\(\eta(s_{sdp} \mid x)\)</span>.
-This function has the form <code>priv_f(sdp, sx)</code> where <code>sdp</code> is an R vector or matrix representing the
-the value of <span class="math inline">\(s_{dp}\)</span> and <code>sx</code> is an R vector or matrix (whichever one matches <code>sdp</code>) representing the value of the confidential summary statistic
-<span class="math inline">\(s := \sum_{i=1}^{n} t_i(x_i, s_{dp})\)</span>.
+The matrix requirement is strict, even if <span class="math inline">\(p = 1\)</span>
+<code>latent_f()</code> should return a <span class="math inline">\(n \times 1\)</span> matrix and not a vector of length <span class="math inline">\(n\)</span>.</p></li>
+<li><p><code>post_f()</code> is a function which makes a one-step draw from the private posterior. It has
+the syntax <code>post_f(dmat, theta)</code>. Here <code>dmat</code> is a numeric matrix representing the confidential database
+and <code>theta</code> is a numeric vector which serves as the initialization point for a one sample draw.
+The easiest, bug-free way to construct <code>post_f()</code> is to use a conjugate prior. However,
+this function can also be constructed by wrapping a MCMC sampler generated from other R packages
+(e.g. <a href="https://cran.r-project.org/package=rstan">rstan</a>, <a href="https://cran.r-project.org/package=fmcmc">fmcmc</a>, <a href="https://cran.r-project.org/package=adaptMCMC">adaptMCMC</a>). Using this approach requires caution;
+<code>dapper</code> requires a valid draw and many sampler implementations violate
+this requirement. This is especially true for adaptive samplers like <code>rstan</code>’s HMC where
+the first few draws are used to initialize the gradient and do not necessarily correspond to draws from a valid MCMC chain.
+Additionally, some packages like <a href="https://cran.r-project.org/package=mcmc">mcmc</a> will generate samplers that may be slow
+due to a large initialization overhead. For these
+reasons we recommend sticking with conjugate priors as they will be quick and avoid
+serious undetected semantic errors arising from specific implementation details of other R packages.</p></li>
+<li><p><code>priv_f()</code> is a function that returns the log of the privacy mechanism density given
+the noised infused summary statistics <span class="math inline">\(s_{dp}\)</span> and its potential true value <span class="math inline">\(s(x, s_{dp}) := \sum_{i=1}^{n} t_i(x_i, s_{dp})\)</span>.
+This function has the syntax <code>priv_f(sdp, sx)</code> where <code>sdp</code> and <code>sx</code>
+are numeric vectors or matrices representing the
+the value of <span class="math inline">\(s_{dp}\)</span> and <span class="math inline">\(s(x, s_{dp})\)</span> respectively.
 The arguments must appear in the exact order with the same variables names as defined above.
-Finally, the return value of <code>priv_f</code> must be a real number.</p></li>
-<li><p><code>st_f</code> is an R function which calculates a summary statistic. It
+Finally, the return value of <code>priv_f()</code> must be a numeric vector of length one.</p></li>
+<li><p><code>st_f()</code> is a function which calculates a summary statistic. It
 must be defined using the three arguments named <code>i</code>, <code>xi</code> and <code>sdp</code>
 in the stated order. The role of this function is to represent terms in the definition of record additivity
 with each of the three arguments in <code>st_f</code> corresponding the the similarly spelled
-terms in <span class="math inline">\(t_i(x_i, s_{dp})\)</span>. Here the type class for <code>i</code> is an integer,
-while <code>xi</code> is an R vector and <code>sdp</code> is an R vector or matrix.</p></li>
-<li><p><code>npar</code> is an integer value that represents the dimension of <span class="math inline">\(\theta\)</span>. It
-should output a vector of the same length as <code>post_f</code>.</p></li>
+terms in <span class="math inline">\(t_i(x_i, s_{dp})\)</span>. Here <code>i</code> is an integer,
+while <code>xi</code> is a numeric vector and <code>sdp</code> is an numeric vector or matrix. The return value
+must be a numeric vector or matrix.</p></li>
+<li><p><code>npar</code> is an integer equal to the dimension of <span class="math inline">\(\theta\)</span>.</p></li>
 </ul>
 <h3 data-number="4.2" id="sampling"><span class="header-section-number">4.2</span> Sampling</h3>
-<p>The main function in <a href="#">dapper</a> is the <code>dapper_sample</code> function. The syntax of the function is:</p>
+<p>The <code>dapper_sample()</code> function essentially takes an existing
+Bayesian model and extends it to handle privatized data. The
+output of <code>dapper_sample()</code> contains MCMC draws from
+the private posterior. The function has syntax:</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class="fu">dapper_sample</span><span class="op">(</span><span class="va">data_model</span>, <span class="va">sdp</span>, <span class="va">init_par</span>, niter <span class="op">=</span> <span class="fl">2000</span>, warmup <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">floor</a></span><span class="op">(</span><span class="va">niter</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>           chains <span class="op">=</span> <span class="fl">1</span>, varnames <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre>
 </div>
 </div>
-<p>The three required inputs into <code>dapper_sample</code> function are the privacy model (<code>data_model</code>)
-whose construction is described in 4.1, and the value
-of the observed privatized statistic (<code>sdp</code>) encoded as a R vector. The dapper
-package is best suited for problems where the complete data can be represented in
-tabular form. This is because internally, it is represented as a matrix.</p>
-<p>The optional arguments are the number of mcmc draws (<code>niter</code>), the
+<p>The parameters <code>data_model</code>, <code>sdp</code>, and <code>init_par</code> are required.
+The <code>data_model</code> input is a privacy model object that is constructed
+using <code>new_privacy()</code> (see section <a href="#privacy-model">Privacy Model</a>). The value
+of <code>sdp</code> is equal to the observed noise infused statistic. We require the
+object class of <code>sdp</code> to be the same as the output of <code>st_f()</code>.
+For example, if <code>st_f()</code> returns a matrix
+then <code>sdp</code> must also be a matrix. The provided starting value of the
+chain (<code>init_par</code>) must work with the <code>latent_f()</code> component. An
+error will be thrown if <code>latent_f()</code> evaluated at <code>init_par</code> does
+not return a numeric matrix.</p>
+<p>The optional arguments are the number of MCMC draws (<code>niter</code>), the
 burn in period (<code>warmup</code>), number of chains (<code>chains</code>) and character
 vector that names the parameters. Running multiple chains can be done in parallel
 using the <a href="https://cran.r-project.org/package=furrr">furrr</a> package. Additionally, progress can be monitored
@@ -3095,12 +3105,12 @@ of the two packages, we leave the setup to the user so that they may
 choose the most appropriate configuration for their system. The
 contingency table demonstration given in section 5 walks
 through a typical setup of <a href="https://cran.r-project.org/package=furrr">furrr</a> and <a href="https://cran.r-project.org/package=progressr">progressr</a>.</p>
-<p>The <code>dapper_sample</code> function returns a list containing
-a <code>draw_matrix</code> and a vector of acceptance probabilities of size <code>niter</code>. The <code>draw_matrix</code> object is described
-in more detail in the <a href="https://cran.r-project.org/package=posterior">posterior</a> package. One of the advantages with working
-with a <code>draw_matrix</code> object is that is compatible with many of the packages in
+<p>The return value of <code>dapper_sample()</code> is a list containing
+a <code>draw_matrix</code> object and a vector of acceptance probabilities of size <code>niter</code>. The <code>draw_matrix</code> object is described
+in more detail in the <a href="https://cran.r-project.org/package=posterior">posterior</a> package. The advantages with working
+with a <code>draw_matrix</code> object is that it is compatible with many of the packages in
 the <a href="https://cran.r-project.org/package=rstan">rstan</a> ecosystem. For example, any <code>draw_matrix</code> object can be
-plugged directly into the popular <a href="https://cran.r-project.org/package=bayesplot">bayesplot</a> package. Additionaly,
+plugged directly into the popular <a href="https://cran.r-project.org/package=bayesplot">bayesplot</a> package. Additionally,
 <code>dapper</code>’s basic summary function provides the same posterior summary statistics
 as those found when using <a href="https://cran.r-project.org/package=rstan">rstan</a>. Overall, this should make working with <code>dapper</code> easier
 for anyone already familiar with the <a href="https://cran.r-project.org/package=rstan">rstan</a> ecosystem.</p>

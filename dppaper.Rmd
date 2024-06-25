@@ -267,21 +267,19 @@ of geometric ergodicity can be found in [@Ju2022].
 
 # The Structure of dapper
 
-The `dapper` package is structured around the two functions `dapper_sample` and
-`new_privacy`. The first function is used to draw samples from the 
-posterior. The second function is used to create a privacy data model object
-which the `dapper_sample` function requires as input. The purpose of the data model
-object is to collect all the components specific to the data generating process 
-into one bundle. This way, the other arguments into `dapper_sample` pertain only 
-to sampling parameters such as the number of iterations.
+The `dapper` package is structured around the two functions `dapper_sample()` and
+`new_privacy()`. The function of `dapper_sample()` is to generate MCMC draws from
+the private posterior. Targeting the correct private posterior requires
+a large set of inputs. In order to simplify the process of setting up the 
+sampler, the `dapper_sample()` function uses a `privacy` object to encapsulate
+all information about the data generating process. And the role of `new_privacy()` is to
+construct `privacy` objects. This separates inputs describing the data generating 
+process from inputs describing simulation parameters, which decreases
+the chance for input related bugs.
 
-
-Since the input to these functions are R functions, there is a great deal of freedom
-in implementation. The next two sections describe in detail the inputs into
-these functions and highlight some considerations that should be taken
-into account in order to avoid unexpected behavior. 
-
-
+Utility functions facilitating work with count data are also included.
+These center around the mass function and random number generators of the 
+discrete Gaussian and discrete Laplacian distributions. 
 
 ## Privacy Model
 
@@ -294,8 +292,8 @@ new_privacy(post_f = NULL, latent_f = NULL, priv_f = NULL,
             st_f = NULL, npar = NULL)
 ```
 
-To minimize the potential for bugs, there are a set of requirements which functions defining the four main components
-must adhere to and are described below:
+To minimize the potential for bugs, there are a set of requirements the four main components
+must adhere to which are described below:
 
 
 * `latent_f()` is a function that samples from the parametric model 
@@ -307,9 +305,9 @@ where $n$ is the number of observations and $p$ is the dimension of a record $x$
 The matrix requirement is strict, even if $p = 1$
 `latent_f()` should return a $n \times 1$ matrix and not a vector of length $n$.
 
-* `post_f()` is a function which makes a one-step draw from the privacy-unaware posterior sampler. It has
-the syntax `post_f(dmat, theta)`. Here `dmat` is a numeric matrix representing the confidential data
-and `theta` is a numeric vector which serves as the initialization point for one-step draw. 
+* `post_f()` is a function which makes a one-step draw from the private posterior. It has
+the syntax `post_f(dmat, theta)`. Here `dmat` is a numeric matrix representing the confidential database
+and `theta` is a numeric vector which serves as the initialization point for a one sample draw. 
 The easiest, bug-free way to construct `post_f()` is to use a conjugate prior. However, 
 this function can also be constructed by wrapping a MCMC sampler generated from other R packages 
 (e.g. \CRANpkg{rstan}, \CRANpkg{fmcmc}, \CRANpkg{adaptMCMC}). Using this approach requires caution; 
@@ -317,7 +315,7 @@ this function can also be constructed by wrapping a MCMC sampler generated from 
 this requirement. This is especially true for adaptive samplers like `rstan`'s HMC where
 the first few draws are used to initialize the gradient and do not necessarily correspond to draws from a valid MCMC chain.
 Additionally, some packages like \CRANpkg{mcmc} will generate samplers that may be slow 
-due to the large overhead associated with initializing the sampler. For these
+due to a large initialization overhead. For these
 reasons we recommend sticking with conjugate priors as they will be quick and avoid
 serious undetected semantic errors arising from specific implementation details of other R packages.
 
@@ -333,30 +331,36 @@ Finally, the return value of `priv_f()` must be a numeric vector of length one.
 must be defined using the three arguments named `i`, `xi` and `sdp`
 in the stated order. The role of this function is to represent terms in the definition of record additivity
 with each of the three arguments in `st_f` corresponding the the similarly spelled
-terms in $t_i(x_i, s_{dp})$. Here the type class for `i` is an integer,
+terms in $t_i(x_i, s_{dp})$. Here `i` is an integer,
 while `xi` is a numeric vector and `sdp` is an numeric vector or matrix. The return value
 must be a numeric vector or matrix.
 
-* `npar` is an integer value that represents the dimension of $\theta$. It 
-should output a vector of the same length as `post_f`.
-
+* `npar` is an integer equal to the dimension of $\theta$.
 
 ## Sampling
 
-The main function in \pkg{dapper} is the `dapper_sample` function. The syntax of the function is:
+The `dapper_sample()` function essentially takes an existing
+Bayesian model and extends it to handle privatized data. The
+output of `dapper_sample()` contains MCMC draws from
+the private posterior. The function has syntax:
 
 ```{r, echo = TRUE, eval = FALSE}
 dapper_sample(data_model, sdp, init_par, niter = 2000, warmup = floor(niter / 2),
            chains = 1, varnames = NULL)
 ```
 
-The three required inputs into `dapper_sample` function are the privacy model (`data_model`) 
-whose construction is described in 4.1, and the value
-of the observed privatized statistic (`sdp`) encoded as a R vector. The dapper
-package is best suited for problems where the complete data can be represented in
-tabular form. This is because internally, it is represented as a matrix.
+The parameters `data_model`, `sdp`, and `init_par` are required.
+The `data_model` input is a privacy model object that is constructed 
+using `new_privacy()` (see section [Privacy Model]). The value
+of `sdp` is equal to the observed noise infused statistic. We require the
+object class of `sdp` to be the same as the output of `st_f()`. 
+For example, if `st_f()` returns a matrix
+then `sdp` must also be a matrix. The provided starting value of the 
+chain (`init_par`) must work with the `latent_f()` component. An
+error will be thrown if `latent_f()` evaluated at `init_par` does
+not return a numeric matrix.
 
-The optional arguments are the number of mcmc draws (`niter`), the 
+The optional arguments are the number of MCMC draws (`niter`), the 
 burn in period (`warmup`), number of chains (`chains`) and character
 vector that names the parameters. Running multiple chains can be done in parallel
 using the \CRANpkg{furrr} package. Additionally, progress can be monitored
@@ -366,12 +370,12 @@ choose the most appropriate configuration for their system. The
 contingency table demonstration given in section 5 walks
 through a typical setup of \CRANpkg{furrr} and \CRANpkg{progressr}.
 
-The `dapper_sample` function returns a list containing
-a `draw_matrix` and a vector of acceptance probabilities of size `niter`. The `draw_matrix` object is described
-in more detail in the \CRANpkg{posterior} package. One of the advantages with working
-with a `draw_matrix` object is that is compatible with many of the packages in
+The return value of `dapper_sample()` is a list containing
+a `draw_matrix` object and a vector of acceptance probabilities of size `niter`. The `draw_matrix` object is described
+in more detail in the \CRANpkg{posterior} package. The advantages with working
+with a `draw_matrix` object is that it is compatible with many of the packages in
 the \CRANpkg{rstan} ecosystem. For example, any `draw_matrix` object can be
-plugged directly into the popular \CRANpkg{bayesplot} package. Additionaly,
+plugged directly into the popular \CRANpkg{bayesplot} package. Additionally,
 `dapper`'s basic summary function provides the same posterior summary statistics
 as those found when using \CRANpkg{rstan}. Overall, this should make working with `dapper` easier 
 for anyone already familiar with the \CRANpkg{rstan} ecosystem.
@@ -413,8 +417,6 @@ density and sampling features for the discrete Gaussian distribution. The `ddnor
 function contains a calculation for the normalizing constant which is expensive. To
 speed up repeated execution, memoization is used via the \CRANpkg{memoise} package. Finally, the functions
 `ddlaplace` and `rdlaplace` provide similar features for the discrete Laplace distribution.
-
-
 
 
 # Examples
