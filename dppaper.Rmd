@@ -293,46 +293,47 @@ new_privacy(post_f = NULL, latent_f = NULL, priv_f = NULL,
             st_f = NULL, npar = NULL)
 ```
 
-The internal implementation of the data augmentation algorithm in `dapper_sample` requires
-some care in how each component is constructed. 
+To minimize the potential for bugs, there are a set of requirements which functions defining the four main components
+must adhere to and are described below:
+
 
 * `latent_f()` is an R function that samples from the parametric model 
-describing how to generate a new confidential record $x$, given $\theta$.
+describing how to generate a new confidential database $x$ given model parameters $\theta$.
 Its syntax must be `latent_f(theta)` where `theta` is a R vector
 representing the model parameters. This function
 must work with the `init_par` argument of `dapper_sample()`. The output must be a $n \times p$ R matrix
 where $n$ is the number of observations and $p$ is the dimension of a record $x$. 
-The matrix requirement is strict, so even if $p = 1$
+The matrix requirement is strict, even if $p = 1$
 `latent_f()` should return a $n \times 1$ matrix and not a R vector of length $n$.
 
+* `post_f()` is a function which makes a one-step draw from the privacy-unaware posterior sampler. It has
+the syntax `post_f(dmat, theta)`. Here `dmat` is a R matrix representing the confidential data
+and `theta` is an R vector which serves as the initialization point for one-step draw. 
+The easiest, bug-free way to construct `post_f()` is to use a conjugate prior. However, 
+this function can also be constructed by wrapping a MCMC sampler generated from other R packages 
+(e.g. \CRANpkg{rstan}, \CRANpkg{fmcmc}, \CRANpkg{adaptMCMC}). Using this approach requires caution; 
+`dapper` requires a valid draw and many sampler implementations violate 
+this requirement. This is especially true for adaptive samplers like `rstan`'s HMC where
+the first few draws are used to initialize the gradient and do not necessarily correspond to draws from a valid MCMC chain.
+Additionally, some packages like \CRANpkg{mcmc} will generate samplers that may be slow 
+due to the large overhead associated with initializing the sampler. For these
+reasons we recommend sticking with conjugate priors as they will be quick and avoid
+serious undetected semantic errors arising from specific implementation details of other R packages.
 
-
-* `post_f` is a function which makes draws from the posterior sampler. It has
-the syntax `post_f(dmat, theta)`. Here `dmat` is an R matrix representing the confidential data. 
-Note `dmat` must be a matrix even if there is only one dimension. Thus, `dmat` cannot
-be a vector for instance. This function can be constructed by wrapping MCMC samplers generated from other R packages 
-(e.g. \CRANpkg{rstan}, \CRANpkg{fmcmc}, \CRANpkg{adaptMCMC}).
-If using this approach, it is recommended to avoid using packages 
-with a large initialization overhead such as \CRANpkg{mcmc} since the sampler is reinitialized
-every loop iteration. In the case of \CRANpkg{mcmc},
-the Metropolis-Hastings loop is implemented in C so there is a significant initialization cost
-when calling from an R function. The `theta` argument is an R vector and its purpose is 
-to serve as the initialization point if samples from `post_f` are draws
-from say a Metropolis-Hastings sampler.
-
-* `priv_f` is an R function that represents the log of the privacy mechanism density, $\eta(s_{sdp} \mid x)$. 
-This function has the form `priv_f(sdp, sx)` where `sdp` is an R vector or matrix representing the
-the value of $s_{dp}$ and `sx` is an R vector or matrix (whichever one matches `sdp`) representing the value of the confidential summary statistic 
-$s := \sum_{i=1}^{n} t_i(x_i, s_{dp})$.
+* `priv_f()` is an R function that returns the log of the privacy mechanism density given
+the noised infused summary statistics $s_{dp}$ and its potential true value $s(x, s_{dp}) := \sum_{i=1}^{n} t_i(x_i, s_{dp})$. 
+This function has the syntax `priv_f(sdp, sx)` where `sdp` is an R vector or matrix representing the
+the value of $s_{dp}$ and `sx` is an R vector or matrix representing $s(x, s_{dp})$.
 The arguments must appear in the exact order with the same variables names as defined above.
-Finally, the return value of `priv_f` must be a real number.
+Finally, the return value of `priv_f` must be a numeric vector of length one.
 
-* `st_f` is an R function which calculates a summary statistic. It
+* `st_f()` is an R function which calculates a summary statistic. It
 must be defined using the three arguments named `i`, `xi` and `sdp`
 in the stated order. The role of this function is to represent terms in the definition of record additivity
 with each of the three arguments in `st_f` corresponding the the similarly spelled
 terms in $t_i(x_i, s_{dp})$. Here the type class for `i` is an integer,
-while `xi` is an R vector and `sdp` is an R vector or matrix.
+while `xi` is an R vector and `sdp` is an R vector or matrix. The return value
+must be a numeric vector or matrix.
 
 * `npar` is an integer value that represents the dimension of $\theta$. It 
 should output a vector of the same length as `post_f`.
