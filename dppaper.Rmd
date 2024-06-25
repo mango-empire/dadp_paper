@@ -119,7 +119,7 @@ noise infused data. The package is designed to integrate well with existing Baye
 results can by analyzed using tools from the `rstan` ecosystem in a drop-in fashion. Additionally, 
 construction of a privacy-aware sampler is simplified 
 through the specification of four independent modules.
-The benefits are twofold: several privacy mechanisms --- these can even be from different formal privacy frameworks---
+The benefits are twofold: several privacy mechanisms --- these can even be from different formal privacy frameworks ---
 can be compared easily by only swapping out relevant modules. And privacy mechanisms
 that have non-smooth transformations (see example 3) can be incorporated with little work. As a result,
 `dapper` may prove particularly useful to those engaged in studying the privacy utility trade-off or dealing with a privacy mechanism that involves multiple transformations.
@@ -284,7 +284,7 @@ into account in order to avoid unexpected behavior.
 
 ## Privacy Model
 
-Creating a privacy model is done using the `new_privacy` constructor. The 
+Creating a privacy model is done using the `new_privacy()` constructor. The 
 main arguments consist of the four components as outlined in the methodology
 section.
 
@@ -296,16 +296,14 @@ new_privacy(post_f = NULL, latent_f = NULL, priv_f = NULL,
 The internal implementation of the data augmentation algorithm in `dapper_sample` requires
 some care in how each component is constructed. 
 
-* `latent_f` is an R function that samples from the latent process.
-The latent process, in this case, is the probability model which dictates how
-to generate a new confidential record $x$, given $\theta$.
-Its syntax should be `latent_f(theta)` where `theta` is a R vector
-representing the model parameters being estimated. This function
-must work with the supplied initial parameter provide in the `init_par`
-argument of `dapper_sample` function. The output is a $n \times p$ matrix
+* `latent_f()` is an R function that samples from the parametric model 
+describing how to generate a new confidential record $x$, given $\theta$.
+Its syntax must be `latent_f(theta)` where `theta` is a R vector
+representing the model parameters. This function
+must work with the `init_par` argument of `dapper_sample()`. The output must be a $n \times p$ R matrix
 where $n$ is the number of observations and $p$ is the dimension of a record $x$. 
-The matrix requirement is strict, so even if there is only one dimension
-`latent_f` should return a $n \times 1$ matrix and not a R vector of length $n$.
+The matrix requirement is strict, so even if $p = 1$
+`latent_f()` should return a $n \times 1$ matrix and not a R vector of length $n$.
 
 
 
