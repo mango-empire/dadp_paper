@@ -298,18 +298,18 @@ To minimize the potential for bugs, there are a set of requirements which functi
 must adhere to and are described below:
 
 
-* `latent_f()` is an R function that samples from the parametric model 
+* `latent_f()` is a function that samples from the parametric model 
 describing how to generate a new confidential database $x$ given model parameters $\theta$.
-Its syntax must be `latent_f(theta)` where `theta` is a R vector
+Its syntax must be `latent_f(theta)` where `theta` is a numeric vector
 representing the model parameters. This function
-must work with the `init_par` argument of `dapper_sample()`. The output must be a $n \times p$ R matrix
+must work with the `init_par` argument of `dapper_sample()`. The output must be a $n \times p$ numeric matrix
 where $n$ is the number of observations and $p$ is the dimension of a record $x$. 
 The matrix requirement is strict, even if $p = 1$
-`latent_f()` should return a $n \times 1$ matrix and not a R vector of length $n$.
+`latent_f()` should return a $n \times 1$ matrix and not a vector of length $n$.
 
 * `post_f()` is a function which makes a one-step draw from the privacy-unaware posterior sampler. It has
-the syntax `post_f(dmat, theta)`. Here `dmat` is a R matrix representing the confidential data
-and `theta` is an R vector which serves as the initialization point for one-step draw. 
+the syntax `post_f(dmat, theta)`. Here `dmat` is a numeric matrix representing the confidential data
+and `theta` is a numeric vector which serves as the initialization point for one-step draw. 
 The easiest, bug-free way to construct `post_f()` is to use a conjugate prior. However, 
 this function can also be constructed by wrapping a MCMC sampler generated from other R packages 
 (e.g. \CRANpkg{rstan}, \CRANpkg{fmcmc}, \CRANpkg{adaptMCMC}). Using this approach requires caution; 
@@ -321,19 +321,20 @@ due to the large overhead associated with initializing the sampler. For these
 reasons we recommend sticking with conjugate priors as they will be quick and avoid
 serious undetected semantic errors arising from specific implementation details of other R packages.
 
-* `priv_f()` is an R function that returns the log of the privacy mechanism density given
+* `priv_f()` is a function that returns the log of the privacy mechanism density given
 the noised infused summary statistics $s_{dp}$ and its potential true value $s(x, s_{dp}) := \sum_{i=1}^{n} t_i(x_i, s_{dp})$. 
-This function has the syntax `priv_f(sdp, sx)` where `sdp` is an R vector or matrix representing the
-the value of $s_{dp}$ and `sx` is an R vector or matrix representing $s(x, s_{dp})$.
+This function has the syntax `priv_f(sdp, sx)` where `sdp` and `sx`
+are numeric vectors or matrices representing the
+the value of $s_{dp}$ and $s(x, s_{dp})$ respectively.
 The arguments must appear in the exact order with the same variables names as defined above.
-Finally, the return value of `priv_f` must be a numeric vector of length one.
+Finally, the return value of `priv_f()` must be a numeric vector of length one.
 
-* `st_f()` is an R function which calculates a summary statistic. It
+* `st_f()` is a function which calculates a summary statistic. It
 must be defined using the three arguments named `i`, `xi` and `sdp`
 in the stated order. The role of this function is to represent terms in the definition of record additivity
 with each of the three arguments in `st_f` corresponding the the similarly spelled
 terms in $t_i(x_i, s_{dp})$. Here the type class for `i` is an integer,
-while `xi` is an R vector and `sdp` is an R vector or matrix. The return value
+while `xi` is a numeric vector and `sdp` is an numeric vector or matrix. The return value
 must be a numeric vector or matrix.
 
 * `npar` is an integer value that represents the dimension of $\theta$. It 
