@@ -121,7 +121,8 @@ construction of a privacy-aware sampler is simplified
 through the specification of four independent modules.
 The benefits are twofold: several privacy mechanisms --- these can even be from different formal privacy frameworks ---
 can be compared easily by only swapping out relevant modules. And privacy mechanisms
-that have non-smooth transformations (see example 3) can be incorporated with little work. As a result,
+that have non-smooth transformations resulting in aforementioned intractable likelihoods
+(see example 3) can be incorporated with little work. As a result,
 `dapper` may prove particularly useful to those engaged in studying the privacy utility trade-off or dealing with a privacy mechanism that involves multiple transformations.
 
 The rest of this article is organized as follows: 
