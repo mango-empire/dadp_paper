@@ -1282,17 +1282,6 @@ be explored more easily. If a faster sampler is needed, and it has been
 determined that the privacy budget is the issue, the pseudo-likelihood scheme proposed by [@Andrieu2009]
 may offer significant speed ups. This scheme fits in the same data augmentation framework as `dapper` but is not implemented.
 
-## Related Work
-Adjusting statistical workflows to account for added noise in covariates
-is extensively studied in the context of measurement error (e.g. noisy sensor readings)
-and there exists readily available tools for making the proper adjustments.
-For textbook length treatments on the topic see [@Yi2017; @Carroll2006].
-Work in this area mostly focuses on methods which do not require fully specifying the 
-measurement error model, since this is often assumed unknown.
-However, in differential privacy, the measurement error model is exactly known.
-This difference, makes feasible some ideas which the measurement
-error community has not previously considered [@Smith2011; @Karwa2015].
-
 
 
 # Summary
