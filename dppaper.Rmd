@@ -26,13 +26,6 @@ author:
     - West Lafayette, IN 47907
     url: https://jordan-awan.com/
     email: jawan@purdue.edu
-  - name: Ruobin Gong
-    affiliation: Rutgers University
-    address:
-    - Department of Statistics
-    - Piscataway, NJ 08854
-    url: https://ruobingong.github.io/
-    email: ruobin.gong@rutgers.edu
   - name: Nianqiao Phyllis Ju
     affiliation: Purdue University
     address:
@@ -47,6 +40,13 @@ author:
     - West Lafayette, IN 47907
     url: https://varao.github.io/
     email: varao@purdue.edu
+  - name: Ruobin Gong
+    affiliation: Rutgers University
+    address:
+    - Department of Statistics
+    - Piscataway, NJ 08854
+    url: https://ruobingong.github.io/
+    email: ruobin.gong@rutgers.edu
 type: package
 output: 
   rjtools::rjournal_article:
@@ -753,11 +753,11 @@ noise into the the total cell counts given in the 2x2 table. The
 randomized response scheme, in contrast, injects noise at the record level.
 In fact, the discrete Gaussian distribution satisfies a different privacy framework called
 zero concentrated differential privacy (zCDP) [@Canonne2021].
-`dapper` accomodates both the randomized response and
+`dapper` accommodates both the randomized response and
 the discrete Gaussian mechanisms, allowing us to compare the impact 
 of the two approaches.
 
-To begine comparing the two approaches, we need to set comparable privacy parameters.
+To begin comparing the two approaches, we need to set comparable privacy parameters.
 Since the two frameworks use different metrics, there does not exist
 a direct comparison^[There is only a direct relationship between zCDP and $(\epsilon, \delta)$-differential privacy. To make comparisons between pure $\epsilon$-differential privacy and zCDP, the Census uses the value $\delta = 10^{-10}$.]. However we can, in a sense, choose zCDP parameters that ensure
 protection at least as good as that achieved with the randomized responses. This
@@ -886,17 +886,17 @@ table_post <- function(x) {
 }
 
 set.seed(1)
-confidential_data <- c(109, 127, 46, 118)
+confidential_data <- c(t(adm_cnf))
 cps <- t(sapply(1:1000, function(s) table_post(confidential_data)))
-odds_male   <- cps[,1] / cps[,2]
-odds_female <- cps[,3] / cps[,4]
+odds_female   <- cps[,1] / cps[,2]
+odds_male <- cps[,3] / cps[,4]
 odds_ratio_conf  <- odds_male/odds_female
 
 set.seed(1)
-sdp <- c(110, 131, 47, 110)
+sdp <- c(t(adm_prv))
 cps <- t(sapply(1:1000, function(s) table_post(sdp)))
-odds_male   <- cps[,1] / cps[,2]
-odds_female <- cps[,3] / cps[,4]
+odds_female   <- cps[,1] / cps[,2]
+odds_male <- cps[,3] / cps[,4]
 odds_ratio_noisy  <- odds_male/odds_female
 
 df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
@@ -1283,7 +1283,6 @@ determined that the privacy budget is the issue, the pseudo-likelihood scheme pr
 may offer significant speed ups. This scheme fits in the same data augmentation framework as `dapper` but is not implemented.
 
 
-
 # Summary
 
 Currently, there is a lack of software tools privacy researchers can use
@@ -1292,7 +1291,8 @@ While there have been tremendous gains in the theoretical aspects of privacy,
 the lack of software resources to deploy and work with new privacy techniques has
 hampered their adoption. This gap in capability has been noted by several
 large industry entities who have begun building software ecosystems for
-working with differential privacy. SmartNoise by Microsoft [insert citation] and SafeTab [insert citation] by the US Census, for example,
+working with differential privacy. 
+SmartNoise by Microsoft [insert citation] and SafeTab [insert citation] by the US Census, for example,
 are tools for generating synthetic data that has differentially private guarantees.
 However, the majority of these software tools only address privacy and not the 
 ensuing analysis or, if it does, address the analysis only for specific models.
@@ -1303,14 +1303,17 @@ Thus `dapper` helps fill an urgent need by providing researchers a way to proper
 for the noise introduced for privacy protection in their statistical analysis. A notable
 feature is its flexibility which allows the users to specify a custom
 privacy mechanism. The benefit being that `dapper` can evaluate already
-established privacy mechanisms and those that have yet to be discovered.
+established privacy mechanisms and those that have yet to be invented.
 
 
 `dapper` offers a significant step forward in providing general-purpose statistical
 inference tools for privatized data. Despite the strengths of `dapper`, there
-are notable weaknesses, which highlight the important directions for future work.
-Weaknesses include the requirement for the privacy mechanism to have a density 
-(e.g. the exponential mechanism has no density). The non-private posterior needs
+are notable weaknesses, which highlight important directions for future work.
+Weaknesses include: 1) the requirement for the privacy mechanism to have a density 
+2) the existence of a record additive statistic and 3) a relatively efficient sampler
+
+
+The non-private posterior needs
 a relatively efficient sampler. Slow convergence when the privacy budget is small,
 and a statistic that satisfies record additivity to fully leverage `dapper` computational
 potential.

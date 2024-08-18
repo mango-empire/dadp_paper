@@ -2,7 +2,7 @@
 \title{dapper: Data Augmentation for Private Posterior Estimation in R}
 
 
-\author{by Kevin Eng, Jordan A. Awan, Ruobin Gong, Nianqiao Phyllis Ju, and Vinayak A. Rao}
+\author{by Kevin Eng, Jordan A. Awan, Nianqiao Phyllis Ju, Vinayak A. Rao, and Ruobin Gong}
 
 \maketitle
 
@@ -36,7 +36,7 @@ adding independent, random error to each cell; the amount and type of which is d
 this will correspond to having measurement errors
 in the covariates. This, unfortunately, violates the assumptions of most statistical models.
 In the presence of such errors, standard estimators can exhibit significant bias and incorrect uncertainty quantification
-(Gong 2022) (Karwa, Kifer, and Slavković 2015a) (Wang et al. 2018).
+(Gong 2022) (Karwa, Kifer, and Slavković 2015) (Wang et al. 2018).
 These issues are a serious concern for researchers (Santos-Lozada, Howard, and Verdery 2020) (Kenny et al. 2021) (Winkler et al. 2021).
 Therefore, developing privacy-aware statistical workflows is necessary in order
 for science and privacy to coexists.
@@ -496,8 +496,8 @@ st_f <- function(xi, sdp, i) {
   the number of entries which differ.
 
 \begin{verbatim}
-priv_f <- function(sdp, tx) {
-  t1 <- sum(sdp == tx)
+priv_f <- function(sdp, sx) {
+  t1 <- sum(sdp == sx)
   t1 * log(3/4) + (800 - t1) * log(1/4)
 }
 \end{verbatim}
@@ -545,6 +545,7 @@ dmod <- new_privacy(post_f   = post_f,
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
+                  seed = 123,
                   niter = 6000,
                   warmup = 1000,
                   chains = 4,
@@ -562,9 +563,10 @@ handlers(global = TRUE)
 
 handlers("cli")
 dp_out <- dapper_sample(dmod,
-                  sdp = c(adm_prv),
-                  niter = 10000,
-                  warmup = 100,
+                  sdp = sdp,
+                  seed = 123,
+                  niter = 6000,
+                  warmup = 1000,
                   chains = 4,
                   init_par = rep(.25,4))
 \end{verbatim}
@@ -577,10 +579,10 @@ the chain has run long enough to achieve adequate mixing.
 #> # A tibble: 4 x 10
 #>   variable  mean median     sd    mad     q5   q95  rhat ess_bulk ess_tail
 #>   <chr>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
-#> 1 pi_11    0.281  0.281 0.0633 0.0643 0.179  0.386  1.01     351.    1136.
-#> 2 pi_10    0.339  0.339 0.0678 0.0674 0.228  0.451  1.01     390.     898.
-#> 3 pi_01    0.111  0.109 0.0556 0.0579 0.0222 0.207  1.02     221.     440.
-#> 4 pi_00    0.268  0.267 0.0622 0.0627 0.168  0.374  1.02     280.     708.
+#> 1 pi_11    0.281  0.281 0.0610 0.0625 0.182  0.382  1.02     362.     818.
+#> 2 pi_10    0.336  0.335 0.0638 0.0640 0.235  0.444  1.01     431.    1191.
+#> 3 pi_01    0.111  0.108 0.0548 0.0563 0.0250 0.206  1.02     282.     504.
+#> 4 pi_00    0.272  0.272 0.0601 0.0616 0.172  0.372  1.02     389.     875.
 \end{verbatim}
 
 Diagnostic checks using trace plots can be done using the \pkg{Bayesplot} package
@@ -740,8 +742,8 @@ st_f <- function(xi, sdp, i) {
   at 0.
 
 \begin{verbatim}
-priv_f <- function(sdp, tx) {
-  sum(dapper::ddnorm(sdp - tx, mu = 0, sigma = 6.25, log = TRUE))
+priv_f <- function(sdp, sx) {
+  sum(dapper::ddnorm(sdp - sx, mu = 0, sigma = 6.25, log = TRUE))
 }
 \end{verbatim}
 \end{enumerate}
@@ -756,10 +758,10 @@ summary(dp_out)
 #> # A tibble: 4 x 10
 #>   variable  mean median     sd    mad     q5   q95  rhat ess_bulk ess_tail
 #>   <chr>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
-#> 1 pi_11    0.314  0.314 0.0278 0.0271 0.269  0.362  1.00     619.     874.
-#> 2 pi_01    0.286  0.285 0.0264 0.0259 0.246  0.332  1.00     663.     762.
-#> 3 pi_10    0.107  0.107 0.0209 0.0216 0.0743 0.143  1.00     355.     510.
-#> 4 pi_00    0.293  0.293 0.0271 0.0281 0.249  0.337  1.00     508.     714.
+#> 1 pi_11    0.315  0.313 0.0266 0.0269 0.273  0.360  1.00     660.     684.
+#> 2 pi_01    0.286  0.285 0.0267 0.0269 0.243  0.329  1.00     611.     622.
+#> 3 pi_10    0.107  0.106 0.0197 0.0200 0.0767 0.141  1.00     428.     737.
+#> 4 pi_00    0.292  0.292 0.0262 0.0261 0.251  0.339  1.00     666.     867.
 \end{verbatim}
 
 Figure \ref{fig:post-or-compare-dg} juxtaposes the private posterior under the
@@ -1114,19 +1116,6 @@ be explored more easily. If a faster sampler is needed, and it has been
 determined that the privacy budget is the issue, the pseudo-likelihood scheme proposed by (Andrieu and Roberts 2009)
 may offer significant speed ups. This scheme fits in the same data augmentation framework as \texttt{dapper} but is not implemented.
 
-\hypertarget{related-work}{%
-\subsection{Related Work}\label{related-work}}
-
-Adjusting statistical workflows to account for added noise in covariates
-is extensively studied in the context of measurement error (e.g.~noisy sensor readings)
-and there exists readily available tools for making the proper adjustments.
-For textbook length treatments on the topic see (Yi 2017; Carroll et al. 2006).
-Work in this area mostly focuses on methods which do not require fully specifying the
-measurement error model, since this is often assumed unknown.
-However, in differential privacy, the measurement error model is exactly known.
-This difference, makes feasible some ideas which the measurement
-error community has not previously considered (Smith 2011; Karwa, Kifer, and Slavković 2015b).
-
 \hypertarget{summary}{%
 \section{Summary}\label{summary}}
 
@@ -1147,7 +1136,7 @@ Thus \texttt{dapper} helps fill an urgent need by providing researchers a way to
 for the noise introduced for privacy protection in their statistical analysis. A notable
 feature is its flexibility which allows the users to specify a custom
 privacy mechanism. The benefit being that \texttt{dapper} can evaluate already
-established privacy mechanisms and those that have yet to be discovered.
+established privacy mechanisms and those that have yet to be invented.
 
 \texttt{dapper} offers a significant step forward in providing general-purpose statistical
 inference tools for privatized data. Despite the strengths of \texttt{dapper}, there
@@ -1179,9 +1168,6 @@ Bickel, Peter J., Eugene A. Hammel, and John W. O'Connell. 1975. {``Sex Bias in 
 \leavevmode\vadjust pre{\hypertarget{ref-Canonne2021}{}}%
 Canonne, Clément L., Gautam Kamath, and Thomas Steinke. 2021. {``The Discrete Gaussian for Differential Privacy.''} \url{https://arxiv.org/abs/2004.00010}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Carroll2006}{}}%
-Carroll, Raymond J., David Ruppert, Leonard A. Stefanski, and Ciprian M. Crainiceanu. 2006. \emph{Measurement Error in Nonlinear Models}. Chapman; Hall/CRC. \url{https://doi.org/10.1201/9781420010138}.
-
 \leavevmode\vadjust pre{\hypertarget{ref-ding2017collecting}{}}%
 Ding, Bolin, Janardhan Kulkarni, and Sergey Yekhanin. 2017. {``Collecting Telemetry Data Privately.''} \url{https://arxiv.org/abs/1712.01524}.
 
@@ -1200,11 +1186,8 @@ Higham, Nicholas J. 1988. {``Computing a Nearest Symmetric Positive Semidefinite
 \leavevmode\vadjust pre{\hypertarget{ref-Ju2022}{}}%
 Ju, Nianqiao, Jordan Awan, Ruobin Gong, and Vinayak Rao. 2022. {``Data Augmentation {MCMC} for Bayesian Inference from Privatized Data.''} In \emph{Advances in Neural Information Processing Systems}, edited by Alice H. Oh, Alekh Agarwal, Danielle Belgrave, and Kyunghyun Cho. \url{https://openreview.net/forum?id=tTWCQrgjuM}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Karwa2015}{}}%
-Karwa, Vishesh, Dan Kifer, and Aleksandra B. Slavković. 2015b. {``Private Posterior Distributions from Variational Approximations.''} \url{https://arxiv.org/abs/1511.07896}.
-
 \leavevmode\vadjust pre{\hypertarget{ref-karwa2015private}{}}%
----------. 2015a. {``Private Posterior Distributions from Variational Approximations.''} \url{https://arxiv.org/abs/1511.07896}.
+Karwa, Vishesh, Dan Kifer, and Aleksandra B. Slavković. 2015. {``Private Posterior Distributions from Variational Approximations.''} \url{https://arxiv.org/abs/1511.07896}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Kenny2021}{}}%
 Kenny, Christopher T., Shiro Kuriwaki, Cory McCartan, Evan T. R. Rosenman, Tyler Simko, and Kosuke Imai. 2021. {``The Use of Differential Privacy for Census Data and Its Impact on Redistricting: The Case of the 2020 u.s. Census.''} \emph{Science Advances} 7 (41). \url{https://doi.org/10.1126/sciadv.abk3283}.
@@ -1218,9 +1201,6 @@ Robert, Christian P., and George Casella. 2004. \emph{Monte Carlo Statistical Me
 \leavevmode\vadjust pre{\hypertarget{ref-SantosLozada2020}{}}%
 Santos-Lozada, Alexis R., Jeffrey T. Howard, and Ashton M. Verdery. 2020. {``How Differential Privacy Will Affect Our Understanding of Health Disparities in the United States.''} \emph{Proceedings of the National Academy of Sciences} 117 (24): 13405--12. \url{https://doi.org/10.1073/pnas.2003714117}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Smith2011}{}}%
-Smith, Adam. 2011. {``Privacy-Preserving Statistical Estimation with Optimal Convergence Rates.''} In \emph{Proceedings of the Forty-Third Annual ACM Symposium on Theory of Computing}. STOC'11. ACM. \url{https://doi.org/10.1145/1993636.1993743}.
-
 \leavevmode\vadjust pre{\hypertarget{ref-tang2017privacy}{}}%
 Tang, Jun, Aleksandra Korolova, Xiaolong Bai, Xueqiang Wang, and Xiaofeng Wang. 2017. {``Privacy Loss in Apple's Implementation of Differential Privacy on MacOS 10.12.''} \url{https://arxiv.org/abs/1709.02753}.
 
@@ -1232,9 +1212,6 @@ Williams, Oliver, and Frank Mcsherry. 2010. {``Probabilistic Inference and Diffe
 
 \leavevmode\vadjust pre{\hypertarget{ref-Winkler2021}{}}%
 Winkler, Richelle L., Jaclyn L. Butler, Katherine J. Curtis, and David Egan-Robertson. 2021. {``Differential Privacy and the Accuracy of County-Level Net Migration Estimates.''} \emph{Population Research and Policy Review} 41 (2): 417--35. \url{https://doi.org/10.1007/s11113-021-09664-5}.
-
-\leavevmode\vadjust pre{\hypertarget{ref-Yi2017}{}}%
-Yi, Grace Y. 2017. \emph{Statistical Analysis with Measurement Error or Misclassification}. \emph{Springer Series in Statistics}. Springer New York. \url{https://doi.org/10.1007/978-1-4939-6640-0}.
 
 \end{CSLReferences}
 
@@ -1260,16 +1237,6 @@ Department of Statistics\\ West Lafayette, IN 47907\\
 }
 
 \address{%
-Ruobin Gong\\
-Rutgers University\\%
-Department of Statistics\\ Piscataway, NJ 08854\\
-%
-\url{https://ruobingong.github.io/}\\%
-%
-\href{mailto:ruobin.gong@rutgers.edu}{\nolinkurl{ruobin.gong@rutgers.edu}}%
-}
-
-\address{%
 Nianqiao Phyllis Ju\\
 Purdue University\\%
 Department of Statistics\\ West Lafayette, IN 47907\\
@@ -1287,4 +1254,14 @@ Department of Statistics\\ West Lafayette, IN 47907\\
 \url{https://varao.github.io/}\\%
 %
 \href{mailto:varao@purdue.edu}{\nolinkurl{varao@purdue.edu}}%
+}
+
+\address{%
+Ruobin Gong\\
+Rutgers University\\%
+Department of Statistics\\ Piscataway, NJ 08854\\
+%
+\url{https://ruobingong.github.io/}\\%
+%
+\href{mailto:ruobin.gong@rutgers.edu}{\nolinkurl{ruobin.gong@rutgers.edu}}%
 }

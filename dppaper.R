@@ -86,8 +86,8 @@ st_f <- function(xi, sdp, i) {
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-priv_f <- function(sdp, tx) {
-  t1 <- sum(sdp == tx)
+priv_f <- function(sdp, sx) {
+  t1 <- sum(sdp == sx)
   t1 * log(3/4) + (800 - t1) * log(1/4)
 }
 
@@ -127,6 +127,7 @@ dmod <- new_privacy(post_f   = post_f,
                   
 dp_out <- dapper_sample(dmod,
                   sdp = sdp,
+                  seed = 123,
                   niter = 6000,
                   warmup = 1000,
                   chains = 4,
@@ -139,9 +140,10 @@ dp_out <- dapper_sample(dmod,
 #> 
 #> handlers("cli")
 #> dp_out <- dapper_sample(dmod,
-#>                   sdp = c(adm_prv),
-#>                   niter = 10000,
-#>                   warmup = 100,
+#>                   sdp = sdp,
+#>                   seed = 123,
+#>                   niter = 6000,
+#>                   warmup = 1000,
 #>                   chains = 4,
 #>                   init_par = rep(.25,4))
 
@@ -272,8 +274,8 @@ st_f <- function(xi, sdp, i) {
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-priv_f <- function(sdp, tx) {
-  sum(dapper::ddnorm(sdp - tx, mu = 0, sigma = 6.25, log = TRUE))
+priv_f <- function(sdp, sx) {
+  sum(dapper::ddnorm(sdp - sx, mu = 0, sigma = 6.25, log = TRUE))
 }
 
 
