@@ -163,45 +163,12 @@ ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,10) + xlab("Odds Ratio")
 
 
 ## ----post-or-compare, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "(Example 1) comparison between using dapper and a naive Bayesian anaylsis on the
-noise infused data and the original confidential data." 
-
-set.seed(1)
-confidential_data <- as.matrix(cnf_df)
-cps <- t(sapply(1:20000, function(s) post_f(confidential_data, NULL)))
-odds_male   <- cps[,1] / cps[,2]
-odds_female <- cps[,3] / cps[,4]
-odds_ratio_conf  <- odds_male/odds_female
-
-set.seed(1)
-noisy_data <- matrix(sdp, ncol = 2, byrow = FALSE)
-cps <- t(sapply(1:20000, function(s) post_f(noisy_data, NULL)))
-odds_male   <- cps[,1] / cps[,2]
-odds_female <- cps[,3] / cps[,4]
-odds_ratio_noisy  <- odds_male/odds_female
-
-df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
-  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
-  mutate(method = "naive")
-
-df2 <- tibble(confidential = odds_ratio_conf, noisy = or) %>%
-  pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
-  mutate(method = "dapper")
-
-df <- rbind(df1,df2)
-
-df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) + 
-  geom_density(alpha = .5) + 
-  facet_wrap(~method) + 
-  xlim(0,8) +
-  xlab("Odds Ratio") +
-  guides(fill= guide_legend(title= "Data")) + 
-  theme(legend.position="bottom")
-
-
-## ----post-or-compare2, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "(Example 1) comparison between using dapper and a naive Bayesian anaylsis on the
-noise infused data and the original confidential data." 
+caption <- "(Example 1) Posterior distributions (cyan) of the odds ratio (admission of males vs. females)
+using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference
+using dapper which takes into account the privacy mechanism; Right panel:
+naive Bayesian inference treating the noisy data as noise-free. Red
+distribution in both panels reflect the true posterior distribution
+if the analysis were to be conducted on the confidential data."
 
 set.seed(1)
 confidential_data <- as.matrix(cnf_df)
@@ -323,17 +290,17 @@ table_post <- function(x) {
 }
 
 set.seed(1)
-confidential_data <- c(109, 127, 46, 118)
+confidential_data <- c(t(adm_cnf))
 cps <- t(sapply(1:1000, function(s) table_post(confidential_data)))
-odds_male   <- cps[,1] / cps[,2]
-odds_female <- cps[,3] / cps[,4]
+odds_female   <- cps[,1] / cps[,2]
+odds_male <- cps[,3] / cps[,4]
 odds_ratio_conf  <- odds_male/odds_female
 
 set.seed(1)
-sdp <- c(110, 131, 47, 110)
+sdp <- c(t(adm_prv))
 cps <- t(sapply(1:1000, function(s) table_post(sdp)))
-odds_male   <- cps[,1] / cps[,2]
-odds_female <- cps[,3] / cps[,4]
+odds_female   <- cps[,1] / cps[,2]
+odds_male <- cps[,3] / cps[,4]
 odds_ratio_noisy  <- odds_male/odds_female
 
 df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
