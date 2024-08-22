@@ -78,8 +78,8 @@ to differential privacy, anonymization schemes did not always have sound
 theoretical guarantees despite appearing adequate. In one influential incident,
 a privacy researcher was able use a publicly released medical data set
 to deduce William Weld, then Governor of Massachusetts, medical diagnoses and prescriptions [@BarthJones2012].
-Differential privacy marks a leap forward in privacy science by putting
-privacy research and solutions on rigorous footing and away from more obscure notions of privacy. 
+Differential privacy marks a leap forward in the science of privacy by putting
+it on rigorous footing and away from past ad hoc and obscure notions of privacy. 
 Several recent high profile
 implementations of differential privacy include Apple [@tang2017privacy], Google [@Erlingsson_2014], Microsoft [@ding2017collecting], and the 
 U.S. Census Bureau [@Abowd2018].
@@ -178,11 +178,11 @@ is to take a summary statistic $s$, and add noise to it
 to produce a noisy summary statistic $s_{dp}$. 
 
 While noise addition has
-been common practice in statistical disclosure control [swapping citation], differential privacy
+been common practice in statistical disclosure control [@Dalenius1982], differential privacy
 provides a rigorous framework to specify where and how much
 noise to add. 
-Most importantly, for the analyst, the specification of the differentially private noise mechanism is publicly
-available and can be incorporated into subsequent analyses.
+Most importantly, for the analyst, the specification of the differentially private noise mechanism can
+be made available without compromising privacy and incorporated into subsequent analyses.
 
 
 The `dapper` package provides a very flexible framework that can accommodate
@@ -220,25 +220,24 @@ for the the Laplace mechanism. Example 2, will cover an
 application of the Laplace mechanism to linear regression. 
 Other common noise adding mechanisms include the Gaussian and the
 discrete Gaussian mechanisms, which also add noise scaled to the sensitivity;
-however these mechanisms satisfy a different privacy criteria called *zero concentrated differential privacy*[@Bun2016].
+however these mechanisms satisfy a different privacy criteria called *zero concentrated differential privacy* [@Bun2016].
 
 # Methodology
-Given data privatized data, $s_{dp}$, the goal of Bayesian inference is to sample from the 
+Given privatized data, $s_{dp}$, the goal of Bayesian inference is to sample from the 
 posterior distribution $p(\theta \mid s_{dp})$. Since the observed likelihood,
 $p(s_{dp} \mid \theta)$, often has no simple closed form expression [@NIPS2010_sherry], most standard approaches
 do not apply. To conduct privacy-aware Bayesian inference, the dapper package implements
 the data augmentation algorithm of @Ju2022 which allows us to sample from $p(\theta \mid s_{dp})$
 without requiring a closed-form expression proportional to $p(s_{dp} \mid \theta)$.
-
-The algorithm considers the joint distribution $p(\theta, x \mid s_{dp})$ and
-alternates sampling from the two distributions $p(\theta \mid x, s_{dp})$
+The algorithm accomplishes this by considering the joint distribution $p(\theta, x \mid s_{dp})$ and
+alternates sampling between the two distributions $p(\theta \mid x, s_{dp})$
 and $p(x \mid \theta, s_{dp})$.
 
 Since $s_{dp}$ is derived from $x$, we have $p(\theta \mid x, s_{dp}) = p(\theta \mid x)$ which
 is just the usual posterior distribution given the confidential data $x$. The `dapper`
 package assumes the user has access to a sampler for $p(\theta \mid x)$. This can
 come from any R package such as \CRANpkg{fmcmc} or constructed analytically via posterior conjugacy.
-For the second distribution, $p(x \mid \theta, s_{dp})$, may
+For the second distribution, $p(x \mid \theta, s_{dp})$ may
 only be known up to a constant. The dapper package samples from this distribution by
 running a Gibbs-like sampler. Each of the $n$ components of $x$ is individually
 updated. However unlike the standard Gibbs sampler, each component is updated
@@ -738,8 +737,7 @@ a direct comparison. However, there is a direct relationship between
 zCDP and $(\epsilon, \delta)$-differential privacy. The latter framework
 is a relaxed version of $\epsilon$-DP where the ratio bound only holds
 in probability. To make our comparison we will set $\delta = 10^{-10}$, which
-is the value the U.S. Census uses. This
-can be achieved by setting the scale parameter in the discrete Guassian
+is the value the U.S. Census uses. To make a comparison,c we set the scale parameter in the discrete Guassian
 distribution to $6.25$ which will guarantee $(2\log(3), 10^{-10})$-differential privacy.^[$\dfrac{1}{2} \epsilon^2$-concentrated differential privacy implies $\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)$-differential privacy [@Bun2016]]  
 
 The table below on the right represents a hypothetical data protected using a discrete
@@ -834,10 +832,6 @@ Figure \@ref(fig:post-or-compare-dg) juxtaposes the private posterior under the
 randomized(dashed line) and discrete Gaussian (solid line) mechanism. Comparing 
 the two suggest using discrete Guassian noise leads to slightly less
 posterior uncertainty and a mode closer to the true, confidential posterior.
-
-
-[LEGEND DOESN'T WORK]
-
 ```{r post-or-density-dg, fig.cap="(Example 2) posterior density estimate for the odds ratio using 1,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'}
 tv2 <- dp_out$chain
 or2 <- as.numeric((tv2[,1] * tv2[,4]) / (tv2[,2] * tv2[,3]))
@@ -849,10 +843,9 @@ ggplot(tibble(x=or2), aes(x, linetype = "dotdash")) + geom_density() +
                           labels = c("group1", "group2"))
   
 ```
-
-If we compare the left hand plots of figure
+Additionally, if we compare the left hand plots of figure
 \@ref(fig:post-or-compare) and figure \@ref(fig:post-or-compare-dg),
-the discrete Gaussian induced considerably less bias when using the naive analysis.
+the discrete Gaussian induces considerably less bias when using the naive analysis.
 
 ```{r post-or-compare-dg, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
 caption <- "(Example 2) comparison between using dapper and a naive Bayesian anaylsis on the
@@ -916,9 +909,7 @@ y &= -1.79 -2.89x_1 -0.66x_2 + \epsilon\\
 Note, in most settings involving linear regression, the covariates are assumed to be
 fixed, known constants. Thus the formulation above is a departure from the norm since
 we are assuming a random design matrix. More details on why this framing is necessary 
-will be provided later when describing the latent model.
-
-The paper considers the scenario where one desires to publicly release the
+will be provided later when describing the latent model. The paper considers the scenario where one desires to publicly release the
 sufficient summary statistics
 
 \[
@@ -931,9 +922,6 @@ where
 \[
 t(x_i,y_i) = ((x_{i})^T y_i, y_i^2, (x_{i})^T x_i),
 \]
-
-
-
 with $\epsilon$-DP privacy guarantees. To achieve this guarantee it is 
 necessary to bound the value of the statistic. This will ensure
 a data point cannot be too "unique." Intuitively, an outlier is 
