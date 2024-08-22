@@ -173,6 +173,7 @@ margin-left: 2em;
   <meta name="citation_reference" content="citation_title=Sex bias in graduate admissions: Data from berkeley: Measuring bias is harder than is usually assumed, and the evidence is sometimes contrary to expectation.;citation_publisher=American Association for the Advancement of Science (AAAS);citation_volume=187;citation_doi=10.1126/science.187.4175.398;citation_issn=1095-9203;citation_author=Peter J. Bickel;citation_author=Eugene A. Hammel;citation_author=John W. O’Connell" />
   <meta name="citation_reference" content="citation_title=The pseudo-marginal approach for efficient monte carlo computations;citation_publisher=Institute of Mathematical Statistics;citation_volume=37;citation_doi=10.1214/07-aos574;citation_issn=0090-5364;citation_author=Christophe Andrieu;citation_author=Gareth O. Roberts" />
   <meta name="citation_reference" content="citation_title=Structure and sensitivity in differential privacy: Comparing k-norm mechanisms;citation_publisher=Informa UK Limited;citation_volume=116;citation_doi=10.1080/01621459.2020.1773831;citation_issn=1537-274X;citation_author=Jordan Awan;citation_author=Aleksandra Slavković" />
+  <meta name="citation_reference" content="citation_title=The discrete gaussian for differential privacy;citation_author=Clément L. Canonne;citation_author=Gautam Kamath;citation_author=Thomas Steinke" />
   <meta name="citation_reference" content="citation_title=Randomized response: A survey technique for eliminating evasive answer bias;citation_publisher=Informa UK Limited;citation_volume=60;citation_doi=10.1080/01621459.1965.10480775;citation_issn=1537-274X;citation_author=Stanley L. Warner" />
   <meta name="citation_reference" content="citation_title=The “re-identification” of governor william weld’s medical information: A critical re-examination of health data identification risks and privacy protections, then and now;citation_publisher=Elsevier BV;citation_doi=10.2139/ssrn.2076397;citation_issn=1556-5068;citation_author=Daniel C. Barth-Jones" />
   <meta name="citation_reference" content="citation_title=SafeTab: DP algorithms for 2020 census detailed DHC race &amp; ethnicity;citation_author=Tumult Labs" />
@@ -2972,7 +2973,7 @@ for the the Laplace mechanism. Example 2, will cover an
 application of the Laplace mechanism to linear regression.
 Other common noise adding mechanisms include the Gaussian and the
 discrete Gaussian mechanisms, which also add noise scaled to the sensitivity;
-however these mechanisms satisfy a different flavor of DP called concentrated DP.</p>
+however these mechanisms satisfy a different privacy criteria called <em>zero concentrated differential privacy</em><span class="citation" data-cites="Bun2016">(<a href="#ref-Bun2016" role="doc-biblioref">Bun and Steinke 2016</a>)</span>.</p>
 <h2 data-number="3" id="methodology"><span class="header-section-number">3</span> Methodology</h2>
 <p>Given data privatized data, <span class="math inline">\(s_{dp}\)</span>, the goal of Bayesian inference is to sample from the
 posterior distribution <span class="math inline">\(p(\theta \mid s_{dp})\)</span>. Since the observed likelihood,
@@ -3123,15 +3124,15 @@ as those found when using <a href="https://cran.r-project.org/package=rstan">rst
 for anyone already familiar with the <a href="https://cran.r-project.org/package=rstan">rstan</a> ecosystem.</p>
 <h3 data-number="4.3" id="privacy-mechanisms-for-count-data"><span class="header-section-number">4.3</span> Privacy Mechanisms for Count Data</h3>
 <p>The <code>dapper</code> package provides several utility functions
-for analyzing privatized count data. Currently, the US Census
+for analyzing privatized count data. Currently, the U.S. Census
 is a major driver behind the deployment and research of privatized
 count data, and these functions were created for census oriented
 researchers in mind.</p>
 <p>Pure <span class="math inline">\(\epsilon\)</span>-differential privacy is a stringent requirement
-that can lead to poor data utility. For this reason the census data is privatized
-under a different framework called concentrated differential privacy <span class="citation" data-cites="Bun2016">(<a href="#ref-Bun2016" role="doc-biblioref">Bun and Steinke 2016</a>)</span> which is
-a weaker definition. The <code>dapper</code> package implements probability mass and sampling functions
-for the discrete Gaussian and discrete Laplace distributions. These
+that can lead to poor data utility. For this reason the U.S. Census uses
+zero concentrated differential privacy which is
+a weaker criteria. The <code>dapper</code> package implements probability mass and sampling functions
+for the discrete Gaussian and discrete Laplace distributions <span class="citation" data-cites="Canonne2021">(<a href="#ref-Canonne2021" role="doc-biblioref">Canonne et al. 2021</a>)</span>. These
 are two potential mechanisms for deploying concentrated differential privacy,
 and both are, in fact, used in several current US Census data products <span class="citation" data-cites="TumultLabs2022">(<a href="#ref-TumultLabs2022" role="doc-biblioref">Labs 2022</a>)</span>.</p>
 <p>The discrete Gaussian / Laplacian mechanism have probability mass functions given in the
@@ -3147,8 +3148,10 @@ two parameters <span class="math inline">\((\mu,\sigma)\)</span> which govern th
 scale respectively. The functions <code>ddnorm</code> and <code>rdnorm</code> provide the
 density and sampling features for the discrete Gaussian distribution. The <code>ddnorm</code>
 function contains a calculation for the normalizing constant which is expensive. To
-speed up repeated execution, memoization is used via the <a href="https://cran.r-project.org/package=memoise">memoise</a> package. Finally, the functions
-<code>ddlaplace</code> and <code>rdlaplace</code> provide similar features for the discrete Laplace distribution.</p>
+speed up repeated execution, memoization is used via the <a href="https://cran.r-project.org/package=memoise">memoise</a> package.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> Finally, the functions
+<code>ddlaplace</code> and <code>rdlaplace</code> provide similar features for the discrete Laplace distribution.
+The implementations of these functions are not the safest and are meant to provide
+uses with a way to quickly explore the behavior of DP mechanisms.</p>
 <h2 data-number="5" id="examples"><span class="header-section-number">5</span> Examples</h2>
 <h3 data-number="5.1" id="example-1-2x2-contingency-table-randomized-response"><span class="header-section-number">5.1</span> Example 1: 2x2 Contingency Table (Randomized Response)</h3>
 <p>As a demonstration, we analyze a subset of the UC Berkeley admissions data, which is often
@@ -3253,7 +3256,7 @@ Male
 the first column representing sex and the second column representing
 admission status. Thus each row in the matrix is the response of an
 individual. To anonymize the results, we apply a random response scheme
-where for each answer we flip a fair coin twice.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> As a concrete example,
+where for each answer we flip a fair coin twice.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> As a concrete example,
 suppose Robert is a male who was rejected. To anonymize his response,
 we would first flip a coin to determine if his sex response is randomized. If
 the first flip is heads we keep his original response of being a male. If we see tails,
@@ -3400,7 +3403,7 @@ parallel computing case.</p>
 <span>                  init_par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">.25</span>,<span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></code></pre>
 </div>
 </div>
-<p>results can be quickly summarized using the <code>summary</code> function which is
+<p>Results can be quickly summarized using the <code>summary</code> function which is
 displayed below. The <code>rhat</code> values in the table are close to 1, which indicates
 the chain has run long enough to achieve adequate mixing.</p>
 <div class="layout-chunk" data-layout="l-body">
@@ -3476,27 +3479,28 @@ if the analysis were to be conducted on the confidential data.
 </div>
 <h3 data-number="5.2" id="example-2-2x2-contingency-table-discrete-gaussian"><span class="header-section-number">5.2</span> Example 2: 2x2 Contingency Table (Discrete Gaussian)</h3>
 <p>To highlight the flexibility of <code>dapper</code> we reanalyze example 1
-with a different privacy mechanism. Here we take inspiration from the US Census,
+with a different privacy mechanism. Here we take inspiration from the 2020 U.S. Decennial Census,
 which is in the process of deploying a novel privacy protection system for count data.
-Because there are many users of Census data, a succesful deployment requires
+Because there are many users of Census data, a successful deployment requires
 a careful analysis of the privacy / utility trade-off and includes
-studing how different mechanisms and privacy parameters affect
+studying how different mechanisms and privacy parameters affect
 down stream analyses.</p>
-<p>One of the mechanisms under consideration is the discrete Gaussian distribution.
+<p>One of the mechanisms used is the discrete Gaussian distribution.
 In our admissions data example, this privacy mechanism works by injecting
 noise into the the total cell counts given in the 2x2 table. The
 randomized response scheme, in contrast, injects noise at the record level.
-In fact, the discrete Gaussian distribution satisfies a different privacy framework called
-zero concentrated differential privacy (zCDP) <span class="citation" data-cites="Canonne2021">(<a href="#ref-Canonne2021" role="doc-biblioref">Canonne et al. 2021</a>)</span>.
-<code>dapper</code> accommodates both the randomized response and
+The <code>dapper</code> package accommodates both the randomized response and
 the discrete Gaussian mechanisms, allowing us to compare the impact
 of the two approaches.</p>
-<p>To begin comparing the two approaches, we need to set comparable privacy parameters.
+<p>To begin comparing the two approaches, we need to set the privacy parameters.
 Since the two frameworks use different metrics, there does not exist
-a direct comparison<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. However we can, in a sense, choose zCDP parameters that ensure
-protection at least as good as that achieved with the randomized responses. This
+a direct comparison. However, there is a direct relationship between
+zCDP and <span class="math inline">\((\epsilon, \delta)\)</span>-differential privacy. The latter framework
+is a relaxed version of <span class="math inline">\(\epsilon\)</span>-DP where the ratio bound only holds
+in probability. To make our comparison we will set <span class="math inline">\(\delta = 10^{-10}\)</span>, which
+is the value the U.S. Census uses. This
 can be achieved by setting the scale parameter in the discrete Guassian
-distribution to <span class="math inline">\(6.25\)</span> which will guarantee it is <span class="math inline">\(2\log(3)\)</span>-differentially private<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
+distribution to <span class="math inline">\(6.25\)</span> which will guarantee <span class="math inline">\((2\log(3), 10^{-10})\)</span>-differential privacy.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
 <p>The table below on the right represents a hypothetical data protected using a discrete
 Gaussian mechanism.</p>
 <div class="layout-chunk" data-layout="l-body">
@@ -4070,8 +4074,9 @@ R. L. Winkler, J. L. Butler, K. J. Curtis and D. Egan-Robertson. Differential pr
 <section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1"><p>The randomized response scheme predates the development of differential privacy and was first described by <span class="citation" data-cites="Warner1965">Warner (<a href="#ref-Warner1965" role="doc-biblioref">1965</a>)</span> as a means to reduce survey bias involving sensitive questions.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p>There is only a direct relationship between zCDP and <span class="math inline">\((\epsilon, \delta)\)</span>-differential privacy. To make comparisons between pure <span class="math inline">\(\epsilon\)</span>-differential privacy and zCDP, the Census uses the value <span class="math inline">\(\delta = 10^{-10}\)</span>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1"><p>Memoization is
+a programming technique used to cache repeated computations<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>The randomized response scheme predates the development of differential privacy and was first described by <span class="citation" data-cites="Warner1965">Warner (<a href="#ref-Warner1965" role="doc-biblioref">1965</a>)</span> as a means to reduce survey bias involving sensitive questions.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn3"><p><span class="math inline">\(\dfrac{1}{2} \epsilon^2\)</span>-concentrated differential privacy implies <span class="math inline">\(\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)\)</span>-differential privacy <span class="citation" data-cites="Bun2016">(<a href="#ref-Bun2016" role="doc-biblioref">Bun and Steinke 2016</a>)</span><a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn4"><p>The original paper, <span class="citation" data-cites="Ju2022">Ju et al. (<a href="#ref-Ju2022" role="doc-biblioref">2022</a>)</span>, contains a computation error and mistakenly uses <span class="math inline">\(\Delta = p^2 + 3p + 3\)</span><a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
