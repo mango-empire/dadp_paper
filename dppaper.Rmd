@@ -63,6 +63,7 @@ library(ggplot2)
 library(kableExtra)
 library(tidyverse)
 library(knitr)
+library(ggsci)
 ```
 
 
@@ -75,9 +76,7 @@ noise to obscure the connection between the individual and data [@Dwork2006].
 Its development was spurred on by successful attacks
 on anonymized data sets containing sensitive personal information. Prior
 to differential privacy, anonymization schemes did not always have sound
-theoretical guarantees despite appearing adequate. In one influential incident,
-a privacy researcher was able use a publicly released medical data set
-to deduce William Weld, then Governor of Massachusetts, medical diagnoses and prescriptions [@BarthJones2012].
+theoretical guarantees despite appearing adequate.
 Differential privacy marks a leap forward in the science of privacy by putting
 it on rigorous footing and away from past ad hoc and obscure notions of privacy. 
 Several recent high profile
@@ -89,7 +88,7 @@ valuable information that stake holders are still interested in
 learning about. However, the noise introduced by differential privacy
 changes the calculus of inference. As an example,
 we can implement differential privacy for tabular data by directly
-adding independent, random error to each cell; the amount and type of which is determined by theory. When we fit a regression model to the noise infused data,
+adding independent, random error to each cell; the amount and type of which is determined by DP theory. When we fit a regression model to the noise infused data,
 this will correspond to having measurement errors
 in the covariates. This, unfortunately, violates the assumptions of most statistical models. 
 In the presence of such errors, standard estimators can exhibit significant bias and incorrect uncertainty quantification 
@@ -107,13 +106,13 @@ it is difficult or impossible to apply traditional statistical methods
 to derive estimators. In particular, the marginal likelihood can involve a complex
 integral where it is not even possible to evaluate the likelihood
 at a point. Tackling the problem by approximating the likelihood can be computationally
-unfeasible since the integral is usually high dimensional. 
+infeasible since the integral is usually high dimensional. 
 Few tools are available to researchers to address these issues,
 and their absence is a serious barrier to the wider adoption
 of differential privacy.
 
 The `dapper` package provides a set of tools for conducting
-privacy-aware Bayesian inference. It serves as a user-friendly R
+privacy-aware Bayesian inference. It serves as a R
 interface for the data augmentation framework proposed by @Ju2022,
 allowing existing Bayesian models to be extended to handle
 noise infused data. The package is designed to integrate well with existing Bayesian workflows;
@@ -169,8 +168,8 @@ dissemination based privacy approaches.
 
 ## Differential Privacy
 While a summary statistic can already partially anonymize data, it is still 
-possible to deduce information about an individual entry depending on
-the distribution of $x$. Differential privacy (DP) offers a more principled
+possible to deduce information about an individual depending on how $x$ is distributed. 
+Differential privacy offers a more principled
 approach by introducing randomness in a way that the output distribution
 does not change much when one individual's data is changed. A common approach -- and the one dapper
 is primarily designed to address--
@@ -199,7 +198,7 @@ privacy guarantees which in turn means less noise being added.
 We now describe the $\epsilon$-DP privacy framework in more detail. For the noisy summary 
 statistic, we write $s_{dp} \sim \eta(\cdot \mid x)$. Here,
 $\eta$ is a known noise infusion process designed to meet a certain property: The privacy mechanism
-$\eta$ is said to be $\epsilon$-differentially private [@Dwork2006] if for all values of
+$\eta$ is said to be $(\epsilon, \delta)$-differentially private [@Dwork2006] if for all values of
 $s_{dp}$, and all "neighboring" databases $(x,x') \in \mathcal{X}^n \times \mathcal{X}^n$ differing
 by one record (denoted by $d(x,x') \leq 1$), the probability ratio is bounded:
 \[
@@ -709,7 +708,8 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
   xlim(0,8) +
   xlab("Odds Ratio") +
   guides(fill= guide_legend(title= "Data")) + 
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") +
+  scale_fill_lancet()
 ```
 
 
@@ -717,7 +717,7 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
 
 To highlight the flexibility of `dapper` we reanalyze example 1
 with a different privacy mechanism. Here we take inspiration from the 2020 U.S. Decennial Census, 
-which is in the process of deploying a novel privacy protection system for count data. 
+which deployed a novel privacy protection system for count data. 
 Because there are many users of Census data, a successful deployment requires 
 a careful analysis of the privacy / utility trade-off and includes
 studying how different mechanisms and privacy parameters affect
@@ -725,7 +725,7 @@ down stream analyses.
 
 One of the mechanisms used is the discrete Gaussian distribution. 
 In our admissions data example, this privacy mechanism works by injecting
-noise into the the total cell counts given in the 2x2 table. The 
+noise into the total cell counts given in the 2x2 table. The 
 randomized response scheme, in contrast, injects noise at the record level.
 The `dapper` package accommodates both the randomized response and
 the discrete Gaussian mechanisms, allowing us to compare the impact 
@@ -736,9 +736,9 @@ Since the two frameworks use different metrics, there does not exist
 a direct comparison. However, there is a direct relationship between 
 zCDP and $(\epsilon, \delta)$-differential privacy. The latter framework
 is a relaxed version of $\epsilon$-DP where the ratio bound only holds
-in probability. To make our comparison we will set $\delta = 10^{-10}$, which
-is the value the U.S. Census uses. To make a comparison,c we set the scale parameter in the discrete Guassian
-distribution to $6.25$ which will guarantee $(2\log(3), 10^{-10})$-differential privacy.^[$\dfrac{1}{2} \epsilon^2$-concentrated differential privacy implies $\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)$-differential privacy [@Bun2016]]  
+in probability. For our comparison, we will set $\delta = 10^{-10}$ which
+is the value the U.S. Census uses. Finally, setting the scale parameter in the discrete Guassian
+distribution to $\sigma = 6.32$ will guarantee $(2\log(3), 10^{-10})$-differential privacy.^[$\dfrac{1}{2} \epsilon^2$-concentrated differential privacy implies $\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)$-differential privacy [@Bun2016]]  
 
 The table below on the right represents a hypothetical data protected using a discrete
 Gaussian mechanism.
@@ -751,7 +751,7 @@ cnf_df <- tibble(sex = c(1, 1, 0, 0),
 
 set.seed(1) 
 ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
-rd <- dapper::rdnorm(4, 0, 6.25)
+rd <- dapper::rdnorm(4, 0, 6.32)
 ```
 
 
@@ -799,7 +799,7 @@ These four vectors correspond to the four possible cells.
 at 0.
     ```{r, echo = TRUE}
     priv_f <- function(sdp, sx) {
-      sum(dapper::ddnorm(sdp - sx, mu = 0, sigma = 6.25, log = TRUE))
+      sum(dapper::ddnorm(sdp - sx, mu = 0, sigma = 6.32, log = TRUE))
     }
     ```
 
@@ -886,13 +886,14 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
   xlim(0,8) +
   xlab("Odds Ratio") +
   guides(fill= guide_legend(title= "Data")) + 
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") + 
+  scale_fill_lancet()
 ```
 
 
 ## Example 3: Linear Regression
 In this section we apply `dapper` to reconstruct an
-example presented in @Ju2022. They apply a Laplace privacy 
+example presented in @Ju2022. In it, they apply a Laplace privacy 
 mechanism to a sufficient summary statistic for a linear regression model.
 Let $\{(x_i,y_i)\}_{i=1}^{n}$ be the original, confidential data with $x_i \in \mathbb{R}^2$.
 They assume the true data generating process follows the model
@@ -918,18 +919,16 @@ s(x,y) = (x^Ty, y^Ty, x^Tx).
 
 This summary statistic satisfies the additive record property since $s(x,y) = \sum_{i=1}^{n} t(x_i, y_i)$ 
 where
-
 \[
-t(x_i,y_i) = ((x_{i})^T y_i, y_i^2, (x_{i})^T x_i),
+t(x_i,y_i) = ((x_{i})^T y_i, y_i^2, (x_{i})^T x_i).
 \]
-with $\epsilon$-DP privacy guarantees. To achieve this guarantee it is 
-necessary to bound the value of the statistic. This will ensure
-a data point cannot be too "unique." Intuitively, an outlier is 
-easy to identify, so we want to make sure no data point
-is an extreme outlier. In the language of differential
-privacy, this equates to bounding the global sensitivity. This was accomplished
+To make the statistic compliant with
+the $\epsilon$-DP criterion it is 
+necessary to bound the value of the statistic 
+(i.e. the statistic must have finite global sensitivity). This will ensure
+a data point can never be too "unique." This is accomplished
 by clamping the data. More precisely, we define 
-the clamp function $[z] := \min\{\max\{z,-10\}, 10\}$ which truncates a value
+the clamping function $[z] := \min\{\max\{z,-10\}, 10\}$ which truncates a value
 $z$ so that it falls into the interval $[-10,10]$. Furthermore, we let $\tilde{z} := [z]/10$
 denote the normalized clamped value of $z$. The clamped statistic is
 
@@ -937,7 +936,9 @@ denote the normalized clamped value of $z$. The clamped statistic is
 t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}_{i})^T \tilde{x}_i).
 \]
 
-Ignoring duplicate entries, the global sensitivity is $\Delta = p^2 + 4p + 3$.^[The original paper, @Ju2022, contains a computation error and mistakenly uses $\Delta = p^2 + 3p + 3$]
+Ignoring duplicate entries, the statistic has $\ell_1$-sensitivity $\Delta = p^2 + 4p + 3$
+where $p$ is the number of predictors in the regression model (in this example $p = 2$)
+.^[The original paper, @Ju2022, contains a computation error and mistakenly uses $\Delta = p^2 + 3p + 3$]
 Using the Laplace mechanism, $\epsilon$-DP privacy can thus be achieved by adding i.i.d. Laplace$(0, \Delta/\epsilon)$
 error to each unique entry. A tighter bound on sensitivity can be achieved using 
 other techniques, see @Awan2020.
@@ -1144,7 +1145,8 @@ rbind(coef_df, coef_post) %>%
   ggplot(aes(x = estimate, group = method, fill = method)) + geom_density(alpha = .5) + 
   geom_vline(aes(xintercept = value), data = coef_true, linetype = "dashed") +
   facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7)) +
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") +
+  scale_fill_lancet()
 ```
 
 
@@ -1175,20 +1177,20 @@ rbind(coef_df, coef_post) %>%
   ggplot(aes(x = estimate, group = data, fill = data)) + geom_density(alpha = .5) + 
   geom_vline(aes(xintercept = value), data = coef_true, linetype = "dashed") +
   facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7)) +
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") +
+  scale_fill_lancet()
 
 ```
 
 
-# Discussion
-## Mixing and Privacy Loss Budget
+# Discussion on Mixing and Privacy Loss Budget
 Mixing can be poor when the posterior under a given privacy mechanism is 
 much wider than the posterior that would arise using the confidential data. In
 other words, a small privacy budget can result in poor mixing. Intuitively,
 this issue arises because the step size of the chain is governed by the variance
 of the posterior model (step 1 of the algorithm) that assumes no privacy noise. Thus, a small privacy budget
 will generate a chain whose step sizes are too small to effectively explore the
-private posterior.The rest of this section explores a toy example that will provide insight into this
+private posterior. The rest of this section explores a toy example that will provide insight into this
 phenomenon.
 
 Suppose the confidential data consist of a single observation $x \in \mathbb{R}$,
@@ -1217,7 +1219,7 @@ $\mu$ and $\tau$ are defined as:
 \[
 \begin{aligned}
 \mu &:= \dfrac{\dfrac{1}{\epsilon^{-2}}s + \dfrac{1}{\sigma^2}\theta}{\dfrac{1}{\epsilon^{-2}} + \dfrac{1}{\sigma^2}}\\
-\tau^2 &:= \dfrac{1}{\dfrac{1}{\epsilon^{-2}} + \dfrac{1}{\sigma^2}}.
+\tau^2 &:= \dfrac{1}{1/\epsilon^{-2} + 1/\sigma^2}.
 \end{aligned}
 \]
 
@@ -1241,10 +1243,8 @@ From the right hand term in the above panel, we can see $\gamma$
 depends only on $\epsilon^{-2}/\sigma^2$ and as the privacy budget decreases (i.e. more noise is being added to $x$),
 $\gamma \to 1$.
 
-Thus we recommend playing with the privacy budget to troubleshoot the cause of slow mixing
-chains. In particular it may be useful to use a relatively large
-privacy budget for qualitative comparisons so that the privacy / utility trade-off can
-be explored more easily. If a faster sampler is needed, and it has been
+Thus we recommend varying the privacy budget as a diagnostic for slow mixing chains. 
+If a faster sampler is needed, and it has been
 determined that the privacy budget is the issue, the pseudo-likelihood scheme proposed by @Andrieu2009
 may offer significant speed ups. This scheme fits in the same data augmentation framework as `dapper` but is not implemented.
 
@@ -1271,7 +1271,7 @@ established privacy mechanisms as well as those that have yet to be discovered.
 
 This package offers a significant step forward in providing general-purpose statistical
 inference tools for privatized data. Despite the strengths of `dapper`, it has
-several stringent requirements for good performance that limit its potential:
+several cumbersome requirements for good performance that limit its potential:
 1) the privacy mechanism must have a closed-form density 2) a record additive 
 statistic must be used to leverage `dapper`'s full computational potential
 3) the non-private posterior sampler needs to be efficient and 4) the privacy budget cannot be too small.

@@ -7,6 +7,7 @@ library(ggplot2)
 library(kableExtra)
 library(tidyverse)
 library(knitr)
+library(ggsci)
 
 
 ## ----echo=TRUE, eval=FALSE----------------------------------------------------
@@ -200,7 +201,8 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
   xlim(0,8) +
   xlab("Odds Ratio") +
   guides(fill= guide_legend(title= "Data")) + 
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") +
+  scale_fill_lancet()
 
 
 ## ----echo = FALSE-------------------------------------------------------------
@@ -211,7 +213,7 @@ cnf_df <- tibble(sex = c(1, 1, 0, 0),
 
 set.seed(1) 
 ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
-rd <- dapper::rdnorm(4, 0, 6.25)
+rd <- dapper::rdnorm(4, 0, 6.32)
 
 
 ## ----echo = FALSE-------------------------------------------------------------
@@ -242,7 +244,7 @@ st_f <- function(xi, sdp, i) {
 
 ## ----echo = TRUE--------------------------------------------------------------
 priv_f <- function(sdp, sx) {
-  sum(dapper::ddnorm(sdp - sx, mu = 0, sigma = 6.25, log = TRUE))
+  sum(dapper::ddnorm(sdp - sx, mu = 0, sigma = 6.32, log = TRUE))
 }
 
 
@@ -319,7 +321,8 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
   xlim(0,8) +
   xlab("Odds Ratio") +
   guides(fill= guide_legend(title= "Data")) + 
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") + 
+  scale_fill_lancet()
 
 
 ## ----echo = TRUE--------------------------------------------------------------
@@ -461,7 +464,8 @@ rbind(coef_df, coef_post) %>%
   ggplot(aes(x = estimate, group = method, fill = method)) + geom_density(alpha = .5) + 
   geom_vline(aes(xintercept = value), data = coef_true, linetype = "dashed") +
   facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7)) +
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") +
+  scale_fill_lancet()
 
 
 ## ----regression-data-compare, fig.cap=caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
@@ -491,6 +495,7 @@ rbind(coef_df, coef_post) %>%
   ggplot(aes(x = estimate, group = data, fill = data)) + geom_density(alpha = .5) + 
   geom_vline(aes(xintercept = value), data = coef_true, linetype = "dashed") +
   facet_wrap(~coefficient, scale = 'free') + coord_cartesian(ylim=c(0, 0.7)) +
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") +
+  scale_fill_lancet()
 
 

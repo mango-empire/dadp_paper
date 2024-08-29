@@ -677,9 +677,9 @@ Since the two frameworks use different metrics, there does not exist
 a direct comparison. However, there is a direct relationship between
 zCDP and \((\epsilon, \delta)\)-differential privacy. The latter framework
 is a relaxed version of \(\epsilon\)-DP where the ratio bound only holds
-in probability. To make our comparison we will set \(\delta = 10^{-10}\), which
-is the value the U.S. Census uses. To make a comparison,c we set the scale parameter in the discrete Guassian
-distribution to \(6.25\) which will guarantee \((2\log(3), 10^{-10})\)-differential privacy.\footnote{\(\dfrac{1}{2} \epsilon^2\)-concentrated differential privacy implies \(\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)\)-differential privacy (Bun and Steinke 2016)}
+in probability. For our comparison, we will set \(\delta = 10^{-10}\) which
+is the value the U.S. Census uses. Finally, setting the scale parameter in the discrete Guassian
+distribution to \(\sigma = 6.32\) will guarantee \((2\log(3), 10^{-10})\)-differential privacy.\footnote{\(\dfrac{1}{2} \epsilon^2\)-concentrated differential privacy implies \(\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)\)-differential privacy (Bun and Steinke 2016)}
 
 The table below on the right represents a hypothetical data protected using a discrete
 Gaussian mechanism.
@@ -744,7 +744,7 @@ st_f <- function(xi, sdp, i) {
 
 \begin{verbatim}
 priv_f <- function(sdp, sx) {
-  sum(dapper::ddnorm(sdp - sx, mu = 0, sigma = 6.25, log = TRUE))
+  sum(dapper::ddnorm(sdp - sx, mu = 0, sigma = 6.32, log = TRUE))
 }
 \end{verbatim}
 \end{enumerate}
@@ -759,10 +759,10 @@ summary(dp_out)
 #> # A tibble: 4 x 10
 #>   variable  mean median     sd    mad     q5   q95  rhat ess_bulk ess_tail
 #>   <chr>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
-#> 1 pi_11    0.315  0.313 0.0266 0.0269 0.273  0.360  1.00     660.     684.
-#> 2 pi_01    0.286  0.285 0.0267 0.0269 0.243  0.329  1.00     611.     622.
-#> 3 pi_10    0.107  0.106 0.0197 0.0200 0.0767 0.141  1.00     428.     737.
-#> 4 pi_00    0.292  0.292 0.0262 0.0261 0.251  0.339  1.00     666.     867.
+#> 1 pi_11    0.315  0.313 0.0267 0.0271 0.273  0.360  1.00     658.     594.
+#> 2 pi_01    0.286  0.285 0.0268 0.0270 0.243  0.330  1.00     611.     724.
+#> 3 pi_10    0.107  0.106 0.0198 0.0197 0.0767 0.141  1.00     422.     768.
+#> 4 pi_00    0.292  0.292 0.0267 0.0265 0.250  0.338  1.00     650.     813.
 \end{verbatim}
 
 Figure \ref{fig:post-or-compare-dg} juxtaposes the private posterior under the
@@ -1147,7 +1147,7 @@ To improve \texttt{dapper}, future work could aim to relax some of these require
 \hypertarget{refs}{}
 \begin{CSLReferences}{1}{0}
 \leavevmode\vadjust pre{\hypertarget{ref-Abowd2018}{}}%
-Abowd, John M. 2018. {``The u.s. Census Bureau Adopts Differential Privacy.''} In \emph{Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery \&Amp; Data Mining}. KDD '18. ACM. \url{https://doi.org/10.1145/3219819.3226070}.
+Abowd, John M. 2018. {``The {U}.{S}. Census {B}ureau Adopts Differential Privacy.''} In \emph{Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery \&Amp; Data Mining}. KDD '18. ACM. \url{https://doi.org/10.1145/3219819.3226070}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Andrieu2009}{}}%
 Andrieu, Christophe, and Gareth O. Roberts. 2009. {``The Pseudo-Marginal Approach for Efficient Monte Carlo Computations.''} \emph{The Annals of Statistics} 37 (2). \url{https://doi.org/10.1214/07-aos574}.
