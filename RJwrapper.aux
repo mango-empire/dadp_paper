@@ -14,40 +14,44 @@
 \newlabel{methodology}{{2.3}{3}{Methodology}{section.2.3}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {2.4}The Structure of dapper}{3}{section.2.4}\protected@file@percent }
 \newlabel{the-structure-of-dapper}{{2.4}{3}{The Structure of dapper}{section.2.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.1}Privacy Model}{3}{subsection.2.4.1}\protected@file@percent }
-\newlabel{privacy-model}{{2.4.1}{3}{Privacy Model}{subsection.2.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.1}Privacy Model}{4}{subsection.2.4.1}\protected@file@percent }
+\newlabel{privacy-model}{{2.4.1}{4}{Privacy Model}{subsection.2.4.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.4.2}Sampling}{4}{subsection.2.4.2}\protected@file@percent }
 \newlabel{sampling}{{2.4.2}{4}{Sampling}{subsection.2.4.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.4.3}Privacy Mechanisms for Count Data}{5}{subsection.2.4.3}\protected@file@percent }
 \newlabel{privacy-mechanisms-for-count-data}{{2.4.3}{5}{Privacy Mechanisms for Count Data}{subsection.2.4.3}{}}
+\newlabel{eq:dgauss}{{1}{5}{Privacy Mechanisms for Count Data}{equation.2.4.1}{}}
+\newlabel{eq:dlaplace}{{2}{5}{Privacy Mechanisms for Count Data}{equation.2.4.2}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {2.5}Examples}{5}{section.2.5}\protected@file@percent }
 \newlabel{examples}{{2.5}{5}{Examples}{section.2.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.5.1}Example 1: 2x2 Contingency Table (Randomized Response)}{5}{subsection.2.5.1}\protected@file@percent }
 \newlabel{example-1-2x2-contingency-table-randomized-response}{{2.5.1}{5}{Example 1: 2x2 Contingency Table (Randomized Response)}{subsection.2.5.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces The table on the left shows the confidential admissions data and the right show the perturbed data as a result of applying the response mechanism.}}{6}{table.caption.2}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces (Example 1) trace plots.}}{8}{figure.caption.3}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
 \newlabel{fig:trace-plot}{{1}{8}{(Example 1) trace plots}{figure.caption.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces (Example 1) posterior density estimate for the odds ratio using 16,000 MCMC draws.}}{8}{figure.caption.4}\protected@file@percent }
-\newlabel{fig:post-or-density}{{2}{8}{(Example 1) posterior density estimate for the odds ratio using 16,000 MCMC draws}{figure.caption.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces (Example 1) Posterior distributions (cyan) of the odds ratio (admission of males vs. females) using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference using dapper which takes into account the privacy mechanism; Right panel: naive Bayesian inference treating the noisy data as noise-free. Red distribution in both panels reflect the true posterior distribution if the analysis were to be conducted on the confidential data.}}{9}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:post-or-compare}{{3}{9}{(Example 1) Posterior distributions (cyan) of the odds ratio (admission of males vs. females) using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference using dapper which takes into account the privacy mechanism; Right panel: naive Bayesian inference treating the noisy data as noise-free. Red distribution in both panels reflect the true posterior distribution if the analysis were to be conducted on the confidential data}{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.2}Example 2: 2x2 Contingency Table (Discrete Gaussian)}{9}{subsection.2.5.2}\protected@file@percent }
-\newlabel{example-2-2x2-contingency-table-discrete-gaussian}{{2.5.2}{9}{Example 2: 2x2 Contingency Table (Discrete Gaussian)}{subsection.2.5.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.3}Example 3: Linear Regression}{10}{subsection.2.5.3}\protected@file@percent }
-\newlabel{example-3-linear-regression}{{2.5.3}{10}{Example 3: Linear Regression}{subsection.2.5.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces (Example 2) posterior density estimate for the odds ratio using 1,000 MCMC draws.}}{11}{figure.caption.7}\protected@file@percent }
-\newlabel{fig:post-or-density-dg}{{4}{11}{(Example 2) posterior density estimate for the odds ratio using 1,000 MCMC draws}{figure.caption.7}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces (Example 2) comparison between using dapper and a naive Bayesian anaylsis on the noise infused data and the original confidential data.}}{11}{figure.caption.8}\protected@file@percent }
-\newlabel{fig:post-or-compare-dg}{{5}{11}{(Example 2) comparison between using dapper and a naive Bayesian anaylsis on the noise infused data and the original confidential data}{figure.caption.8}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces (Example 3) comparison between dapper and a naive approach that ignores the privacy mechanism. The dashed lines are the true coefficient values.}}{14}{figure.caption.9}\protected@file@percent }
-\newlabel{fig:regression-compare}{{6}{14}{(Example 3) comparison between dapper and a naive approach that ignores the privacy mechanism. The dashed lines are the true coefficient values}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.2}Example 2: 2x2 Contingency Table (Discrete Gaussian)}{8}{subsection.2.5.2}\protected@file@percent }
+\newlabel{example-2-2x2-contingency-table-discrete-gaussian}{{2.5.2}{8}{Example 2: 2x2 Contingency Table (Discrete Gaussian)}{subsection.2.5.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces (Example 1) posterior density estimate for the odds ratio using 5,000 MCMC draws.}}{9}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:post-or-density}{{2}{9}{(Example 1) posterior density estimate for the odds ratio using 5,000 MCMC draws}{figure.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces (Example 1) Posterior distributions (red) of the odds ratio (admission of males vs. females) using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference using dapper which takes into account the privacy mechanism; Right panel: naive Bayesian inference treating the noisy data as noise-free. Blue distribution in both panels reflect the true posterior distribution if the analysis were to be conducted on the confidential data.}}{9}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:post-or-compare}{{3}{9}{(Example 1) Posterior distributions (red) of the odds ratio (admission of males vs. females) using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference using dapper which takes into account the privacy mechanism; Right panel: naive Bayesian inference treating the noisy data as noise-free. Blue distribution in both panels reflect the true posterior distribution if the analysis were to be conducted on the confidential data}{figure.caption.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces The table on the left shows the confidential admissions data and the right show the perturbed data as a result of applying the discrete Gaussian mechanism with $\sigma = 6.32$.}}{10}{table.caption.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces (Example 2) Private posterior density estimate for the odds ratio under random response (dashed) and discrete Gaussian (solid). Density plots are made using 5,000 and 1,000 MCMC draws for the random response and discrete Gaussian respectively.}}{11}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:post-or-density-dg}{{4}{11}{(Example 2) Private posterior density estimate for the odds ratio under random response (dashed) and discrete Gaussian (solid). Density plots are made using 5,000 and 1,000 MCMC draws for the random response and discrete Gaussian respectively}{figure.caption.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces (Example 2) Posterior distributions (red) of the odds ratio (admission of males vs. females) using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference using dapper which takes into account the privacy mechanism; Right panel: naive Bayesian inference treating the noisy data as noise-free. Blue distribution in both panels reflect the true posterior distribution if the analysis were to be conducted on the confidential data.}}{11}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:post-or-compare-dg}{{5}{11}{(Example 2) Posterior distributions (red) of the odds ratio (admission of males vs. females) using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference using dapper which takes into account the privacy mechanism; Right panel: naive Bayesian inference treating the noisy data as noise-free. Blue distribution in both panels reflect the true posterior distribution if the analysis were to be conducted on the confidential data}{figure.caption.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.3}Example 3: Linear Regression}{12}{subsection.2.5.3}\protected@file@percent }
+\newlabel{example-3-linear-regression}{{2.5.3}{12}{Example 3: Linear Regression}{subsection.2.5.3}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {2.6}Discussion on Mixing and Privacy Loss Budget}{14}{section.2.6}\protected@file@percent }
 \newlabel{discussion-on-mixing-and-privacy-loss-budget}{{2.6}{14}{Discussion on Mixing and Privacy Loss Budget}{section.2.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces (Example 3) comparison for example between using dapper on the noisy data set and a standard Bayesian analysis on the confidential data set.}}{15}{figure.caption.10}\protected@file@percent }
-\newlabel{fig:regression-data-compare}{{7}{15}{(Example 3) comparison for example between using dapper on the noisy data set and a standard Bayesian analysis on the confidential data set}{figure.caption.10}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces (Example 3) The red densities represent the posterior of the coefficient using the confidential data. The blue densities are the posterior distributions that would arise from treating the noise infused data as noise-free. The dashed lines are the true coefficient values.}}{15}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:regression-compare}{{6}{15}{(Example 3) The red densities represent the posterior of the coefficient using the confidential data. The blue densities are the posterior distributions that would arise from treating the noise infused data as noise-free. The dashed lines are the true coefficient values}{figure.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces (Example 3) The red densities represent the posterior of the coefficient using the confidential data. The blue densities are the true private posterior distributions. The dashed lines are the true coefficient values.}}{15}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:regression-data-compare}{{7}{15}{(Example 3) The red densities represent the posterior of the coefficient using the confidential data. The blue densities are the true private posterior distributions. The dashed lines are the true coefficient values}{figure.caption.10}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {2.7}Summary}{16}{section.2.7}\protected@file@percent }
 \newlabel{summary}{{2.7}{16}{Summary}{section.2.7}{}}
-\newlabel{references}{{2.7}{16}{}{section.2.7}{}}
-\@writefile{toc}{\contentsline {section}{References}{16}{section.2.7}\protected@file@percent }
+\newlabel{references}{{2.7}{17}{}{section.2.7}{}}
+\@writefile{toc}{\contentsline {section}{References}{17}{section.2.7}\protected@file@percent }
 \ttl@finishall
-\gdef \@abspage@last{17}
+\gdef \@abspage@last{18}

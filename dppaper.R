@@ -43,13 +43,12 @@ sdp[ri] <- ra
 prv_df <- tibble(sex = sdp[1:400], status = sdp[401:800])
 
 
-## ----echo = FALSE-------------------------------------------------------------
-tmp1_df <- cnf_df %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
-                             status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
-tmp2_df <- prv_df %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
-                             status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
-kbl(list(table(tmp1_df), table(tmp2_df)), booktabs = TRUE) %>%
-  kable_styling(position = 'center', latex_options = c("hold_position"))
+## ----echo = FALSE, eval=knitr::is_html_output()-------------------------------
+#> tmp1_df <- cnf_df %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
+#>                              status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
+#> tmp2_df <- prv_df %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
+#>                              status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
+#> kbl(list(table(tmp1_df), table(tmp2_df)), caption = 'The table on the left shows the confidential admissions data and the right show the perturbed data as a result of applying the response mechanism.') %>% kable_styling(position = 'center')
 
 
 ## ----echo = TRUE--------------------------------------------------------------
@@ -114,7 +113,7 @@ priv_f <- function(sdp, sx) {
 #> sdp[ri] <- ra
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ----echo = TRUE, cache = TRUE------------------------------------------------
 library(dapper)
 library(furrr)
 plan(multisession, workers = 4)
@@ -149,25 +148,26 @@ dp_out <- dapper_sample(dmod,
 #>                   init_par = rep(.25,4))
 
 
-## ----echo = FALSE-------------------------------------------------------------
+## ----echo = FALSE, cache = TRUE-----------------------------------------------
 summary(dp_out)
 
 
-## ----trace-plot,  fig.cap="(Example 1) trace plots.", fig.height=3, fig.width=5, fig.align='center'----
+## ----trace-plot,  fig.cap="(Example 1) trace plots.", fig.height=3, fig.width=5, fig.align='center', cache = TRUE----
 plot(dp_out)
 
 
-## ----post-or-density, fig.cap="(Example 1) posterior density estimate for the odds ratio using 16,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
+## ----post-or-density, fig.cap="(Example 1) posterior density estimate for the odds ratio using 5,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
 tv <- dp_out$chain
 or <- as.numeric((tv[,1] * tv[,4]) / (tv[,2] * tv[,3]))
 ggplot(tibble(x=or), aes(x)) + geom_density() + xlim(0,10) + xlab("Odds Ratio")
 
 
 ## ----post-or-compare, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "(Example 1) Posterior distributions (cyan) of the odds ratio (admission of males vs. females)
+caption <- "(Example 1) Posterior distributions (red) of the odds ratio 
+(admission of males vs. females)
 using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference
 using dapper which takes into account the privacy mechanism; Right panel:
-naive Bayesian inference treating the noisy data as noise-free. Red
+naive Bayesian inference treating the noisy data as noise-free. Blue
 distribution in both panels reflect the true posterior distribution
 if the analysis were to be conducted on the confidential data."
 
@@ -215,17 +215,17 @@ set.seed(1)
 ix <- sample(1:nrow(cnf_df), 400, replace = FALSE)
 rd <- dapper::rdnorm(4, 0, 6.32)
 
-
-## ----echo = FALSE-------------------------------------------------------------
 tmp_df <- cnf_df[ix,] %>% mutate(sex = case_match(sex, 1 ~ "Male", 0 ~ "Female"),
                              status = case_match(status, 1 ~ "Admitted", 0 ~ "Rejected"))
 
 adm_cnf <- table(tmp_df)
 adm_prv <- adm_cnf + rd
 
-kbl(list(adm_cnf, adm_prv), booktabs = TRUE) %>%
-  kable_styling(position = 'center', 
-                latex_options = c("hold_position"))
+
+## ----echo = FALSE, eval=knitr::is_html_output()-------------------------------
+#> 
+#> kbl(list(adm_cnf, adm_prv), booktabs = TRUE, caption = 'The table on the left shows the confidential admissions data and the right show the perturbed data as a result of applying the discrete Guassian mechanism with the scale parameter set to 6.32.') %>%
+#>   kable_styling(position = 'center')
 
 
 ## ----echo = TRUE--------------------------------------------------------------
@@ -248,7 +248,7 @@ priv_f <- function(sdp, sx) {
 }
 
 
-## ----echo = FALSE-------------------------------------------------------------
+## ----echo = FALSE, cache = TRUE-----------------------------------------------
 library(dapper)
 
 dmod <- new_privacy(post_f   = post_f,
@@ -266,25 +266,30 @@ dp_out <- dapper_sample(dmod,
                   init_par = rep(.25,4))
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ----echo = TRUE, cache = TRUE------------------------------------------------
 summary(dp_out)
 
 
-## ----post-or-density-dg, fig.cap="(Example 2) posterior density estimate for the odds ratio using 1,000 MCMC draws.",  fig.height=3, fig.width=5, fig.align='center'----
+## ----post-or-density-dg, fig.cap="(Example 2) Private posterior density estimate for the odds ratio under random response (dashed) and discrete Gaussian (solid). Density plots are made using 5,000 and 1,000 MCMC draws for the random response and discrete Gaussian respectively.",  fig.height=3, fig.width=5, fig.align='center', cache = TRUE----
 tv2 <- dp_out$chain
 or2 <- as.numeric((tv2[,1] * tv2[,4]) / (tv2[,2] * tv2[,3]))
-ggplot(tibble(x=or2), aes(x, linetype = "dotdash")) + geom_density() + 
-  geom_density(data = tibble(x=or), aes(x, linetype = "solid")) +
-  xlim(0,10) + xlab("Odds Ratio") + 
-  scale_linetype_discrete(name="Privacy", 
-                          breaks=c(1, 2), 
-                          labels = c("group1", "group2"))
-  
+
+df_ex2_or <- tibble(odds_ratio = c(or, or2), Mechanism = c(rep("Random Response", length(or)), rep("Discrete Guassian", length(or2))))
+
+ggplot(df_ex2_or) + 
+  stat_density(aes(x=odds_ratio, linetype=Mechanism),
+  geom="line",position="identity") + 
+  xlim(0,10)
 
 
 ## ----post-or-compare-dg, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "(Example 2) comparison between using dapper and a naive Bayesian anaylsis on the
-noise infused data and the original confidential data." 
+caption <- "(Example 2) Posterior distributions (red) of the odds ratio 
+(admission of males vs. females)
+using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference
+using dapper which takes into account the privacy mechanism; Right panel:
+naive Bayesian inference treating the noisy data as noise-free. Blue
+distribution in both panels reflect the true posterior distribution
+if the analysis were to be conducted on the confidential data."
 
 table_post <- function(x) {
     t1 <- rgamma(4, x + 1, 1)
@@ -411,7 +416,7 @@ dp_out <- dapper_sample(dmod,
 
 
 
-## ----echo = TRUE--------------------------------------------------------------
+## ----echo = TRUE, cache = TRUE------------------------------------------------
 summary(dp_out)
 
 
@@ -435,8 +440,9 @@ sigma_hat <- 2^2 * s3
 
 
 ## ----regression-compare, fig.cap = caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "(Example 3) comparison between dapper and a naive approach that ignores the privacy mechanism. 
-The dashed lines are the true coefficient values."
+caption <- "(Example 3) The red densities represent
+the posterior of the coefficient using the confidential data. The blue densities are the 
+posterior distributions that would arise from treating the noise infused data as noise-free. The dashed lines are the true coefficient values."
 
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
@@ -469,8 +475,9 @@ rbind(coef_df, coef_post) %>%
 
 
 ## ----regression-data-compare, fig.cap=caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "(Example 3) comparison for example between using dapper on the noisy data set and a standard
-Bayesian analysis on the confidential data set."
+caption <- "(Example 3) The red densities represent
+the posterior of the coefficient using the confidential data. The blue densities are the 
+true private posterior distributions. The dashed lines are the true coefficient values."
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
   pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%

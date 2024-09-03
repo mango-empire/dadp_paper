@@ -13,36 +13,34 @@ This paper serves as a reference and introduction on using the dapper R package.
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
-Differential privacy provides a rigorous framework for protecting
+Differential privacy (DP) provides a rigorous framework for protecting
 confidential information from re-identification attacks by using random
 noise to obscure the connection between the individual and data (Dwork et al. 2006).
 Its development was spurred on by successful attacks
 on anonymized data sets containing sensitive personal information. Prior
 to differential privacy, anonymization schemes did not always have sound
-theoretical guarantees despite appearing adequate. In one influential incident,
-a privacy researcher was able use a publicly released medical data set
-to deduce William Weld, then Governor of Massachusetts, medical diagnoses and prescriptions (Barth-Jones 2012).
+theoretical guarantees despite appearing adequate.
 Differential privacy marks a leap forward in the science of privacy by putting
 it on rigorous footing and away from past ad hoc and obscure notions of privacy.
 Several recent high profile
 implementations of differential privacy include Apple (Tang et al. 2017), Google (Erlingsson, Pihur, and Korolova 2014), Microsoft (Ding, Kulkarni, and Yekhanin 2017), and the
 U.S. Census Bureau (Abowd 2018).
 
-Many data sets that are a target for deploying differential privacy contain
+Many data sets amenable to differential privacy contain
 valuable information that stake holders are still interested in
 learning about. However, the noise introduced by differential privacy
 changes the calculus of inference. As an example,
 we can implement differential privacy for tabular data by directly
-adding independent, random error to each cell; the amount and type of which is determined by theory. When we fit a regression model to the noise infused data,
+adding independent, random error to each cell; the amount and type of which is determined by DP theory. When we fit a regression model to the noise infused data,
 this will correspond to having measurement errors
 in the covariates. This, unfortunately, violates the assumptions of most statistical models.
 In the presence of such errors, standard estimators can exhibit significant bias and incorrect uncertainty quantification
 (Gong 2022; Karwa, Kifer, and Slavković 2015; Wang et al. 2018).
 These issues are a serious concern for researchers (Santos-Lozada, Howard, and Verdery 2020; Kenny et al. 2021; Winkler et al. 2021).
-Therefore, developing privacy-aware statistical workflows is necessary in order
+Therefore, developing privacy-aware statistical workflows are necessary in order
 for science and privacy to coexist.
 
-Unfortunately, making the necessary adjustments poses formidable mathematical
+Unfortunately making the necessary adjustments poses formidable mathematical
 challenges (Williams and Mcsherry 2010), even for seemingly simple models like linear regression.
 The difficulty lies in the marginal likelihood that results from correctly accounting for the injected
 privacy noise. This function is often analytically intractable and as a result,
@@ -50,13 +48,13 @@ it is difficult or impossible to apply traditional statistical methods
 to derive estimators. In particular, the marginal likelihood can involve a complex
 integral where it is not even possible to evaluate the likelihood
 at a point. Tackling the problem by approximating the likelihood can be computationally
-unfeasible since the integral is usually high dimensional.
+infeasible since the integral is usually high dimensional.
 Few tools are available to researchers to address these issues,
 and their absence is a serious barrier to the wider adoption
 of differential privacy.
 
-The \texttt{dapper} package provides a set of tools for conducting
-privacy-aware Bayesian inference. It serves as a user-friendly R
+The \CRANpkg{dapper} package provides a set of tools for conducting
+privacy-aware Bayesian inference. It serves as a R
 interface for the data augmentation framework proposed by Ju et al. (2022),
 allowing existing Bayesian models to be extended to handle
 noise infused data. The package is designed to integrate well with existing Bayesian workflows;
@@ -66,18 +64,19 @@ through the specification of four independent modules.
 The benefits are twofold: several privacy mechanisms --- these can even be from different formal privacy frameworks ---
 can be compared easily by only swapping out relevant modules. And privacy mechanisms
 that have non-smooth transformations resulting in aforementioned intractable likelihoods
-(see example 3) can be incorporated with little work. As a result,
-\texttt{dapper} may prove particularly useful to those engaged in studying the privacy utility trade-off or dealing with a privacy mechanism that involves multiple transformations.
+(see example 3 which involves clamping) can be incorporated with little work. As a result,
+\CRANpkg{dapper} may prove particularly useful to those engaged in studying the privacy utility trade-off or dealing with a privacy mechanism that involves multiple transformations.
 
 The rest of this article is organized as follows:
 Section 2 covers the necessary background to understand the mathematical notation
 and ideas used throughout the paper. Section 3 goes over the main algorithm without
-going into mathematical detail; for specifics see Ju et al. (2022). Section 4 provides
-an overview of the dapper package and discusses important implementation details.
-Section 5 contains two examples of how one might use the package to analyze the
+going into mathematical detail-- for specifics see Ju et al. (2022). Section 4 provides
+an overview of the \CRANpkg{dapper} package and discusses important implementation details.
+Section 5 contains three examples of how one might use the package to analyze the
 impact of adding noise for privacy. The first example goes over a typical
-odds ratio analysis for a \(2 \times 2\) table and the second example
-covers a linear regression model.
+odds ratio analysis for a \(2 \times 2\) table, the second example highlights
+the modular nature of \CRANpkg{dapper} and reanalyzes the first example under a different
+privacy scheme, and the third example covers a linear regression model.
 
 \hypertarget{background}{%
 \section{Background}\label{background}}
@@ -114,8 +113,8 @@ dissemination based privacy approaches.
 \subsection{Differential Privacy}\label{differential-privacy}}
 
 While a summary statistic can already partially anonymize data, it is still
-possible to deduce information about an individual entry depending on
-the distribution of \(x\). Differential privacy (DP) offers a more principled
+possible to deduce information about an individual depending on how \(x\) is distributed.
+Differential privacy offers a more principled
 approach by introducing randomness in a way that the output distribution
 does not change much when one individual's data is changed. A common approach -- and the one dapper
 is primarily designed to address--
@@ -129,7 +128,7 @@ noise to add.
 Most importantly, for the analyst, the specification of the differentially private noise mechanism can
 be made available without compromising privacy and incorporated into subsequent analyses.
 
-The \texttt{dapper} package provides a very flexible framework that can accommodate
+The \CRANpkg{dapper} package provides a very flexible framework that can accommodate
 the many different flavors a differential privacy; the main requirement being that
 the DP mechanism has a closed-form density.
 The section on privacy mechanisms provides details about utility functions for working with dapper
@@ -145,14 +144,14 @@ statistic, we write \(s_{dp} \sim \eta(\cdot \mid x)\). Here,
 \(\eta\) is a known noise infusion process designed to meet a certain property: The privacy mechanism
 \(\eta\) is said to be \(\epsilon\)-differentially private (Dwork et al. 2006) if for all values of
 \(s_{dp}\), and all ``neighboring'' databases \((x,x') \in \mathcal{X}^n \times \mathcal{X}^n\) differing
-by one record (denoted by \(d(x,x') \leq 1\)), the probability ratio is bounded:
+by one record (specifically we consider \(d(x,x') \leq 1\) where \(d\) is the Hamming distance), the probability ratio is bounded:
 \[
 \dfrac{\eta(s_{dp} \mid x)}{\eta(s_{dp} \mid x')} \leq \exp(\epsilon), \quad \epsilon > 0.
 \]
 
 The differential privacy framework is used to create and verify privacy
 mechanisms. One such mechanism is the \emph{Laplace mechanism}. It works by
-taking a deterministic statistic \(s: X \mapsto \mathbb{R}^m\) and constructs
+taking a deterministic statistic \(s: \mathcal{X} \mapsto \mathbb{R}^m\) and constructs
 the privatized statistic \(s_{dp} := s(x) + u\) where \(u\) is a \(m\)-dimensional
 vector of i.i.d. Laplace random variables. The amount of noise, \(u\), is scaled
 proportionally to the \emph{global sensitivity} (or just sensitivity) of the statistic \(s\).
@@ -160,11 +159,21 @@ We define the sensitivity of a statistic \(s\) as
 \(\Delta (s) := \max_{(x,x') \in \mathcal{X}^n \times \mathcal{X}^n; d(x,x') \leq 1} \|s(x) - s(x')\|\).
 If we draw
 each \(u_i \sim \text{Lap}(\Delta (s) / \epsilon)\), we can show \(s_{dp}\) is \(\epsilon\)-differentially private
-for the the Laplace mechanism. Example 2, will cover an
+for the the Laplace mechanism. Example 3, will cover an
 application of the Laplace mechanism to linear regression.
 Other common noise adding mechanisms include the Gaussian and the
 discrete Gaussian mechanisms, which also add noise scaled to the sensitivity;
-however these mechanisms satisfy a different privacy criteria called \emph{zero concentrated differential privacy} (Bun and Steinke 2016).
+however these mechanisms satisfy a different privacy criteria called \emph{zero concentrated differential privacy} (zCDP) (Bun and Steinke 2016). \footnote{Example 2 will consider another privacy framework called \((\epsilon, \delta)\)-differential privacy which
+  is an extension of \(\epsilon\)-differential privacy to the case where the ratio bound
+  can fail with probability governed by \(\delta\). More specifically, we say
+  a privacy mechanism, \(\mathcal{M}\), satisfies \((\epsilon, \delta)\)-differential privacy if
+  for all neighboring databases where \(d(x,x') = 1\), we have
+  \begin{align*}
+  P(\mathcal{M(x)} \in S) \leq \epsilon P(\mathcal{M(x')} \in S) + \delta
+  \end{align*}
+  for any \(S \subseteq \text{Range}(\mathcal{M})\) and \(\delta \in [0,1]\). Note
+  setting \(\delta = 0\) gives us back the pure \(\epsilon\)-differential privacy
+  condition.}
 
 \hypertarget{methodology}{%
 \section{Methodology}\label{methodology}}
@@ -172,21 +181,21 @@ however these mechanisms satisfy a different privacy criteria called \emph{zero 
 Given privatized data, \(s_{dp}\), the goal of Bayesian inference is to sample from the
 posterior distribution \(p(\theta \mid s_{dp})\). Since the observed likelihood,
 \(p(s_{dp} \mid \theta)\), often has no simple closed form expression (Williams and Mcsherry 2010), most standard approaches
-do not apply. To conduct privacy-aware Bayesian inference, the dapper package implements
+do not apply. To conduct privacy-aware Bayesian inference, the \CRANpkg{dapper} package implements
 the data augmentation algorithm of Ju et al. (2022) which allows us to sample from \(p(\theta \mid s_{dp})\)
-without requiring a closed-form expression proportional to \(p(s_{dp} \mid \theta)\).
+without knowing a closed-form expression proportional to \(p(s_{dp} \mid \theta)\).
 The algorithm accomplishes this by considering the joint distribution \(p(\theta, x \mid s_{dp})\) and
 alternates sampling between the two distributions \(p(\theta \mid x, s_{dp})\)
 and \(p(x \mid \theta, s_{dp})\).
 
 Since \(s_{dp}\) is derived from \(x\), we have \(p(\theta \mid x, s_{dp}) = p(\theta \mid x)\) which
-is just the usual posterior distribution given the confidential data \(x\). The \texttt{dapper}
+is just the usual posterior distribution given the confidential data \(x\). The \CRANpkg{dapper}
 package assumes the user has access to a sampler for \(p(\theta \mid x)\). This can
 come from any R package such as \CRANpkg{fmcmc} or constructed analytically via posterior conjugacy.
 For the second distribution, \(p(x \mid \theta, s_{dp})\) may
-only be known up to a constant. The dapper package samples from this distribution by
-running a Gibbs-like sampler. Each of the \(n\) components of \(x\) is individually
-updated. However unlike the standard Gibbs sampler, each component is updated
+only be known up to a constant. The \CRANpkg{dapper} package samples from this distribution by
+running a Gibbs-like sampler. Like a Gibbs sampler, each of the \(n\) components of \(x\) is individually
+updated. However unlike a Gibbs sampler, each component is updated
 using a Metropolis-Hastings algorithm. This method is sometimes called the Metropolis-within-Gibbs sampler (Robert and Casella 2004).
 
 In some cases, sampling from \(p(x \mid \theta, s_{dp})\) can be made more efficient
@@ -233,7 +242,7 @@ results on ergodicity can be found in Ju et al. (2022).
 \hypertarget{the-structure-of-dapper}{%
 \section{The Structure of dapper}\label{the-structure-of-dapper}}
 
-The \texttt{dapper} package is structured around the two functions \texttt{dapper\_sample()} and
+The \CRANpkg{dapper} package is structured around the two functions \texttt{dapper\_sample()} and
 \texttt{new\_privacy()}. The function, \texttt{dapper\_sample()}, is used to generate MCMC draws from
 the private posterior. Targeting the correct private posterior requires
 a large set of inputs. In order to simplify the process of setting up the
@@ -279,8 +288,8 @@ must adhere to which are described below:
   The easiest, bug-free way to construct \texttt{post\_f()} is to use a conjugate prior. However,
   this function can also be constructed by wrapping a MCMC sampler generated from other R packages
   (e.g.~\CRANpkg{rstan}, \CRANpkg{fmcmc}, \CRANpkg{adaptMCMC}). Using this approach requires caution;
-  \texttt{dapper} requires a valid draw and many sampler implementations violate
-  this requirement. This is especially true for adaptive samplers like \texttt{rstan}'s HMC where
+  \CRANpkg{dapper} requires a valid draw and many sampler implementations violate
+  this requirement. This is especially true for adaptive samplers like \CRANpkg{rstan}'s HMC where
   the first few draws are used to initialize the gradient and do not necessarily correspond to draws from a valid MCMC chain.
   Additionally, some packages like \CRANpkg{mcmc} will generate samplers that may be slow
   due to a large initialization overhead. For these
@@ -293,7 +302,7 @@ must adhere to which are described below:
   are numeric vectors or matrices representing the
   the value of \(s_{dp}\) and \(s(x, s_{dp})\) respectively.
   The arguments must appear in the exact order with the same variables names as defined above.
-  Finally, the return value of \texttt{priv\_f()} must be a numeric vector of length one.
+  Finally, the return value of \texttt{priv\_f()} must be a scalar value.
 \item
   \texttt{st\_f()} is a function which calculates a summary statistic. It
   must be defined using the three arguments named \texttt{i}, \texttt{xi} and \texttt{sdp}
@@ -332,7 +341,8 @@ not return a numeric matrix.
 
 The optional arguments are the number of MCMC draws (\texttt{niter}), the
 burn in period (\texttt{warmup}), number of chains (\texttt{chains}) and character
-vector that names the parameters. Running multiple chains can be done in parallel
+vector that names the parameters. Running the chain without
+any warm up can be done by setting the value to 0. Running multiple chains can be done in parallel
 using the \CRANpkg{furrr} package. Additionally, progress can be monitored
 using the \CRANpkg{progressr} package. Adhering to the design philosophy
 of the two packages, we leave the setup to the user so that they may
@@ -359,7 +369,7 @@ is a major driver behind the deployment and research of privatized
 count data, and these functions were created for census oriented
 researchers in mind.
 
-Pure \(\epsilon\)-differential privacy is a stringent requirement
+Pure \(\epsilon\)-differential privacy is a strong requirement
 that can lead to poor data utility. For this reason the U.S. Census uses
 zero concentrated differential privacy which is
 a weaker criteria. The \texttt{dapper} package implements probability mass and sampling functions
@@ -367,22 +377,20 @@ for the discrete Gaussian and discrete Laplace distributions (Canonne, Kamath, a
 are two potential mechanisms for deploying concentrated differential privacy,
 and both are, in fact, used in several current US Census data products (Labs 2022).
 
-The discrete Gaussian / Laplacian mechanism have probability mass functions given in the
-panel below.
-\[
-\begin{aligned}
-P[X = x] &= \dfrac{e^{-(x - \mu)^2/2\sigma^2}}{\sum_{y \in \mathbb{Z}} e^{-(x-\mu)^2/2\sigma^2}} \quad \text{(Discrete Gaussian)}\\
-P[X = x] &= \dfrac{e^{1/t} - 1}{e^{1/t} + 1} e^{-|x|/t} \quad \text{(Discrete Laplacian)}
-\end{aligned}
-\]
+Equations \eqref{eq:dgauss} and \eqref{eq:dlaplace} in the panel below give the
+probability mass functions for the discrete Gaussian and discrete Laplace distributions respectively.
+\begin{align}
+P[X = x] &= \dfrac{e^{-(x - \mu)^2/2\sigma^2}}{\sum_{y \in \mathbb{Z}} e^{-(x-\mu)^2/2\sigma^2}} \label{eq:dgauss}\\
+P[X = x] &= \dfrac{e^{1/t} - 1}{e^{1/t} + 1} e^{-|x|/t} \label{eq:dlaplace}
+\end{align}
 
-For both distributions \(x \in \mathbb{Z}\). The discrete Gaussian has
-two parameters \((\mu,\sigma)\) which govern the location and
-scale respectively. The functions \texttt{ddnorm} and \texttt{rdnorm} provide the
+The support of both distributions is the set of all integers. The discrete Gaussian has
+two parameters \((\mu,\sigma) \in \mathbb{R} \times \mathbb{R}^+\) which govern the location and
+scale respectively. On the other hand, the discrete Laplace only has the scale parameter \(t \in \mathbb{R}^+\). The functions \texttt{ddnorm} and \texttt{rdnorm} provide the
 density and sampling features for the discrete Gaussian distribution. The \texttt{ddnorm}
 function contains a calculation for the normalizing constant which is expensive. To
-speed up repeated execution, memoization is used via the \CRANpkg{memoise} package.\footnote{Memoization is
-  a programming technique used to cache repeated computations} Finally, the functions
+speed up repeated execution, an optional logical argument named \texttt{normalize} is provided. When set to \texttt{FALSE}, it forgoes calculating the normalizing constant, however the default value is
+\texttt{TRUE}. Finally, the functions
 \texttt{ddlaplace} and \texttt{rdlaplace} provide similar features for the discrete Laplace distribution.
 The implementations of these functions are not the safest and are meant to provide
 uses with a way to quickly explore the behavior of DP mechanisms.
@@ -421,6 +429,7 @@ Female & 74 & 102\\
 Male & 104 & 120\\
 \bottomrule
 \end{tabular}
+\caption{The table on the left shows the confidential admissions data and the right show the perturbed data as a result of applying the response mechanism.}
 \end{table}
 
 To see how the privacy mechanism works, we envision the record level data set as a \(N \times 2\) matrix with
@@ -458,10 +467,10 @@ latent_f <- function(theta) {
 }
 \end{verbatim}
 \item
-  \texttt{post\_f}: Given confidential data, we can derive the posterior analytically
+  \texttt{post\_f}: Given the confidential data, we can derive the posterior analytically
   using a Dirichlet prior. In this example, we use a flat prior which
-  corresponds to Dirichlet(1) distribution. A sample from the Dirichlet distribution
-  can be generated using random draws from the gamma distribution.
+  corresponds to Dirichlet(1) distribution. The code below generates samples from the Dirichlet distribution
+  using random draws from the gamma distribution.
 
 \begin{verbatim}
  post_f <- function(dmat, theta) {
@@ -482,7 +491,7 @@ latent_f <- function(theta) {
 \end{verbatim}
 \item
   \texttt{st\_f}: The private summary statistic \(s_{dp}\) can be written as a record additive
-  statistic using indicator functions. Let \(v_i\) be a binary vector of length \(2 \times 400\)
+  statistic using indicator functions. Let \(v_i\) be a binary vector of length \(800 = 2 \times 400\)
   where the entries with index \(i\) and \(400 + i\) are the only possible non zero entries.
   We let these two entries correspond to the sex and admission status response of
   the individual with record \(x_i\). With this construction we have \(s_{dp} = \sum_{i=1}^{400} v_i\).
@@ -621,7 +630,7 @@ with females being favored over males.
 
 }
 
-\caption{(Example 1) posterior density estimate for the odds ratio using 16,000 MCMC draws.}\label{fig:post-or-density}
+\caption{(Example 1) posterior density estimate for the odds ratio using 5,000 MCMC draws.}\label{fig:post-or-density}
 \end{figure}
 
 For comparison, we run a standard Bayesian analysis on the
@@ -645,10 +654,11 @@ uncertainty associated with the odds ratio estimate.
 
 }
 
-\caption{(Example 1) Posterior distributions (cyan) of the odds ratio (admission of males vs. females)
+\caption{(Example 1) Posterior distributions (red) of the odds ratio 
+(admission of males vs. females)
 using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference
 using dapper which takes into account the privacy mechanism; Right panel:
-naive Bayesian inference treating the noisy data as noise-free. Red
+naive Bayesian inference treating the noisy data as noise-free. Blue
 distribution in both panels reflect the true posterior distribution
 if the analysis were to be conducted on the confidential data.}\label{fig:post-or-compare}
 \end{figure}
@@ -656,19 +666,14 @@ if the analysis were to be conducted on the confidential data.}\label{fig:post-o
 \hypertarget{example-2-2x2-contingency-table-discrete-gaussian}{%
 \subsection{Example 2: 2x2 Contingency Table (Discrete Gaussian)}\label{example-2-2x2-contingency-table-discrete-gaussian}}
 
-To highlight the flexibility of \texttt{dapper} we reanalyze example 1
+To highlight the flexibility of \CRANpkg{dapper} we reanalyze example 1
 with a different privacy mechanism. Here we take inspiration from the 2020 U.S. Decennial Census,
-which is in the process of deploying a novel privacy protection system for count data.
-Because there are many users of Census data, a successful deployment requires
-a careful analysis of the privacy / utility trade-off and includes
-studying how different mechanisms and privacy parameters affect
-down stream analyses.
-
-One of the mechanisms used is the discrete Gaussian distribution.
+which deployed a novel privacy protection system for count data.
+One of the privacy mechanisms used is the discrete Gaussian distribution.
 In our admissions data example, this privacy mechanism works by injecting
-noise into the the total cell counts given in the 2x2 table. The
+noise into the total cell counts given in the 2x2 table. The
 randomized response scheme, in contrast, injects noise at the record level.
-The \texttt{dapper} package accommodates both the randomized response and
+The \CRANpkg{dapper} package accommodates both the randomized response and
 the discrete Gaussian mechanisms, allowing us to compare the impact
 of the two approaches.
 
@@ -678,11 +683,9 @@ a direct comparison. However, there is a direct relationship between
 zCDP and \((\epsilon, \delta)\)-differential privacy. The latter framework
 is a relaxed version of \(\epsilon\)-DP where the ratio bound only holds
 in probability. For our comparison, we will set \(\delta = 10^{-10}\) which
-is the value the U.S. Census uses. Finally, setting the scale parameter in the discrete Guassian
+is the value the U.S. Census Bureau uses.
+For this value of \(\delta\), setting the scale parameter in the discrete Guassian
 distribution to \(\sigma = 6.32\) will guarantee \((2\log(3), 10^{-10})\)-differential privacy.\footnote{\(\dfrac{1}{2} \epsilon^2\)-concentrated differential privacy implies \(\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)\)-differential privacy (Bun and Steinke 2016)}
-
-The table below on the right represents a hypothetical data protected using a discrete
-Gaussian mechanism.
 
 \begin{table}[!h]
 \centering
@@ -704,9 +707,10 @@ Female & 47 & 110\\
 Male & 110 & 131\\
 \bottomrule
 \end{tabular}
+\caption{The table on the left shows the confidential admissions data and the right show the perturbed data as a result of applying the discrete Gaussian mechanism with $\sigma = 6.32$.}
 \end{table}
 
-For the public, the US Census only releases aggregate cell counts along with
+For the public, the U.S. Census Bureau only releases aggregate cell counts along with
 the true total count of said cells. In our example,
 this means the Census would have released the right hand
 table along with the fact that \(N = 400\) in the original
@@ -714,7 +718,7 @@ table. Thus, it natural to let \(s_{dp}\) be the vector of cell counts. As in
 example 1, we imagine the latent database as a
 \(400 \times 2\) binary matrix. Below
 we describe the process for analyzing the privatized
-data using \texttt{dapper}. Since the latent process
+data using \CRANpkg{dapper}. Since the latent process
 and posterior are the same as example 1, we only describe
 how to construct \texttt{st\_f} and \texttt{priv\_f}.
 
@@ -765,7 +769,7 @@ summary(dp_out)
 #> 4 pi_00    0.292  0.292 0.0267 0.0265 0.250  0.338  1.00     650.     813.
 \end{verbatim}
 
-Figure \ref{fig:post-or-compare-dg} juxtaposes the private posterior under the
+Figure \ref{fig:post-or-density-dg} juxtaposes the private posterior under the
 randomized(dashed line) and discrete Gaussian (solid line) mechanism. Comparing
 the two suggest using discrete Guassian noise leads to slightly less
 posterior uncertainty and a mode closer to the true, confidential posterior.
@@ -776,7 +780,7 @@ posterior uncertainty and a mode closer to the true, confidential posterior.
 
 }
 
-\caption{(Example 2) posterior density estimate for the odds ratio using 1,000 MCMC draws.}\label{fig:post-or-density-dg}
+\caption{(Example 2) Private posterior density estimate for the odds ratio under random response (dashed) and discrete Gaussian (solid). Density plots are made using 5,000 and 1,000 MCMC draws for the random response and discrete Gaussian respectively.}\label{fig:post-or-density-dg}
 \end{figure}
 
 Additionally, if we compare the left hand plots of figure
@@ -789,15 +793,20 @@ the discrete Gaussian induces considerably less bias when using the naive analys
 
 }
 
-\caption{(Example 2) comparison between using dapper and a naive Bayesian anaylsis on the
-noise infused data and the original confidential data.}\label{fig:post-or-compare-dg}
+\caption{(Example 2) Posterior distributions (red) of the odds ratio 
+(admission of males vs. females)
+using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference
+using dapper which takes into account the privacy mechanism; Right panel:
+naive Bayesian inference treating the noisy data as noise-free. Blue
+distribution in both panels reflect the true posterior distribution
+if the analysis were to be conducted on the confidential data.}\label{fig:post-or-compare-dg}
 \end{figure}
 
 \hypertarget{example-3-linear-regression}{%
 \subsection{Example 3: Linear Regression}\label{example-3-linear-regression}}
 
-In this section we apply \texttt{dapper} to reconstruct an
-example presented in Ju et al. (2022). They apply a Laplace privacy
+In this section we apply \CRANpkg{dapper} to reconstruct an
+example presented in Ju et al. (2022). In it, they apply a Laplace privacy
 mechanism to a sufficient summary statistic for a linear regression model.
 Let \(\{(x_i,y_i)\}_{i=1}^{n}\) be the original, confidential data with \(x_i \in \mathbb{R}^2\).
 They assume the true data generating process follows the model
@@ -823,18 +832,16 @@ s(x,y) = (x^Ty, y^Ty, x^Tx).
 
 This summary statistic satisfies the additive record property since \(s(x,y) = \sum_{i=1}^{n} t(x_i, y_i)\)
 where
-
 \[
-t(x_i,y_i) = ((x_{i})^T y_i, y_i^2, (x_{i})^T x_i),
+t(x_i,y_i) = ((x_{i})^T y_i, y_i^2, (x_{i})^T x_i).
 \]
-with \(\epsilon\)-DP privacy guarantees. To achieve this guarantee it is
-necessary to bound the value of the statistic. This will ensure
-a data point cannot be too ``unique.'' Intuitively, an outlier is
-easy to identify, so we want to make sure no data point
-is an extreme outlier. In the language of differential
-privacy, this equates to bounding the global sensitivity. This was accomplished
+To make the statistic compliant with
+the \(\epsilon\)-DP criterion it is
+necessary to bound the value of the statistic
+(i.e.~the statistic must have finite global sensitivity). This will ensure
+a data point can never be too ``unique.'' This is accomplished
 by clamping the data. More precisely, we define
-the clamp function \([z] := \min\{\max\{z,-10\}, 10\}\) which truncates a value
+the clamping function \([z] := \min\{\max\{z,-10\}, 10\}\) which truncates a value
 \(z\) so that it falls into the interval \([-10,10]\). Furthermore, we let \(\tilde{z} := [z]/10\)
 denote the normalized clamped value of \(z\). The clamped statistic is
 
@@ -842,7 +849,9 @@ denote the normalized clamped value of \(z\). The clamped statistic is
 t(x_i,y_i) = ((\tilde{x}^{i})^T \tilde{y}_i, \tilde{y}_i^2, (\tilde{x}_{i})^T \tilde{x}_i).
 \]
 
-Ignoring duplicate entries, the global sensitivity is \(\Delta = p^2 + 4p + 3\).\footnote{The original paper, Ju et al. (2022), contains a computation error and mistakenly uses \(\Delta = p^2 + 3p + 3\)}
+Ignoring duplicate entries, the statistic has \(\ell_1\)-sensitivity \(\Delta = p^2 + 4p + 3\)
+where \(p\) is the number of predictors in the regression model (in this example \(p = 2\))
+.\footnote{The original paper, Ju et al. (2022), contains a computation error and mistakenly uses \(\Delta = p^2 + 3p + 3\)}
 Using the Laplace mechanism, \(\epsilon\)-DP privacy can thus be achieved by adding i.i.d. Laplace\((0, \Delta/\epsilon)\)
 error to each unique entry. A tighter bound on sensitivity can be achieved using
 other techniques, see Awan and Slavković (2020).
@@ -1023,8 +1032,9 @@ uncertainty to the estimates.
 
 }
 
-\caption{(Example 3) comparison between dapper and a naive approach that ignores the privacy mechanism. 
-The dashed lines are the true coefficient values.}\label{fig:regression-compare}
+\caption{(Example 3) The red densities represent
+the posterior of the coefficient using the confidential data. The blue densities are the 
+posterior distributions that would arise from treating the noise infused data as noise-free. The dashed lines are the true coefficient values.}\label{fig:regression-compare}
 \end{figure}
 
 \begin{figure}
@@ -1033,15 +1043,13 @@ The dashed lines are the true coefficient values.}\label{fig:regression-compare}
 
 }
 
-\caption{(Example 3) comparison for example between using dapper on the noisy data set and a standard
-Bayesian analysis on the confidential data set.}\label{fig:regression-data-compare}
+\caption{(Example 3) The red densities represent
+the posterior of the coefficient using the confidential data. The blue densities are the 
+true private posterior distributions. The dashed lines are the true coefficient values.}\label{fig:regression-data-compare}
 \end{figure}
 
-\hypertarget{discussion}{%
-\section{Discussion}\label{discussion}}
-
-\hypertarget{mixing-and-privacy-loss-budget}{%
-\subsection{Mixing and Privacy Loss Budget}\label{mixing-and-privacy-loss-budget}}
+\hypertarget{discussion-on-mixing-and-privacy-loss-budget}{%
+\section{Discussion on Mixing and Privacy Loss Budget}\label{discussion-on-mixing-and-privacy-loss-budget}}
 
 Mixing can be poor when the posterior under a given privacy mechanism is
 much wider than the posterior that would arise using the confidential data. In
@@ -1049,7 +1057,7 @@ other words, a small privacy budget can result in poor mixing. Intuitively,
 this issue arises because the step size of the chain is governed by the variance
 of the posterior model (step 1 of the algorithm) that assumes no privacy noise. Thus, a small privacy budget
 will generate a chain whose step sizes are too small to effectively explore the
-private posterior.The rest of this section explores a toy example that will provide insight into this
+private posterior. The rest of this section explores a toy example that will provide insight into this
 phenomenon.
 
 Suppose the confidential data consist of a single observation \(x \in \mathbb{R}\),
@@ -1080,7 +1088,7 @@ two steps
   \[
   \begin{aligned}
   \mu &:= \dfrac{\dfrac{1}{\epsilon^{-2}}s + \dfrac{1}{\sigma^2}\theta}{\dfrac{1}{\epsilon^{-2}} + \dfrac{1}{\sigma^2}}\\
-  \tau^2 &:= \dfrac{1}{\dfrac{1}{\epsilon^{-2}} + \dfrac{1}{\sigma^2}}.
+  \tau^2 &:= \dfrac{1}{1/\epsilon^{-2} + 1/\sigma^2}.
   \end{aligned}
   \]
 \item
@@ -1105,10 +1113,8 @@ From the right hand term in the above panel, we can see \(\gamma\)
 depends only on \(\epsilon^{-2}/\sigma^2\) and as the privacy budget decreases (i.e.~more noise is being added to \(x\)),
 \(\gamma \to 1\).
 
-Thus we recommend playing with the privacy budget to troubleshoot the cause of slow mixing
-chains. In particular it may be useful to use a relatively large
-privacy budget for qualitative comparisons so that the privacy / utility trade-off can
-be explored more easily. If a faster sampler is needed, and it has been
+Thus we recommend varying the privacy budget as a diagnostic for slow mixing chains.
+If a faster sampler is needed, and it has been
 determined that the privacy budget is the issue, the pseudo-likelihood scheme proposed by Andrieu and Roberts (2009)
 may offer significant speed ups. This scheme fits in the same data augmentation framework as \texttt{dapper} but is not implemented.
 
@@ -1126,19 +1132,19 @@ ensuing analysis or, if it does, addresses the analysis only for specific models
 Privacy researchers currently lack good tools for evaluating the impact
 of privacy mechanisms on a statistical analysis.
 
-Thus \texttt{dapper} helps fill an urgent need by providing researchers a way to properly account
+Thus \CRANpkg{dapper} helps fill an urgent need by providing researchers a way to properly account
 for the noise introduced for privacy protection in their statistical analysis. A notable
 feature is its flexibility which allows the users to specify a custom
-privacy mechanism. The benefit being that \texttt{dapper} can evaluate already
+privacy mechanism. The benefit being that \CRANpkg{dapper} can evaluate already
 established privacy mechanisms as well as those that have yet to be discovered.
 
 This package offers a significant step forward in providing general-purpose statistical
-inference tools for privatized data. Despite the strengths of \texttt{dapper}, it has
-several stringent requirements for good performance that limit its potential:
+inference tools for privatized data. Despite the strengths of \CRANpkg{dapper}, it has
+several cumbersome requirements for good performance that limit its potential:
 1) the privacy mechanism must have a closed-form density 2) a record additive
-statistic must be used to leverage \texttt{dapper}'s full computational potential
+statistic must be used to leverage \CRANpkg{dapper}'s full computational potential
 3) the non-private posterior sampler needs to be efficient and 4) the privacy budget cannot be too small.
-To improve \texttt{dapper}, future work could aim to relax some of these requirements.
+To improve \CRANpkg{dapper}, future work could aim to relax some of these requirements.
 
 \hypertarget{references}{%
 \section*{References}\label{references}}
@@ -1154,9 +1160,6 @@ Andrieu, Christophe, and Gareth O. Roberts. 2009. {``The Pseudo-Marginal Approac
 
 \leavevmode\vadjust pre{\hypertarget{ref-Awan2020}{}}%
 Awan, Jordan, and Aleksandra Slavković. 2020. {``Structure and Sensitivity in Differential Privacy: Comparing k-Norm Mechanisms.''} \emph{Journal of the American Statistical Association} 116 (534): 935--54. \url{https://doi.org/10.1080/01621459.2020.1773831}.
-
-\leavevmode\vadjust pre{\hypertarget{ref-BarthJones2012}{}}%
-Barth-Jones, Daniel C. 2012. {``The {`Re-Identification'} of Governor William Weld's Medical Information: A Critical Re-Examination of Health Data Identification Risks and Privacy Protections, Then and Now.''} \emph{SSRN Electronic Journal}. \url{https://doi.org/10.2139/ssrn.2076397}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-Bickel1975}{}}%
 Bickel, Peter J., Eugene A. Hammel, and John W. O'Connell. 1975. {``Sex Bias in Graduate Admissions: Data from Berkeley: Measuring Bias Is Harder Than Is Usually Assumed, and the Evidence Is Sometimes Contrary to Expectation.''} \emph{Science} 187 (4175): 398--404. \url{https://doi.org/10.1126/science.187.4175.398}.
