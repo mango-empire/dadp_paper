@@ -404,10 +404,8 @@ uses with a way to quickly explore the behavior of DP mechanisms.
 As a demonstration, we analyze a subset of the UC Berkeley admissions data, which is often
 used as an illustrative example of Simpson's paradox (Bickel, Hammel, and O'Connell 1975). The question posed is whether
 the data suggest there is bias against females during the college admissions
-process. Below is a table of the aggregate admissions result from six departments based on sex
-for a total of \(N = 400\) applicants. The table on the left represents
-the true admissions data and the table on the right is the result of anonymizing
-the data with a differentially private mechanism.
+process. Table 1 shows the aggregate admissions result from six departments based on sex
+for a total of \(N = 400\) applicants. The left sub-table shows the confidential data and the right shows the resulting counts after applying the random response privacy mechanism.
 
 \begin{table}[!h]
 \centering
@@ -908,10 +906,10 @@ clamp_data <- function(dmat) {
   pmin(pmax(dmat,-10),10) / 10
 }
 
-st_f <- function(i, tx, sdp) {
-  txc <- clamp_data(tx)
-  ydp <- txc[1]
-  xdp <- cbind(1,t(txc[-1]))
+st_f <- function(xi, sdp, i) {
+  xic <- clamp_data(xi)
+  ydp <- xic[1]
+  xdp <- cbind(1,t(xic[-1]))
 
   s1 <- t(xdp) %*% ydp
   s2 <- t(ydp) %*% ydp
@@ -929,8 +927,8 @@ st_f <- function(i, tx, sdp) {
   of the statistic. In this example, \(\Delta = 15\) and \(\epsilon = 10\).
 
 \begin{verbatim}
-priv_f <- function(sdp, zt) {
-  sum(VGAM::dlaplace(sdp - zt, 0, 15/10, log = TRUE))
+priv_f <- function(sdp, sx) {
+  sum(VGAM::dlaplace(sdp - sx, 0, 15/10, log = TRUE))
 }
 \end{verbatim}
 \end{enumerate}
@@ -950,7 +948,7 @@ y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
 
 #clamp the confidential data in xmat
 dmat <- cbind(y,xmat)
-sdp <-  apply(sapply(1:nrow(dmat), function(i) st_f(i, dmat[i,], sdp)), 1, sum)
+sdp <-  apply(sapply(1:nrow(dmat), function(i) st_f(dmat[i,], sdp, i)), 1, sum)
 
 #add Laplace noise 
 sdp <- sdp + VGAM::rlaplace(length(sdp), location = 0, scale = deltaa/epsilon)
@@ -989,9 +987,9 @@ summary(dp_out)
 #> # A tibble: 3 x 10
 #>   variable   mean median    sd   mad    q5   q95  rhat ess_bulk ess_tail
 #>   <chr>     <dbl>  <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl>
-#> 1 beta0    -0.900 -0.821  1.49  1.47 -3.49 1.41   1.00     471.    1082.
-#> 2 beta1    -2.22  -2.42   1.22  1.03 -3.91 0.136  1.00     231.     329.
-#> 3 beta2     0.511  0.454  1.28  1.36 -1.48 2.70   1.00     224.     480.
+#> 1 beta0    -0.916 -0.864  1.49  1.49 -3.42 1.46   1.00     525.     890.
+#> 2 beta1    -1.96  -2.26   1.41  1.12 -3.78 0.934  1.01     153.     318.
+#> 3 beta2     0.734  0.727  1.30  1.37 -1.35 2.94   1.02     163.     484.
 \end{verbatim}
 
 For comparison, we consider a Bayesian analysis where the design matrix
@@ -1011,10 +1009,8 @@ attempt to reconstruct the posterior be extracting the
 relevant entries which is done below.
 
 Because of the injected privacy noise, the reconstructed
-\((x^Tx)^{-1}\) matrix is not positive definite. As
-a naive solution we use the algorithm proposed\\
-by Higham (1988) to find the closest positive semi-definite matrix
-as determined by the Forbenius norm. The \texttt{pracma}
+\((x^Tx)^{-1}\) matrix is not positive definite. As a naive solution we use the algorithm proposed by Higham (1988) to find the closest positive semi-definite matrix
+as determined by the Forbenius norm. The \CRANpkg{pracma}
 package contains an implementation via the \texttt{nearest\_psd}
 function.
 
@@ -1033,8 +1029,8 @@ uncertainty to the estimates.
 }
 
 \caption{(Example 3) The red densities represent
-the posterior of the coefficient using the confidential data. The blue densities are the 
-posterior distributions that would arise from treating the noise infused data as noise-free. The dashed lines are the true coefficient values.}\label{fig:regression-compare}
+the posteriors of the regression coefficient that come from applying the naive analysis to the privitized data. The blue densities are the 
+privacy aware posterior distributions. The dashed lines are the true coefficient values.}\label{fig:regression-compare}
 \end{figure}
 
 \begin{figure}
@@ -1043,9 +1039,9 @@ posterior distributions that would arise from treating the noise infused data as
 
 }
 
-\caption{(Example 3) The red densities represent
-the posterior of the coefficient using the confidential data. The blue densities are the 
-true private posterior distributions. The dashed lines are the true coefficient values.}\label{fig:regression-data-compare}
+\caption{(Example 3) This plot compares the posteriors that would arise from applying the naive, privacy blind analysis to the confidential and privitized data. The red densities represent
+the posterior of the coefficient under the confidential data. The blue densities are the 
+posterior distributions that would arise from using the privitized data. The dashed lines are the true coefficient values.}\label{fig:regression-data-compare}
 \end{figure}
 
 \hypertarget{discussion-on-mixing-and-privacy-loss-budget}{%
@@ -1087,7 +1083,7 @@ two steps
   \(\mu\) and \(\tau\) are defined as:
   \[
   \begin{aligned}
-  \mu &:= \dfrac{\dfrac{1}{\epsilon^{-2}}s + \dfrac{1}{\sigma^2}\theta}{\dfrac{1}{\epsilon^{-2}} + \dfrac{1}{\sigma^2}}\\
+  \mu &:= \dfrac{s/\epsilon^{-2} + \theta/\sigma^2}{1/\epsilon^{-2} + 1/\sigma^2}\\
   \tau^2 &:= \dfrac{1}{1/\epsilon^{-2} + 1/\sigma^2}.
   \end{aligned}
   \]
@@ -1105,7 +1101,7 @@ defined as
 Plugging in the appropriate quantities into the above panel gives us
 
 \begin{align*}
-\gamma &= 1 - \dfrac{\sigma^2}{\sigma^2 + \epsilon^{-2}} = 1 - \dfrac{1}{1 + \dfrac{\epsilon^{-2}}{\sigma^2}}.
+\gamma &= 1 - \dfrac{\sigma^2}{\sigma^2 + \epsilon^{-2}} = 1 - \dfrac{1}{1 + \epsilon^{-2}/\sigma^2}.
 \end{align*}
 
 The chain converges faster as \(\gamma \to 0\) an slower as \(\gamma \to 1\).

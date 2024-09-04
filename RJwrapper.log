@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.24)  2 SEP 2024 20:09
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.24)  4 SEP 2024 01:02
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -806,13 +806,13 @@ File: ts1ppl.fd 2001/06/04 font definitions for TS1/ppl.
 
 [4]
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 415.
+(Font)              scaled to size 10.42007pt on input line 413.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 415.
+(Font)              scaled to size 7.91925pt on input line 413.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 415.
+(Font)              scaled to size 10.42007pt on input line 413.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 415.
+(Font)              scaled to size 7.91925pt on input line 413.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
@@ -826,17 +826,17 @@ LaTeX Warning: `!h' float specifier changed to `!ht'.
 <dppaper_files/figure-latex/trace-plot-1.pdf, id=167, 361.35pt x 216.81pt>
 File: dppaper_files/figure-latex/trace-plot-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/trace-plot-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/trace-plot-1.pdf  used on input line 611.
+Package pdftex.def Info: dppaper_files/figure-latex/trace-plot-1.pdf  used on input line 609.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
 <dppaper_files/figure-latex/post-or-density-1.pdf, id=169, 361.35pt x 216.81pt>
 File: dppaper_files/figure-latex/post-or-density-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/post-or-density-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/post-or-density-1.pdf  used on input line 629.
+Package pdftex.def Info: dppaper_files/figure-latex/post-or-density-1.pdf  used on input line 627.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
 <dppaper_files/figure-latex/post-or-compare-1.pdf, id=172, 361.35pt x 216.81pt>
 File: dppaper_files/figure-latex/post-or-compare-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/post-or-compare-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/post-or-compare-1.pdf  used on input line 653.
+Package pdftex.def Info: dppaper_files/figure-latex/post-or-compare-1.pdf  used on input line 651.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
 
 
@@ -846,12 +846,12 @@ Package pdftex.def Info: dppaper_files/figure-latex/post-or-compare-1.pdf  used 
 <dppaper_files/figure-latex/post-or-density-dg-1.pdf, id=208, 361.35pt x 216.81pt>
 File: dppaper_files/figure-latex/post-or-density-dg-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/post-or-density-dg-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/post-or-density-dg-1.pdf  used on input line 779.
+Package pdftex.def Info: dppaper_files/figure-latex/post-or-density-dg-1.pdf  used on input line 777.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
 <dppaper_files/figure-latex/post-or-compare-dg-1.pdf, id=211, 361.35pt x 216.81pt>
 File: dppaper_files/figure-latex/post-or-compare-dg-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/post-or-compare-dg-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/post-or-compare-dg-1.pdf  used on input line 792.
+Package pdftex.def Info: dppaper_files/figure-latex/post-or-compare-dg-1.pdf  used on input line 790.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
 
 
@@ -862,15 +862,15 @@ Package pdftex.def Info: dppaper_files/figure-latex/post-or-compare-dg-1.pdf  us
 [12]
 
 [13]
-<dppaper_files/figure-latex/regression-compare-1.pdf, id=258, 361.35pt x 216.81pt>
+<dppaper_files/figure-latex/regression-compare-1.pdf, id=259, 361.35pt x 216.81pt>
 File: dppaper_files/figure-latex/regression-compare-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/regression-compare-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/regression-compare-1.pdf  used on input line 1031.
+Package pdftex.def Info: dppaper_files/figure-latex/regression-compare-1.pdf  used on input line 1027.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
-<dppaper_files/figure-latex/regression-data-compare-1.pdf, id=259, 361.35pt x 216.81pt>
+<dppaper_files/figure-latex/regression-data-compare-1.pdf, id=260, 361.35pt x 216.81pt>
 File: dppaper_files/figure-latex/regression-data-compare-1.pdf Graphic file (type pdf)
 <use dppaper_files/figure-latex/regression-data-compare-1.pdf>
-Package pdftex.def Info: dppaper_files/figure-latex/regression-data-compare-1.pdf  used on input line 1042.
+Package pdftex.def Info: dppaper_files/figure-latex/regression-data-compare-1.pdf  used on input line 1038.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
 
 
@@ -883,10 +883,10 @@ Package pdftex.def Info: dppaper_files/figure-latex/regression-data-compare-1.pd
 [17]
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 1238.
+(Font)              using `T1/zi4/m/n' instead on input line 1234.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 1238.
+(Font)              scaled to size 9.18004pt on input line 1234.
 )
 
 [18] (./RJwrapper.aux)
@@ -903,7 +903,7 @@ Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
 Here is how much of TeX's memory you used:
  27172 strings out of 475544
  494758 string characters out of 5776851
- 1948905 words of memory out of 5000000
+ 1949905 words of memory out of 5000000
  48838 multiletter control sequences out of 15000+600000
  623776 words of font info for 378 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
@@ -921,10 +921,10 @@ pdfTeX warning (dest): name{Hfootnote.2} has been referenced but does not exist,
 pdfTeX warning (dest): name{Hfootnote.1} has been referenced but does not exist, replaced by a fixed one
 
 </Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmbb.pfb></Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb></Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb></Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb></Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></Users/kevin/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (18 pages, 690353 bytes).
+Output written on RJwrapper.pdf (18 pages, 690038 bytes).
 PDF statistics:
- 449 PDF objects out of 1000 (max. 8388607)
- 389 compressed objects within 4 object streams
+ 450 PDF objects out of 1000 (max. 8388607)
+ 390 compressed objects within 4 object streams
  103 named destinations out of 1000 (max. 500000)
  78000 words of extra memory for PDF output out of 89155 (max. 10000000)
 

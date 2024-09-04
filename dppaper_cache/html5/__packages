@@ -10,7 +10,7 @@ stringr
 forcats
 lubridate
 knitr
+ggsci
 dapper
-progressr
 future
 furrr

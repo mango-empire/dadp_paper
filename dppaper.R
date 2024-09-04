@@ -355,10 +355,10 @@ clamp_data <- function(dmat) {
   pmin(pmax(dmat,-10),10) / 10
 }
 
-st_f <- function(i, tx, sdp) {
-  txc <- clamp_data(tx)
-  ydp <- txc[1]
-  xdp <- cbind(1,t(txc[-1]))
+st_f <- function(xi, sdp, i) {
+  xic <- clamp_data(xi)
+  ydp <- xic[1]
+  xdp <- cbind(1,t(xic[-1]))
     
   s1 <- t(xdp) %*% ydp
   s2 <- t(ydp) %*% ydp
@@ -372,8 +372,8 @@ st_f <- function(i, tx, sdp) {
 
 
 ## ----echo = TRUE--------------------------------------------------------------
-priv_f <- function(sdp, zt) {
-  sum(VGAM::dlaplace(sdp - zt, 0, 15/10, log = TRUE))
+priv_f <- function(sdp, sx) {
+  sum(VGAM::dlaplace(sdp - sx, 0, 15/10, log = TRUE))
 }
 
 
@@ -389,7 +389,7 @@ y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
 
 #clamp the confidential data in xmat
 dmat <- cbind(y,xmat)
-sdp <-  apply(sapply(1:nrow(dmat), function(i) st_f(i, dmat[i,], sdp)), 1, sum)
+sdp <-  apply(sapply(1:nrow(dmat), function(i) st_f(dmat[i,], sdp, i)), 1, sum)
 
 #add Laplace noise 
 sdp <- sdp + VGAM::rlaplace(length(sdp), location = 0, scale = deltaa/epsilon)
@@ -441,8 +441,8 @@ sigma_hat <- 2^2 * s3
 
 ## ----regression-compare, fig.cap = caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
 caption <- "(Example 3) The red densities represent
-the posterior of the coefficient using the confidential data. The blue densities are the 
-posterior distributions that would arise from treating the noise infused data as noise-free. The dashed lines are the true coefficient values."
+the posteriors of the regression coefficient that come from applying the naive analysis to the privitized data. The blue densities are the 
+privacy aware posterior distributions. The dashed lines are the true coefficient values."
 
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
@@ -475,9 +475,9 @@ rbind(coef_df, coef_post) %>%
 
 
 ## ----regression-data-compare, fig.cap=caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
-caption <- "(Example 3) The red densities represent
-the posterior of the coefficient using the confidential data. The blue densities are the 
-true private posterior distributions. The dashed lines are the true coefficient values."
+caption <- "(Example 3) This plot compares the posteriors that would arise from applying the naive, privacy blind analysis to the confidential and privitized data. The red densities represent
+the posterior of the coefficient under the confidential data. The blue densities are the 
+posterior distributions that would arise from using the privitized data. The dashed lines are the true coefficient values."
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
   pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%

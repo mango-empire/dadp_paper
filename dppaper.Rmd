@@ -442,10 +442,8 @@ uses with a way to quickly explore the behavior of DP mechanisms.
 As a demonstration, we analyze a subset of the UC Berkeley admissions data, which is often
 used as an illustrative example of Simpson's paradox [@Bickel1975]. The question posed is whether
 the data suggest there is bias against females during the college admissions 
-process. Below is a table of the aggregate admissions result from six departments based on sex
-for a total of $N = 400$ applicants. The table on the left represents
-the true admissions data and the table on the right is the result of anonymizing
-the data with a differentially private mechanism.
+process. Table 1 shows the aggregate admissions result from six departments based on sex
+for a total of $N = 400$ applicants. The left sub-table shows the confidential data and the right shows the resulting counts after applying the random response privacy mechanism.
 
 ```{r, echo = FALSE}
 #Original UCBAdmissions data.
@@ -1048,10 +1046,10 @@ global sensitivity.
       pmin(pmax(dmat,-10),10) / 10
     }
     
-    st_f <- function(i, tx, sdp) {
-      txc <- clamp_data(tx)
-      ydp <- txc[1]
-      xdp <- cbind(1,t(txc[-1]))
+    st_f <- function(xi, sdp, i) {
+      xic <- clamp_data(xi)
+      ydp <- xic[1]
+      xdp <- cbind(1,t(xic[-1]))
         
       s1 <- t(xdp) %*% ydp
       s2 <- t(ydp) %*% ydp
@@ -1067,8 +1065,8 @@ global sensitivity.
 adds Laplace$(0, \Delta/\epsilon)$ error to each unique entry
 of the statistic. In this example, $\Delta = 15$ and $\epsilon = 10$.
     ```{r, echo = TRUE}
-    priv_f <- function(sdp, zt) {
-      sum(VGAM::dlaplace(sdp - zt, 0, 15/10, log = TRUE))
+    priv_f <- function(sdp, sx) {
+      sum(VGAM::dlaplace(sdp - sx, 0, 15/10, log = TRUE))
     }
     ```
 
@@ -1087,7 +1085,7 @@ y <- cbind(1,xmat) %*% beta + rnorm(n, sd = sqrt(2))
 
 #clamp the confidential data in xmat
 dmat <- cbind(y,xmat)
-sdp <-  apply(sapply(1:nrow(dmat), function(i) st_f(i, dmat[i,], sdp)), 1, sum)
+sdp <-  apply(sapply(1:nrow(dmat), function(i) st_f(dmat[i,], sdp, i)), 1, sum)
 
 #add Laplace noise 
 sdp <- sdp + VGAM::rlaplace(length(sdp), location = 0, scale = deltaa/epsilon)
@@ -1154,10 +1152,8 @@ s3[lower.tri(s3)] <- s3[upper.tri(s3)]
 ```
 
 Because of the injected privacy noise, the reconstructed
-$(x^Tx)^{-1}$ matrix is not positive definite. As
-a naive solution we use the algorithm proposed  
-by @Higham1988 to find the closest positive semi-definite matrix
-as determined by the Forbenius norm. The `pracma`
+$(x^Tx)^{-1}$ matrix is not positive definite. As a naive solution we use the algorithm proposed by @Higham1988 to find the closest positive semi-definite matrix
+as determined by the Forbenius norm. The \CRANpkg{pracma}
 package contains an implementation via the `nearest_psd`
 function.
 
@@ -1178,8 +1174,8 @@ uncertainty to the estimates.
 
 ```{r regression-compare, fig.cap = caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
 caption <- "(Example 3) The red densities represent
-the posterior of the coefficient using the confidential data. The blue densities are the 
-posterior distributions that would arise from treating the noise infused data as noise-free. The dashed lines are the true coefficient values."
+the posteriors of the regression coefficient that come from applying the naive analysis to the privitized data. The blue densities are the 
+privacy aware posterior distributions. The dashed lines are the true coefficient values."
 
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
@@ -1213,9 +1209,9 @@ rbind(coef_df, coef_post) %>%
 
 
 ```{r regression-data-compare, fig.cap=caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
-caption <- "(Example 3) The red densities represent
-the posterior of the coefficient using the confidential data. The blue densities are the 
-true private posterior distributions. The dashed lines are the true coefficient values."
+caption <- "(Example 3) This plot compares the posteriors that would arise from applying the naive, privacy blind analysis to the confidential and privitized data. The red densities represent
+the posterior of the coefficient under the confidential data. The blue densities are the 
+posterior distributions that would arise from using the privitized data. The dashed lines are the true coefficient values."
 coef_df <- dp_out$chain %>% 
   as_tibble() %>%
   pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%
@@ -1281,7 +1277,7 @@ two steps
 $\mu$ and $\tau$ are defined as:
 \[
 \begin{aligned}
-\mu &:= \dfrac{\dfrac{1}{\epsilon^{-2}}s + \dfrac{1}{\sigma^2}\theta}{\dfrac{1}{\epsilon^{-2}} + \dfrac{1}{\sigma^2}}\\
+\mu &:= \dfrac{s/\epsilon^{-2} + \theta/\sigma^2}{1/\epsilon^{-2} + 1/\sigma^2}\\
 \tau^2 &:= \dfrac{1}{1/\epsilon^{-2} + 1/\sigma^2}.
 \end{aligned}
 \]
@@ -1298,7 +1294,7 @@ defined as
 Plugging in the appropriate quantities into the above panel gives us 
 
 \begin{align*}
-\gamma &= 1 - \dfrac{\sigma^2}{\sigma^2 + \epsilon^{-2}} = 1 - \dfrac{1}{1 + \dfrac{\epsilon^{-2}}{\sigma^2}}.
+\gamma &= 1 - \dfrac{\sigma^2}{\sigma^2 + \epsilon^{-2}} = 1 - \dfrac{1}{1 + \epsilon^{-2}/\sigma^2}.
 \end{align*}
 
 The chain converges faster as $\gamma \to 0$ an slower as $\gamma \to 1$.
