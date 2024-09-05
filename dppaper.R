@@ -279,7 +279,8 @@ df_ex2_or <- tibble(odds_ratio = c(or, or2), Mechanism = c(rep("Random Response"
 ggplot(df_ex2_or) + 
   stat_density(aes(x=odds_ratio, linetype=Mechanism),
   geom="line",position="identity") + 
-  xlim(0,10)
+  xlim(0,10) + 
+  theme(legend.position="bottom")
 
 
 ## ----post-or-compare-dg, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'----
@@ -420,7 +421,7 @@ dp_out <- dapper_sample(dmod,
 summary(dp_out)
 
 
-## ----echo = FALSE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 #x^Ty
 s1 <- sdp[1:3]
 
@@ -433,7 +434,7 @@ s3[upper.tri(s3, diag = TRUE)] <- c(n, sdp[5:9])
 s3[lower.tri(s3)] <- s3[upper.tri(s3)]
 
 
-## ----echo = FALSE-------------------------------------------------------------
+## ----echo = TRUE--------------------------------------------------------------
 s3 <- pracma::nearest_spd(solve(s3))
 bhat <- s3 %*% s1
 sigma_hat <- 2^2 * s3
