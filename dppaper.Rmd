@@ -259,7 +259,8 @@ for some known and tractable functions $g, t_1, \ldots, t_n$. The sample mean is
 example of a summary statistic satisfying record additivity where $t_i(x_i, s_{dp}) = x_i$.
 
 
-The data augmentation algorithm is described in the following pseudo code:
+The following pseudocode shows how to generate the $(t+1)$th step from the $t$th step
+in the data augmentation algorithm:
 
 1. Sample $\theta^{t+1}$ from $p(\cdot \mid x^{(t)})$.
 2. Sample from $p(x \mid \theta, s_{dp})$ using a three step process
@@ -348,7 +349,7 @@ terms in $t_i(x_i, s_{dp})$. Here `i` is an integer,
 while `xi` is a numeric vector and `sdp` is an numeric vector or matrix. The return value
 must be a numeric vector or matrix.
 
-* `npar` is an integer equal to the dimension of $\theta$.
+* `npar` is an integer representing the dimension of $\theta$.
 
 ## Sampling
 
@@ -406,7 +407,7 @@ Pure $\epsilon$-differential privacy is a strong requirement
 that can lead to poor data utility. For this reason the U.S. Census Bureau uses
 zero concentrated differential privacy which is
 a weaker criteria. The \CRANpkg{dapper} package includes probability mass and sampling functions
-for the discrete Gaussian and discrete Laplace distributions [@Canonne2021]. These
+for the discrete Gaussian and discrete Laplace distributions [@Canonne2022]. These
 are two potential mechanisms for deploying concentrated differential privacy,
 and both are used in several current U.S. Census Bureau data products [@TumultLabs2022].
 
