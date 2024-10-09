@@ -3,13 +3,15 @@ title: "dapper: Data Augmentation for Private
 Posterior Estimation in R"
 date: "2023-11-01"
 abstract: >
-    This paper serves as a reference and introduction on using the \CRANpkg{dapper} R
-    package. It is an MCMC sampling framework which targets the
-    exact posterior distribution given privitized data. 
-    The goal of this package is to provide researchers a tool to perform
-    valid Bayesian inference on data protected by differential privacy. A strength of
-    this framework is that it can be applied in situations where the likelihood 
-    is analytically intractable.
+    This paper serves as a reference and introduction to using the R package \CRANpkg{dapper}. 
+    \CRANpkg{dapper} encodes a sampling framework which allows exact Markov chain Monte Carlo 
+    simulation of parameters and latent variables in a statistical model given privatized data. 
+    The goal of this package is to fill an urgent need by providing applied researchers 
+    with a flexible tool to perform valid Bayesian inference on data protected by 
+    differential privacy, allowing them to properly account for the noise 
+    introduced for privacy protection in their statistical analysis. 
+    \CRANpkg{dapper} offers a significant step forward in providing 
+    general-purpose statistical inference tools for privatized data.
 draft: true
 author:  
   - name: Kevin Eng
@@ -83,7 +85,7 @@ implementations of differential privacy include Apple [@tang2017privacy], Google
 U.S. Census Bureau [@Abowd2018].
 
 Many data sets amenable to differential privacy contain
-valuable information that stake holders are still interested in
+valuable information that stakeholders are still interested in
 learning about. However, the noise introduced by differential privacy
 changes the calculus of inference. As an example,
 we can implement differential privacy for tabular data by directly
@@ -99,8 +101,8 @@ for science and privacy to coexist.
 
 Unfortunately making the necessary adjustments poses formidable mathematical
 challenges [@NIPS2010_sherry], even for seemingly simple models like linear regression. 
-The difficulty lies in the marginal likelihood that results from correctly accounting for the injected
-privacy noise. This function is often analytically intractable and as a result,
+The difficulty lies in the marginal likelihood of the privatized data that results from correctly accounting for the injected 
+noise. This function is often analytically intractable and as a result,
 it is difficult or impossible to apply traditional statistical methods
 to derive estimators. In particular, the marginal likelihood can involve a complex
 integral where it is not even possible to evaluate the likelihood
@@ -114,7 +116,7 @@ The \CRANpkg{dapper} package provides a set of tools for conducting
 privacy-aware Bayesian inference. It serves as a R
 interface for the data augmentation MCMC framework proposed by @Ju2022,
 allowing existing Bayesian models to be extended to handle
-noise infused data. The package is designed to integrate well with existing Bayesian workflows;
+noise-infused data. The package is designed to integrate well with existing Bayesian workflows;
 results can by analyzed using tools from the \CRANpkg{rstan} ecosystem in a drop-in fashion. Additionally, 
 construction of a privacy-aware sampler is simplified 
 through the specification of four independent modules.
@@ -161,7 +163,7 @@ greatly simplify calculations. Since summary statistics are easier to work with,
 database curators often publish them to efficiently communicate information 
 contained in large data sets.
 This makes them a natural target for
-dissemination based privacy approaches.
+dissemination-based privacy approaches.
 
 
 ## Differential Privacy
@@ -214,7 +216,7 @@ for the the Laplace mechanism. Example 3, will cover an
 application of the Laplace mechanism to linear regression. 
 Other common noise adding mechanisms include the Gaussian and the
 discrete Gaussian mechanisms, which also add noise scaled to the sensitivity;
-however these mechanisms satisfy a different privacy criteria called *zero concentrated differential privacy* (zCDP) [@Bun2016]. ^[Example 2 will consider another privacy framework called $(\epsilon, \delta)$-differential privacy which
+however these mechanisms satisfy a different privacy criteria called *zero-concentrated differential privacy* (zCDP) [@Bun2016]. ^[Example 2 will consider another privacy framework called $(\epsilon, \delta)$-differential privacy which
 is an extension of $\epsilon$-differential privacy to the case where the ratio bound
 can fail with probability governed by $\delta$. More specifically, we say
 a privacy mechanism, $\mathcal{M}$, satisfies $(\epsilon, \delta)$-differential privacy if 
@@ -245,7 +247,7 @@ come from any R package such as \CRANpkg{fmcmc} or constructed analytically via 
 For the second distribution, $p(x \mid \theta, s_{dp})$ may
 only be known up to a constant. The \CRANpkg{dapper} package samples from this distribution by
 running a Gibbs-like sampler: Similar to a Gibbs sampler, each of the $n$ components of $x$ is individually
-updated. However unlike a Gibbs sampler, each component is updated
+updated. However unlike a standard Gibbs sampler, each component is updated
 using a Metropolis-Hastings algorithm. This method is sometimes called the Metropolis-within-Gibbs sampler [@Robert2004].
 
 In some cases, sampling from $p(x \mid \theta, s_{dp})$ can be made more efficient
@@ -332,6 +334,9 @@ Additionally, some packages like \CRANpkg{mcmc} will generate samplers that may 
 due to a large initialization overhead. For these
 reasons we recommend sticking with conjugate priors as they will be quick and avoid
 serious undetected semantic errors arising from specific implementation details of other R packages.
+If one needs to use a non-conjugate prior, we recommend building `post_f()` using
+a lightweight and well documented package such as \CRANpkg{fmcmc}.
+
 
 * `priv_f()` is a function that returns the log of the privacy mechanism density given
 the noise-infused summary statistics $s_{dp}$ and its potential true value $s(x, s_{dp}) := \sum_{i=1}^{n} t_i(x_i, s_{dp})$. 
