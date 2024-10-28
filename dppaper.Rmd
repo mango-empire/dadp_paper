@@ -3,14 +3,14 @@ title: "dapper: Data Augmentation for Private
 Posterior Estimation in R"
 date: "2023-11-01"
 abstract: >
-    This paper serves as a reference and introduction to using the R package \CRANpkg{dapper}. 
-    \CRANpkg{dapper} encodes a sampling framework which allows exact Markov chain Monte Carlo 
+    This paper serves as a reference and introduction to using the R package dapper. 
+    dapper encodes a sampling framework which allows exact Markov chain Monte Carlo 
     simulation of parameters and latent variables in a statistical model given privatized data. 
     The goal of this package is to fill an urgent need by providing applied researchers 
     with a flexible tool to perform valid Bayesian inference on data protected by 
     differential privacy, allowing them to properly account for the noise 
     introduced for privacy protection in their statistical analysis. 
-    \CRANpkg{dapper} offers a significant step forward in providing 
+    dapper offers a significant step forward in providing 
     general-purpose statistical inference tools for privatized data.
 draft: true
 author:  
@@ -89,7 +89,7 @@ valuable information that stakeholders are still interested in
 learning about. However, the noise introduced by differential privacy
 changes the calculus of inference. As an example,
 we can implement differential privacy for tabular data by directly
-adding independent, random error to each cell; the amount and type of which is determined by DP theory. When we fit a regression model to the noise infused data,
+adding independent, random error to each cell; the amount and type of which is determined by the DP mechanism design. When we fit a regression model to the noise infused data,
 this will correspond to having measurement errors
 in the covariates. This, unfortunately, violates the assumptions of most statistical models. 
 In the presence of such errors, standard estimators can exhibit significant bias and incorrect uncertainty quantification 
@@ -101,8 +101,8 @@ for science and privacy to coexist.
 
 Unfortunately making the necessary adjustments poses formidable mathematical
 challenges [@NIPS2010_sherry], even for seemingly simple models like linear regression. 
-The difficulty lies in the marginal likelihood of the privatized data that results from correctly accounting for the injected 
-noise. This function is often analytically intractable and as a result,
+The difficulty lies in the marginal likelihood for the privacy protected data. 
+This function is often analytically intractable and as a result,
 it is difficult or impossible to apply traditional statistical methods
 to derive estimators. In particular, the marginal likelihood can involve a complex
 integral where it is not even possible to evaluate the likelihood
@@ -157,13 +157,13 @@ it provides a mechanism for incorporating information not explicitly contained
 in the data at hand. This is especially useful in settings where there 
 is considerable domain knowledge on the value of $\theta$.
 
-For large data sets, it is common to work with a summary statistic $s = s(x)$
+When they are available, it is desirable to work with a summary statistic $s = s(x)$
 that has much smaller dimension than the original data because doing so can
 greatly simplify calculations. Since summary statistics are easier to work with, 
 database curators often publish them to efficiently communicate information 
 contained in large data sets.
 This makes them a natural target for
-dissemination-based privacy approaches.
+dissemination-based privacy approaches [@Karr2016].
 
 
 ## Differential Privacy
@@ -207,17 +207,19 @@ mechanisms. One such mechanism is the *Laplace mechanism*. It works by
 taking a deterministic statistic $s: \mathcal{X} \mapsto \mathbb{R}^m$ and constructs
 the privatized statistic $s_{dp} := s(x) + u$ where $u$ is a $m$-dimensional
 vector of i.i.d. Laplace random variables. The amount of noise, $u$, is scaled
-proportionally to the *global sensitivity* (or just sensitivity) of the statistic $s$. 
-We define the sensitivity of a statistic $s$ as 
+proportionally to the *global sensitivity* of the statistic $s$. 
+We define the global sensitivity of a statistic $s$ as 
 $\Delta (s) := \max_{(x,x') \in \mathcal{X}^n \times \mathcal{X}^n; d(x,x') \leq 1} \|s(x) - s(x')\|$.
 If we draw
 each $u_i \sim \text{Lap}(\Delta (s) / \epsilon)$, we can show $s_{dp}$ is $\epsilon$-differentially private
 for the the Laplace mechanism. Example 3, will cover an
 application of the Laplace mechanism to linear regression. 
 Other common noise adding mechanisms include the Gaussian and the
-discrete Gaussian mechanisms, which also add noise scaled to the sensitivity;
-however these mechanisms satisfy a different privacy criteria called *zero-concentrated differential privacy* (zCDP) [@Bun2016]. ^[Example 2 will consider another privacy framework called $(\epsilon, \delta)$-differential privacy which
-is an extension of $\epsilon$-differential privacy to the case where the ratio bound
+discrete Gaussian mechanisms, which also add noise scaled to the sensitivity. ^[The 
+Gaussian mechanisms require different and more general notions of DP than $\epsilon$-DP,
+in particular zCDP [@Bun2016] and $(\epsilon, \delta)$-DP [@Dwork2006p]. 
+Example 2 will consider $(\epsilon, \delta)$-differential privacy which
+extends the $\epsilon$-differential privacy to the case where the ratio bound
 can fail with probability governed by $\delta$. More specifically, we say
 a privacy mechanism, $\mathcal{M}$, satisfies $(\epsilon, \delta)$-differential privacy if 
 for all neighboring databases where $d(x,x') \leq 1$, we have
@@ -226,8 +228,8 @@ P(\mathcal{M}(x) \in S) \leq \epsilon P(\mathcal{M}(x') \in S) + \delta
 \end{align*}
 for any $S \subseteq \text{Range}(\mathcal{M})$ and $\delta \in [0,1]$. Note
 setting $\delta = 0$ gives us back the pure $\epsilon$-differential privacy
-condition.
-] 
+condition.] 
+
 
 # Methodology
 Given privatized data, $s_{dp}$, the goal of Bayesian inference is to learn the 
@@ -321,7 +323,7 @@ where $n$ is the number of observations and $p$ is the dimension of a record $x$
 The matrix requirement is strict so even if $p = 1$,
 `latent_f()` should return a $n \times 1$ matrix and not a vector of length $n$.
 
-* `post_f()` is a function which makes a one-step draw from the private posterior. It has
+* `post_f()` is a function which makes a one-step draw from the posterior given the imputed confidential data. It has
 the syntax `post_f(dmat, theta)`. Here `dmat` is a numeric matrix representing the confidential database
 and `theta` is a numeric vector which serves as the initialization point for a one sample draw. 
 The easiest, bug-free way to construct `post_f()` is to use a conjugate prior. However, 
@@ -403,18 +405,15 @@ for anyone already familiar with the \CRANpkg{rstan} ecosystem.
 
 ## Privacy Mechanisms for Count Data
 The \CRANpkg{dapper} package provides several utility functions 
-for analyzing privatized count data. Currently, the U.S. Census Bureau
-is a major driver behind the deployment and research of privatized 
-count data, and these functions were created for census oriented
-researchers in mind.
+for analyzing privatized count data. Privatized count data is a common data type for official and public statistics. 
+As an example, the most prominent deployment of differential privacy for public data dissemination is the 2020 U.S. Decennial Census, consisting of a collection of tabular data products that follow a geographic hierarchy.
 
-Pure $\epsilon$-differential privacy is a strong requirement
-that can lead to poor data utility. For this reason the U.S. Census Bureau uses
-zero concentrated differential privacy which is
-a weaker criteria. The \CRANpkg{dapper} package includes probability mass and sampling functions
-for the discrete Gaussian and discrete Laplace distributions [@Canonne2022]. These
-are two potential mechanisms for deploying concentrated differential privacy,
-and both are used in several current U.S. Census Bureau data products [@TumultLabs2022].
+Pure $\epsilon$-differential privacy places a stringent requirement on the privacy noise that must be introduced, 
+which can lead to poor data quality. For this reason, alternative choices of privacy noise can be desirable. 
+For example, the U.S. Census Bureau adopts zero concentrated differential privacy (zCDP), which is a more general criterion that allows for a broader choice over noise mechanisms.
+The \CRANpkg{dapper} package includes probability mass and sampling functions
+for the discrete Gaussian and discrete Laplace distributions [@Canonne2022] which are both common distributions used in the zCDP framework. 
+The 2020 U.S. Decennial Census data products are protected with two sets of mechanisms that satisfy zCDP: the TopDown mechanism for the redistricting and Demographic and Housing Characteristics (DHC) files [@Abowd2022], and the SafeTab for the detailed DHC files [@TumultLabs2022].
 
 
 Equations \@ref(eq:dgauss) and \@ref(eq:dlaplace) in the panel below give the 
@@ -428,9 +427,8 @@ The support of both distributions is the set of all integers. The discrete Gauss
 two parameters $(\mu,\sigma) \in \mathbb{R} \times \mathbb{R}^+$ which govern the location and 
 scale respectively. On the other hand, the discrete Laplace only has the scale parameter $t \in \mathbb{R}^+$. The functions `ddnorm` and `rdnorm` provide the
 density and sampling features for the discrete Gaussian distribution. The `ddnorm` 
-function contains a calculation for the normalizing constant which is expensive. To
-speed up repeated execution, an optional logical argument named `normalize` is provided. When set to `FALSE`, it forgoes calculating the normalizing constant, however the default value is
-`TRUE`. Finally, the functions
+function contains a calculation for the normalizing constant which is expensive. 
+To speed up repeated execution, the optional `log` argument returns the log unnormalized density when set to `TRUE`. Finally, the functions
 `ddlaplace` and `rdlaplace` provide similar features for the discrete Laplace distribution. Due to potential floating point attacks, these implementations of these functions are not the safest and are merely meant to provide 
 users with a way to quickly explore the behavior of these DP mechanisms.
 
@@ -674,7 +672,7 @@ Specifically, we look at the odds of a male being admitted compared to
 that of female. A higher odds ratio would indicate a bias
 favoring males. Figure \@ref(fig:post-or-density) shows draws from the private posterior. 
 The large odds ratio values would seem
-to indicate there is bias favoring the males. The "paradox" arises
+to indicate there is bias favoring the males. Simpson's paradox arises
 when analyzing the data stratified by university department where the odds ratio flips
 with females being favored over males.
 
@@ -698,7 +696,7 @@ Looking at left hand plot in figure \@ref(fig:post-or-compare) shows the MAP est
 is similar to that in the case of the confidential data.
 The width of the posterior is also much larger since
 it properly accounts for the uncertainty due to the privacy mechanism. This
-illustrates the dangers of ignoring the privacy mechanism: a naive
+illustrates the dangers of ignoring the privacy mechanism: a naïve
 analysis not only has bias, but also severely underestimates the 
 uncertainty associated with the odds ratio estimate.
 
@@ -709,7 +707,7 @@ caption <- "(Example 1) Posterior distributions (red) of the odds ratio
 (admission of males vs. females)
 using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference
 using dapper which takes into account the privacy mechanism; Right panel:
-naive Bayesian inference treating the noisy data as noise-free. Blue
+naïve Bayesian inference treating the noisy data as noise-free. Blue
 distribution in both panels reflect the true posterior distribution
 if the analysis were to be conducted on the confidential data."
 
@@ -729,7 +727,7 @@ odds_ratio_noisy  <- odds_male/odds_female
 
 df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
   pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
-  mutate(method = "naive")
+  mutate(method = "naïve")
 
 df2 <- tibble(confidential = odds_ratio_conf, noisy = or) %>%
   pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
@@ -753,7 +751,7 @@ df %>%  ggplot(aes(odds_ratio, group = group, fill = group)) +
 To highlight the flexibility of \CRANpkg{dapper} we reanalyze example 1
 with a different privacy mechanism. Here we take inspiration from the 2020 U.S. Decennial Census, 
 which deployed a novel privacy protection system for count data. 
-One of the privacy mechanisms used is the discrete Gaussian distribution. 
+In particular, the discrete Gaussian distribution is used in SafeTab. 
 In our admissions data example, this privacy mechanism works by injecting
 noise into the total cell counts given in the 2x2 table. The 
 randomized response scheme, in contrast, injects noise at the record level.
@@ -767,9 +765,9 @@ a direct comparison. However, there is a direct relationship between
 zCDP and $(\epsilon, \delta)$-differential privacy. The latter framework
 is a relaxed version of $\epsilon$-DP where the ratio bound only holds
 in probability. For our comparison, we will set $\delta = 10^{-10}$ which
-is the value the U.S. Census Bureau uses. 
+is the value used in the 2020 Decennial Census. 
 For this value of $\delta$, setting the scale parameter in the discrete Guassian
-distribution to $\sigma = 6.32$ will guarantee $(2\log(3), 10^{-10})$-differential privacy.^[$\dfrac{1}{2} \epsilon^2$-concentrated differential privacy implies $\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)$-differential privacy [@Bun2016]]  
+distribution to $\sigma = 6.32$ will guarantee $(2\log(3), 10^{-10})$-differential privacy.^[$\dfrac{1}{2} \epsilon^2$-concentrated differential privacy implies $\left(\dfrac{1}{2}\epsilon^2 + \epsilon \sqrt{2\log(1/\delta)}, \delta\right)$-differential privacy [@Bun2016].]  
 
 ```{r, echo = FALSE}
 #Original UCBAdmissions data.
@@ -819,7 +817,7 @@ Male & 110 & 131\\
 kbl(list(adm_cnf, adm_prv), booktabs = TRUE, caption = 'The table on the left shows the confidential admissions data and the right show the perturbed data as a result of applying the discrete Guassian mechanism with the scale parameter set to 6.32.') %>%
   kable_styling(position = 'center')
 ```
-For the public, the U.S. Census Bureau only releases aggregate cell counts along with
+For the public, the 2020 Decennial Census only shows aggregate cell counts along with
 the true total count of said cells. In our example,
 this means the Census would have released the right hand 
 table along with the fact that $N = 400$ in the original
@@ -899,14 +897,14 @@ ggplot(df_ex2_or) +
 
 Additionally, if we compare the left hand plots of figure
 \@ref(fig:post-or-compare) and figure \@ref(fig:post-or-compare-dg),
-the discrete Gaussian induces considerably less bias when using the naive analysis.
+the discrete Gaussian induces considerably less bias when using the naïve analysis.
 
 ```{r post-or-compare-dg, fig.cap= caption,  echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
 caption <- "(Example 2) Posterior distributions (red) of the odds ratio 
 (admission of males vs. females)
 using noisy (i.e. privacy-protected) data. Left panel: correct Bayesian inference
 using dapper which takes into account the privacy mechanism; Right panel:
-naive Bayesian inference treating the noisy data as noise-free. Blue
+naïve Bayesian inference treating the noisy data as noise-free. Blue
 distribution in both panels reflect the true posterior distribution
 if the analysis were to be conducted on the confidential data."
 
@@ -931,7 +929,7 @@ odds_ratio_noisy  <- odds_male/odds_female
 
 df1 <- tibble(confidential = odds_ratio_conf, noisy = odds_ratio_noisy) %>%
   pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
-  mutate(method = "naive")
+  mutate(method = "naïve")
 
 df2 <- tibble(confidential = odds_ratio_conf, noisy = or2) %>%
   pivot_longer(everything(), names_to = "group", values_to = "odds_ratio") %>%
@@ -1152,7 +1150,7 @@ s3[lower.tri(s3)] <- s3[upper.tri(s3)]
 ```
 
 Because of the injected privacy noise, the reconstructed
-$(x^Tx)^{-1}$ matrix is not positive definite. As a naive solution we use the algorithm proposed by @Higham1988 to find the closest positive semi-definite matrix
+$(x^Tx)^{-1}$ matrix is not positive definite. As a naïve solution we use the algorithm proposed by @Higham1988 to find the closest positive semi-definite matrix
 as determined by the Forbenius norm. The \CRANpkg{pracma}
 package contains an implementation via the `nearest_psd`
 function.
@@ -1164,7 +1162,7 @@ sigma_hat <- 2^2 * s3
 ```
 
 Figure \@ref(fig:regression-compare) shows the posterior density estimates for the $\beta$ coefficients based
-on $s_{dp}$. The density estimates indicates the naive method, which ignores the privacy mechanism, has bias and 
+on $s_{dp}$. The density estimates indicates the naïve method, which ignores the privacy mechanism, has bias and 
 underestimates the variance. Likewise Figure \@ref(fig:regression-data-compare) 
 illustrates how \CRANpkg{dapper} provides point estimates that are not far off from those
 that would have been obtained using the original confidential data. The dramatic
@@ -1174,7 +1172,7 @@ uncertainty to the estimates.
 
 ```{r regression-compare, fig.cap = caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
 caption <- "(Example 3) The red densities represent
-the posteriors of the regression coefficient that come from applying the naive analysis to the privitized data. The blue densities are the 
+the posteriors of the regression coefficient that come from applying the naïve analysis to the privitized data. The blue densities are the 
 privacy aware posterior distributions. The dashed lines are the true coefficient values."
 
 coef_df <- dp_out$chain %>% 
@@ -1189,15 +1187,15 @@ coef_med <- coef_df %>%
 coef_true <- tibble(coefficient = c("beta0", "beta1", "beta2"),
                     value  = c(-1.79, -2.89, -0.66))
 
-naive_sample <- MASS::mvrnorm(9000, mu = bhat, Sigma = sigma_hat)
+naïve_sample <- MASS::mvrnorm(9000, mu = bhat, Sigma = sigma_hat)
 
-coef_post <- tibble(beta0 = naive_sample[,1],
-                    beta1 = naive_sample[,2],
-                    beta2 = naive_sample[,3])
+coef_post <- tibble(beta0 = naïve_sample[,1],
+                    beta1 = naïve_sample[,2],
+                    beta2 = naïve_sample[,3])
 
 coef_post <- coef_post %>% 
   pivot_longer(contains("beta"), names_to = "coefficient", values_to = "estimate") %>%
-  mutate(method = "naive")
+  mutate(method = "naïve")
 
 rbind(coef_df, coef_post) %>%
   ggplot(aes(x = estimate, group = method, fill = method)) + geom_density(alpha = .5) + 
@@ -1209,7 +1207,7 @@ rbind(coef_df, coef_post) %>%
 
 
 ```{r regression-data-compare, fig.cap=caption, echo = FALSE, fig.height=3, fig.width=5, fig.align='center'}
-caption <- "(Example 3) This plot compares the posteriors that would arise from applying the naive, privacy blind analysis to the confidential and privitized data. The red densities represent
+caption <- "(Example 3) This plot compares the posteriors that would arise from applying the naïve, privacy blind analysis to the confidential and privitized data. The red densities represent
 the posterior of the coefficient under the confidential data. The blue densities are the 
 posterior distributions that would arise from using the privitized data. The dashed lines are the true coefficient values."
 coef_df <- dp_out$chain %>% 
@@ -1244,7 +1242,7 @@ rbind(coef_df, coef_post) %>%
 
 # Discussion on Mixing and Privacy Loss Budget
 Mixing can be poor when the posterior under a given privacy mechanism is 
-much wider than the posterior that would arise using the confidential data. In
+more dispersed than the posterior that would arise using the confidential data. In
 other words, a small privacy budget can result in poor mixing. Intuitively,
 this issue arises because the step size of the chain is governed by the variance
 of the posterior model (step 1 of the algorithm) that assumes no privacy noise. Thus, a small privacy budget
@@ -1317,8 +1315,6 @@ hampered their adoption. This gap in capability has been noted by several
 large industry entities who have begun building software ecosystems for
 working with differential privacy. However, the majority of these software tools only address privacy and not the 
 ensuing analysis or, if they do, address the analysis only for specific models.
-Privacy researchers currently lack good tools for evaluating the impact
-of privacy mechanisms on a statistical analysis.
 
 Thus \CRANpkg{dapper} helps fill an urgent need by providing researchers a way to properly account
 for the noise introduced for privacy protection in their statistical analysis. A notable
@@ -1329,14 +1325,14 @@ established privacy mechanisms as well as those that have yet to be invented.
 
 This package offers a significant step forward in providing general-purpose statistical
 inference tools for privatized data. Despite the strengths of \CRANpkg{dapper}, it has
-some cumbersome requirements for good performance that limit its potential:
-1) the privacy mechanism must have a closed-form density 2) a record additive 
-statistic must be used to leverage \CRANpkg{dapper}'s full computational potential
-3) the non-private posterior sampler needs to mix well and 4) the privacy budget cannot be too small.
+some cumbersome requirements for good performance that limit its potential. 
+First, the privacy mechanism must have a closed-form density. Second, a record additive 
+statistic must be used to leverage \CRANpkg{dapper}'s full computational potential.
+Third, the non-private posterior sampler needs to mix well. Finally, the privacy budget cannot be too small.
 To improve \CRANpkg{dapper}, future work could aim to relax some of these requirements.
 
 # Disclosure Statement {-}
 
-We are grateful for support from the Alfred P. Sloan Foundation. Jordan Awan's research was supported in part by NSF grant no. SES-2150615, awarded to Purdue University.
+Kevin Eng and Ruobin Gong are grateful for support from the Alfred P. Sloan Foundation. Jordan Awan's research was supported in part by NSF grant no. SES-2150615, awarded to Purdue University.
 
 
